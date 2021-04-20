@@ -1,0 +1,5 @@
+numpy
+scipy
+matplotlib
+mendeleev
+basis_set_exchange

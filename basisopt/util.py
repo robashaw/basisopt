@@ -1,8 +1,20 @@
 # utility functions
 import numpy as np
+import logging
 
 def fit_poly(x, y, n=6):
-    "Fits a polynomial of order n to the set of (x [Bohr], y [Hartree]) coordinates given, and calculates data necessary for a Dunham analysis" 
+    """Fits a polynomial of order n to the set of (x [Bohr], y [Hartree]) coordinates given,
+       and calculates data necessary for a Dunham analysis.
+    
+       Arguments:
+            x (numpy array): atomic separations in Bohr
+            y (numpy array): energies at each point in Hartree
+            n (int): order of polynomial to fit
+    
+       Returns:
+            poly1d object, reference separation (Bohr), equilibrium separation (Bohr),
+            first (n+1) Taylor series coefficients at eq. sep.
+    """ 
     # Find best guess at minimum and shift coordinates
     xref = x[np.argmin(y)]
     xshift = x - xref
@@ -16,7 +28,7 @@ def fit_poly(x, y, n=6):
     xmax = max(xshift)+0.1
     crit_points = [x.real for x in p.deriv().r if np.abs(x.imag) < 1e-8 and xmin < x.real < xmax] 
     if len(crit_points) == 0:
-        print("MINIMUM NOT FOUND")
+        logging.warning("Minimum not found in polynomial fit")
         # Set outputs to default values
         re = xref
         pt = [0.0]*(n+1)

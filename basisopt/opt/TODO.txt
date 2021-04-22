@@ -1,0 +1,6 @@
++ Handle first/second derivatives (* branch optdev)
++ Methods to check/kick out of local minima
++ CorrelationConsistentStrategy (* branch optdev)
++ PCSegStrategy (* branch optdev)
++ Think of ways to implement more novel strategies
++ More regularisers/preconditioners

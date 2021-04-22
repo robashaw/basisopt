@@ -3,10 +3,12 @@ from basisopt.exceptions import MethodNotAvailable
 import functools
 
 def available(func):
+    """Decorator to mark a method as available"""
     func._available = True
     return func
 
 def unavailable(func):
+    """Decorator to mark a method as unavailable"""
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         raise MethodNotAvailable(func.__name__)
@@ -14,6 +16,32 @@ def unavailable(func):
     return wrapper
 
 class Wrapper:
+    """ Abstract class to derive all backend wrappers from;
+        see e.g. Psi4. 
+    
+        All new calculation types must be added to this class and marked as unavailable,
+        this means that the library knows what calculation types are possible
+        agnostic to which wrapper is being used. 
+    
+        You only have to implement the calculation types that you want to expose, and
+        decorate them as being available. These functions should have the signature
+         func(self, mol, tmp="") where mol is a Molecule object, and tmp is the path to
+        the scratch directory.
+     
+        Attributes that should be set in children:
+            _name (str): identifier, e.g. 'Psi4'
+            _method_strings (dict): dictionary of method names and what calculation types
+            can be done with them, e.g. {'hf': ['energy', 'dipole'], 'mp2': ['energy'], ...}
+            
+        Attributes used by children:
+            _values (dict): dictionary where most recent calculated results are stored
+            _globals (dict): dictionary of parameters that should be set every time 
+            a calculation is run, e.g. {'memory': '2gb', ...}. These should be parsed
+            as part of the 'run' function in every Child implementation
+            
+        Attributes that should only be set here:    
+            _methods (dict): dictionary of all possible calculation types, pointing to member funcs
+    """
     def __init__(self, name='Empty'):
         self._name = name
         
@@ -32,15 +60,26 @@ class Wrapper:
         self._globals = {}
     
     def add_global(self, name, value):
+        """Add a global option"""
         self._globals[name] = value
     
     def get_value(self, name):
+        """Retrieve a data point if it exists"""
         if name in self._values:
             return self._values[name]
         else:
             return None
     
     def verify_method_string(self, str):
+        """Checks whether a method is available with this wrapper
+        
+           Arguments:
+                str (str): a string of the form "name.method", e.g. "rhf.energy"
+                will check to see if 'energy' can be calculated with 'rhf'
+        
+           Returns: 
+                True if available, False otherwise
+        """
         parts = str.split('.')
         name = parts[0]
         method = parts[1]
@@ -51,20 +90,34 @@ class Wrapper:
         return available
     
     def run(self, evaluate, molecule, params, tmp=""):
+        """Runs a calculation with this backend
+           MUST BE IMPLEMENTED IN ALL WRAPPERS
+             
+           Arguments:
+                evaluate (str): the property to evaluate, e.g. 'energy'
+                molecule: a Molecule object to run a calculation on
+                params (dict): any parameters for the calculation in addition to _globals
+                tmp (str): path to scratch directory
+            
+           Returns:
+                0 on success, -1 if method isn't available, -2 otherwise
+        """
         method_str = f"{molecule.method}.{evaluate}".lower()
         try:
             if self.verify_method_string(method_str): 
-                self._values[evaluate] = self._methods[evaluate](mol=molecule, tmp=tmp, **params)
+                self._values[evaluate] = self._methods[evaluate](mol, tmp=tmp, **params)
                 return 0
             else:
                 raise MethodNotAvailable(method_str)
         except KeyError:
-            print(f"There is no method {evaluate}")
+            logging.error(f"There is no method {evaluate}")
+            return -2
         except MethodNotAvailable:
-            print(f"Unable to run {method_str} with {self._name} backend")
+            logging.error(f"Unable to run {method_str} with {self._name} backend")
             return -1
     
     def method_is_available(self, method='energy'):
+        """Returns True if a calculation type is available, false otherwise""" 
         try:
             func = self._methods[method]
             return func._available
@@ -73,9 +126,16 @@ class Wrapper:
     
     @functools.cached_property        
     def all_available(self):
+        """Returns a list of all available calculation types"""
         return [k for k, v in self._methods.items() if v._available]
         
     def available_properties(self, name):
+        """Returns a list of all available calculation types for a
+           given method. 
+        
+           Attributes:
+                name (str): method name, e.g. 'rhf', 'mp2'
+        """
         if name in self._method_strings:
             return self._method_strings[name]
         else:
@@ -83,30 +143,41 @@ class Wrapper:
     
     @functools.cache
     def available_methods(self, prop):
+        """Returns a list of all available methods to calculate a particular property
+           
+           Attributes:
+                prop (str): name of property, e.g. 'energy', 'dipole'
+        """
         return [k for k, v in self._method_strings.items() if prop in v]
         
     @unavailable
-    def energy(mol=None, tmp=""):
+    def energy(self, mol, tmp=""):
+        """Energy, Hartree"""
         raise NotImplementedException
         
     @unavailable
-    def dipole(mol=None, tmp=""):
+    def dipole(self, mol, tmp=""):
+        """Dipole moment, numpy array, a.u."""
         raise NotImplementedException
         
     @unavailable
-    def quadrupole(mol=None, tmp=""):
+    def quadrupole(self, mol, tmp=""):
+        """Quadrupole moment, numpy array, a.u."""
         raise NotImplementedException
         
     @unavailable
-    def trans_dipole(mol=None, tmp=""):
+    def trans_dipole(self, mol, tmp=""):
+        """Transition dipole moment, numpy array, a.u."""
         raise NotImplementedException
     
     @unavailable
-    def trans_quadrupole(mol=None, tmp=""):
+    def trans_quadrupole(self, mol, tmp=""):
+        """Transition quadrupole moment, numpy array, a.u."""
         raise NotImplementedException
     
     @unavailable
-    def polarizability(mol=None, tmp=""):
+    def polarizability(self, mol, tmp=""):
+        """Dipole polarizability, a.u."""
         raise NotImplementedException
     
     

@@ -25,14 +25,14 @@ AM_DICT = {
 """Dictionary converting back from l quantum number to letter value"""
 INV_AM_DICT = dict((v, k) for k, v in AM_DICT.items())
 
+"""Dictionary with pre-optimised even-tempered expansions for atoms"""
 _EVEN_TEMPERED_DATA = {
-    'H' : [[(1.0, 1.8, 6), (1.0, 1.7, 6)], 
-           [(0.9, 1.8, 6), (0.9, 1.7, 6)],
-           [(0.8, 1.8, 6), (0.8, 1.7, 6)]],
 }
 
-
 def get_even_temper_params(atom='H', accuracy=1e-5):
+    """Searches for the relevant even tempered expansion
+       from _EVEN_TEMPERED_DATA
+    """
     if atom in _EVEN_TEMPERED_DATA:
         log_acc = -np.log10(accuracy)
         index = max(4, log_acc)-4
@@ -40,7 +40,10 @@ def get_even_temper_params(atom='H', accuracy=1e-5):
         return _EVEN_TEMPERED_DATA[atom][index]
     else:
         return []
-        
+
+"""Essentially exact numerical Hartree-Fock energies for all atoms
+   in Hartree. Ref: Saito 2009, doi.org/10.1016/j.adt.2009.06.001
+"""
 _ATOMIC_HF_ENERGIES = {
       1 : -0.5,
       2 : -2.86167999561,

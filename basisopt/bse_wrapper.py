@@ -6,6 +6,14 @@ from basisopt.containers import Shell
 import numpy as np
 
 def make_bse_shell(shell):
+    """Converts an internal-format basis shell into a BSE-format shell
+    
+       Arguments:
+            shell: an internal Shell object
+    
+       Returns:
+            a BSE-format gto_spherical shell
+    """
     new_shell = {
         "function_type" : 'gto_spherical',
         "region": "",
@@ -16,6 +24,15 @@ def make_bse_shell(shell):
     return new_shell
 
 def make_internal_shell(shell):
+    """Converts a BSE-format basis shell into an internal-format shell
+    
+       Arguments:
+            shell: a BSE shell, a dictionary that must have these attributes
+                   ['angular_momentum', 'exponents', 'coefficients']    
+    
+       Returns:
+            an internal Shell object
+    """
     new_shell = Shell()
     new_shell.l = data.INV_AM_DICT[shell['angular_momentum'][0]]
     new_shell.exps = np.array([float(x) for x in shell['exponents']])
@@ -23,6 +40,15 @@ def make_internal_shell(shell):
     return new_shell
 
 def internal_to_bse(basis):
+    """Converts an internal basis dictionary into a BSE basis object
+    
+       Arguments:
+            basis: an internal basis, which is a dictionary with k, v pairs like:
+                   element_symbol: [array of internal Shell objects]
+    
+       Returns:
+            a BSE basis of type 'component' with 'gto_spherical' function types
+    """
     # get a container
     bse_basis = bse.skel.create_skel('component')
     bse_basis['function_types'] = ['gto_spherical']
@@ -38,6 +64,16 @@ def internal_to_bse(basis):
     return bse_basis
     
 def bse_to_internal(basis):
+    """Converts a BSE basis object into an internal basis dictionary
+    
+       Arguments:
+            basis: a BSE basis, must have the following attributes
+            ['elements'] each of which must then have an ['electron_shells']
+            attribute
+    
+       Returns:
+            an internal basis dictionary
+    """
     new_basis = {}
     for z,e in basis['elements'].items():
         shells = [make_internal_shell(s) for s in e['electron_shells']]
@@ -46,9 +82,27 @@ def bse_to_internal(basis):
     return new_basis
 
 def internal_basis_converter(basis, fmt='gaussian94'):
+    """Writes out an internal basis in the desired BSE format
+    
+       Arguments:
+            basis (dict): the internal basis dictionary
+            fmt (str): the desired output format - see the BSE docs for options
+    
+       Returns:
+            the basis as a string in the desired format
+    """
     bse_basis = internal_to_bse(basis)
     return bse.writers.write_formatted_basis_str(bse_basis, fmt)
     
 def fetch_basis(name, elements):
+    """Fetches a basis set for a set of elements from the BSE
+    
+       Arguments:
+            name (str) - the name of the desired basis, see BSE docs for options
+            elements (list) - a list of element symbols (or atomic numbers)
+    
+       Returns:
+            an internal basis dictionary
+    """
     basis = bse.get_basis(name, elements)
     return bse_to_internal(basis)

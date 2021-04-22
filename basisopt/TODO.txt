@@ -1,0 +1,3 @@
++ Summary statistics and prettifying of results
++ Handling of ECPs on molecules
++ Generate/scrape default even-tempered parameters for atoms 

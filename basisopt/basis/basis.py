@@ -3,8 +3,12 @@ from basisopt.containers import Result, Shell
 from basisopt import data
 import numpy as np
 import copy
+import logging
 
 def uncontract_shell(shell):
+    """Converts a Shell into an uncontracted Shell
+       (overwrites any existing contraction coefs)
+    """
     shell.coefs = []
     n = shell.exps.size
     for ix in range(n):
@@ -13,6 +17,16 @@ def uncontract_shell(shell):
         shell.coefs.append(c)
 
 def uncontract(basis, elements=None):
+    """Uncontracts all shells in a basis for the elements specified
+       (does not overwrite the old basis).
+    
+       Arguments:
+            basis (dict): the basis dictionary to be uncontracted
+            elements (list): list of atomic symbols 
+    
+       Returns:
+            a new basis dictionary with uncontracted shells
+    """
     if elements is None:
         elements = basis.keys() # do all
     new_basis = copy.copy(basis)
@@ -23,6 +37,16 @@ def uncontract(basis, elements=None):
     return new_basis
     
 def even_temper_expansion(params):
+    """Forms a basis for an element from even tempered expansion parameters
+    
+       Arguments:
+            params (list): list of tuples corresponding to shells
+            e.g. [(c_s, x_s, n_s), (c_p, x_p, n_p), ...] where each shell
+            is expanded as c_l * (x_l**k) for k=0,...,n_l
+    
+       Returns:
+            list of Shell objects for the expansion
+    """
     el_basis = []
     for ix, (c, x, n) in enumerate(params):
         new_shell = Shell()
@@ -33,33 +57,52 @@ def even_temper_expansion(params):
     return el_basis
     
 def fix_ratio(exps, ratio=1.4):
-    exps = np.sort(exps)
+    """Returns a sorted numpy array of exponents
+       where x_{i+1}/x_i >= ratio
+    """
+    new_exps = np.sort(exps)
     for i in range(exps.size-1):
-        if (exps[i+1]/exps[i] < ratio):
-            exps[i+1] = exps[i]*ratio
-    return exps
+        if (new_exps[i+1]/new_exps[i] < ratio):
+            new_exps[i+1] = new_exps[i]*ratio
+    return new_exps
     
 class Basis:
+    """Abstract parent class object representing a basis type
+       All basis types must inherit from here to work, see e.g. AtomicBasis, MolecularBasis
+    
+       Attributes:
+            results: a Result object where any results (e.g. calculations, optimizations, ...)
+            can be archived
+    
+       Private attributes:
+            _tests (list): a list of Test objects that can be run and collated together, with results
+            going into the results attribute
+    """
     def __init__(self):
         self.results = Result()
         self._tests = []
-        self._molecule = None
             
     def save(self, filename):
+        """Pickles the Basis object into a binary file"""
         with open(filename, 'wb') as f:
             pickle.dump(self, f)
             f.close()
+        logging.info(f"Dumped object of type {type(data)} to {filename}")
     
     def load(self, filename):
+        """Loads and returns a Basis object from a binary file pickle"""
         with open(filename, 'rb') as f:
             data = pickle.load(f)
             f.close()
+        logging.info(f"Loaded object of type {type(data)} from {filename}")
         return data
     
     def register_test(self, test):
+        """Add a Test object to the set of tests"""
         self._tests.append(test)
         
     def get_test(self, name):
+        """Retrieve a Test with a given name if it exists"""
         for t in self._tests:
             if t.name == name:
                 return t
@@ -68,15 +111,16 @@ class Basis:
     def run_test(self, name, params={}):
         t = self.get_test(name)
         if t is None:
-            print(f"No test with name {name}")
+            logging.warning(f"No test with name {name}")
         else:
             t.result = t.calculate(self._molecule.basis, params=params)
-            print(f"Test {name}: {t.result}")
+            logging.info(f"Test {name}: {t.result}")
     
     def run_all_tests(self, params={}):
         for t in self._tests:
             t.result = t.calculate(self._molecule.basis, params=params)
-            print(f"Test {name}: {t.result}")
+            logging.info(f"Test {name}: {t.result}")
             
-    def optimize(self, algorithm, params):
+    def optimize(self, algorithm='Nelder-Mead', params={}):
+        """All basis objects should implement an optimize method with this signature"""
         raise NotImplementedException

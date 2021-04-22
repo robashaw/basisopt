@@ -1,4 +1,4 @@
-# regularisers
+# regularisers, needs expanding
 import numpy as np
 
 def l1_norm(x):

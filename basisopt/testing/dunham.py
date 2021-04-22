@@ -7,7 +7,7 @@ from basisopt.util import fit_poly
 from basisopt.exceptions import InvalidDiatomic
 from mendeleev import element as md_element
 
-_VALUE_NAMES = ["E0", "R0", "BRot", "ARot", "W0", "Wx", "Wy", "De", "D0"]
+_VALUE_NAMES = ["Ee", "Re", "BRot", "ARot", "We", "Wx", "Wy", "De", "D0"]
 
 def dunham(energies, distances, mu, poly_order=6, angstrom=True, Emax=0):
     "Performs a Dunham analysis on a diatomic, given energy/distance values around a minimum and the reduced mass mu"
@@ -48,6 +48,33 @@ def dunham(energies, distances, mu, poly_order=6, angstrom=True, Emax=0):
     return p, xref, Ee, re*data.TO_ANGSTROM, Be, Ae, We, Wexe, Weye, De, D0   
 
 class DunhamTest(Test):
+    """Carries out a Dunham analysis on a diatomic, calculating spectroscopic constants
+       Initialised with either a diatomic Molecule object, or a mol_string of the form
+       "Atom1Atom2,separation in Ang", e.g. "H2,0.9", "NO,1.2", "LiH,1.3" etc.
+    
+       Results:
+            returned as numpy array, as well as archived
+            Ee:         Energy at eq. separation (Ha)
+            Re:         Eq. separation (Ang)
+            BRot, ARot: First and second rotational constants (cm-1)
+            We:         First vibrational constant (cm-1)
+            Wx, Wy:     x and y anharmonic corrections to We (cm-1)
+            De:         Dissociation energy (eV)
+            D0:         Zero-point dissociation energy (eV)
+    
+       Additional data stored:
+            StencilRi (numpy array): the separation values (Ang) used in the polynomial fit
+            StencilEi (numpy array): the energy values (Ha) at each point in the fit
+    
+       Additional attributes:
+            poly_order (int): order of polynomial to fit, >= 3
+            step (float): step size in Angstrom to use for polynomial fit
+            Emax (float): energy in Ha to calculate dissociation from (default 0)
+            poly (poly1d): fitted polynomial
+            shift (float): the shift for separations used in the polynomial fit
+            e.g. to calculate the value at the point R, use poly(R-shift)
+            
+    """
     def __init__(self, name, mol=None, mol_str="", charge=0, mult=1, poly_order=6, step=0.05, Emax=0):
         Test.__init__(self, name, mol=mol, charge=charge, mult=mult)
         self.poly_order = max(3, poly_order)
@@ -63,6 +90,7 @@ class DunhamTest(Test):
         self.molecule = build_diatomic(mol_str, charge=charge, mult=mult)
         
     def reduced_mass(self):
+        """Calculate the reduced mass of the diatomic"""
         atom1 = md_element(self.molecule._atom_names[0].title())
         atom2 = md_element(self.molecule._atom_names[1].title())
         return (atom1.mass*atom2.mass)/(atom1.mass + atom2.mass)
@@ -73,8 +101,9 @@ class DunhamTest(Test):
         self.molecule.basis = basis
         self.molecule.method = method
         
+        # create the stencil
         rvals = np.zeros(self.poly_order+1)
-        
+        # set the midpoint as the current separation
         midix = int(self.poly_order/2)
         rvals[midix] = self.molecule.distance(0, 1)
         for i in range(midix+1,self.poly_order+1):
@@ -82,6 +111,7 @@ class DunhamTest(Test):
         for i in range(midix):
             rvals[midix-i-1] = rvals[midix-i] - self.step
         
+        # calculate energies
         wrapper = api.get_backend()    
         energies = []
         for r in rvals:
@@ -90,9 +120,11 @@ class DunhamTest(Test):
             success = api.run_calculation(evaluate='energy', mol=self.molecule, params=params)
             energies.append(wrapper.get_value('energy'))
            
+        # perform the analysis
         energies = np.array(energies)
         results = dunham(energies, rvals, self.reduced_mass(), poly_order=self.poly_order, Emax=self.Emax)
         
+        # store results
         self.poly = results[0]
         self.shift = results[1]
         self.add_data("StencilRi", rvals*data.TO_ANGSTROM)
@@ -100,7 +132,7 @@ class DunhamTest(Test):
         for n, r in zip(_VALUE_NAMES, results[2:]):
             self.add_data(n, r)
         
-        return results[2:]
+        return np.array(results[2:])
         
     
          

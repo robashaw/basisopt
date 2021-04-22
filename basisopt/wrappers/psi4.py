@@ -5,6 +5,7 @@ from basisopt.exceptions import *
 import psi4
 
 class Psi4Wrapper(Wrapper):
+    """Wrapper for Psi4"""
     def __init__(self):
         Wrapper.__init__(self, name='Psi4')
         self._method_strings = {
@@ -30,12 +31,18 @@ class Psi4Wrapper(Wrapper):
         }
         
     def convert_molecule(self, m):
+        """Convert an internal Molecule object
+           to a Psi4 Molecule object
+        """
         molstring = ""
         for i in range(m.natoms()):
             molstring += m.get_line(i) + "\n"
         return psi4.geometry(molstring)
     
     def _property_prefix(self, method):
+        """Helper function to lookup properties from
+           psi4.properties
+        """
         m = method.lower()
         if m in ['scf', 'hf', 'dft']:
             return 'SCF'
@@ -45,14 +52,18 @@ class Psi4Wrapper(Wrapper):
             return method.upper()
     
     def initialise(self, m, name="", tmp=""):
+        """Initialises Psi4 before each calculation"""
+        # create output file
         outfile = tmp + f"{m.name}-{m.method}-" + name + ".out"
         psi4.core.set_output_file(outfile, False)
         
+        # create the molecule
         mol = self.convert_molecule(m)
         mol.set_molecular_charge(m.charge)
         mol.set_multiplicity(m.multiplicity)
         
         # logic to check global options
+        # TODO: expand option handling
         if "memory" in self._globals:
             psi4.set_memory(self._globals["memory"])
         psi4.set_options({k: v for k, v in self._globals.items() if k != "memory"})
@@ -62,6 +73,9 @@ class Psi4Wrapper(Wrapper):
         psi4.basis_helper(g94_basis) 
     
     def _get_properties(self, mol, name="prop", properties=[], tmp=""):
+        """Helper function to retrieve a property value from Psi4
+           after a calculation.
+        """
         ptype = self._property_prefix(mol.method)
         strings = [ptype + " " + p.upper() for p in properties]
         
@@ -81,22 +95,22 @@ class Psi4Wrapper(Wrapper):
         return results
         
     @available
-    def energy(self, mol=None, tmp=""):
+    def energy(self, mol, tmp=""):
         self.initialise(mol, name="energy", tmp=tmp)
         runstring = f"{mol.method}"
         return psi4.energy(runstring)
         
     @available
-    def dipole(self, mol=None, tmp=""):
+    def dipole(self, mol, tmp=""):
         results = self._get_properties(mol, name="dipole", properties=['dipole'], tmp=tmp)
         return results['dipole']
         
     @available
-    def quadrupole(self, mol=None, tmp=""):
+    def quadrupole(self, mol, tmp=""):
         results = self._get_properties(mol, name="quadrupole", properties=['quadrupole'], tmp=tmp)
         return results['quadrupole']
         
     @available
-    def polarizability(self, mol=None, tmp=""):
+    def polarizability(self, mol, tmp=""):
         results = self._get_properties(mol, name="polar", properties=['polarizability'], tmp=tmp)
         return results['polarizability']

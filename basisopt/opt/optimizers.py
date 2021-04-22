@@ -3,28 +3,64 @@ from .strategies import Strategy
 from basisopt import api
 from basisopt.exceptions import FailedCalculation
 import numpy as np
+import logging
 
+# needs expansion to properly log optimization results, and handle different losses
 
 def _atomic_opt(basis, element, algorithm, strategy, opt_params, objective):
-    print(f"Starting optimization of {element}/{strategy.eval_type}")
-    print(f"Algorithm: {algorithm}, Strategy: {strategy.name}")
+    """Helper function to run a strategy for a single atom
+    
+       Arguments:
+            basis: internal basis dictionary
+            element: symbol of atom to be optimized
+            algorithm (str): optimization algorithm, see scipy.optimize for options
+            opt_params (dict): parameters to pass to scipy.optimize.minimize
+            objective (func): function to calculate objective, must have signature
+            func(x) where x is a 1D numpy array of floats
+    
+        Returns:
+            a scipy.optimize result object of the optimization
+    """
+    logging.info(f"Starting optimization of {element}/{strategy.eval_type}")
+    logging.info(f"Algorithm: {algorithm}, Strategy: {strategy.name}")
     objective_value = objective(strategy.get_active(basis, element))
-    print(f"Initial objective value: {objective_value}")        
+    logging.info(f"Initial objective value: {objective_value}")  
+    
+    # Keep going until strategy says stop      
     while strategy.next(basis, element, objective_value):
-        print(f"Doing step {strategy._step+1}")
+        logging.info(f"Doing step {strategy._step+1}")
         guess = strategy.get_active(basis, element)
         res = minimize(objective, guess, method=algorithm, **opt_params)
         objective_value = res.fun
-        print(f"Parameters: {res.x}\nObjective: {objective_value}\n")
+        logging.info(f"Parameters: {res.x}\nObjective: {objective_value}\n")
     return res
 
 def optimize(molecule, element=None, algorithm='l-bfgs-b', strategy=Strategy(), reg=(lambda x: 0), opt_params={}):
+    """General purpose optimizer for a single atomic basis
+    
+        Arguments:
+            molecule: Molecule object 
+            element (str): symbol of atom to optimize; if None, will default to first atom in molecule
+            algorithm (str): scipy.optimize algorithm to use
+            strategy (Strategy): optimization strategy
+            reg (func): regularization function
+            opt_params (dict): parameters to pass to scipy.optimize.minimize
+    
+        Returns:
+            scipy.optimize result object
+    
+        Raises:
+            FailedCalculation
+    """
     wrapper = api.get_backend()
     if element is None:
         element = molecule.unique_atoms()[0]
     element = element.lower()
 
     def objective(x):
+        """Set exponents, run calculation, compute objective
+           Currently just RMSE, need to expand via Strategy
+        """
         strategy.set_active(x, molecule.basis, element)
         success = api.run_calculation(evaluate=strategy.eval_type, mol=molecule, params=strategy.params)
         if success != 0:
@@ -33,19 +69,43 @@ def optimize(molecule, element=None, algorithm='l-bfgs-b', strategy=Strategy(), 
         result = molecule.get_delta(strategy.eval_type)
         return np.linalg.norm(result) + reg(x)
     
+    # Initialise and run optimization
     strategy.initialise(molecule.basis, element)
     return _atomic_opt(molecule.basis, element, algorithm, strategy, opt_params, objective)    
         
 def collective_optimize(molecules, basis, opt_data=[], npass=3):
+    """General purpose optimizer for a collection of atomic bases
+    
+       Arguments:
+            molecules (list): list of Molecule objects to be included in objective
+            basis: internal basis dictionary, will be used for all molecules
+            opt_data (list): list of tuples, with one tuple for each atomic basis to be
+            optimized: (element, algorithm, strategy, regularizer, opt_params) - see the 
+            signature of _atomic_opt or optimize
+            npass (int): number of passes to do, i.e. it will optimize each atomic basis
+            listed in opt_data in order, then loop back and iterate npass times
+    
+      Returns:
+            list of scipy.optimize result objects from last pass, in same order as opt_data
+    
+      Raises:
+            FailedCalculation
+    """
     wrapper = api.get_backend()
     results = []*len(opt_data)
+    
     for i in range(npass):
-        print(f"Collective pass {i+1}")
+        logging.info(f"Collective pass {i+1}")
         total = 0.0
+        
+        # loop over elements in opt_data, and collect objective into total
         for ix, (el, alg, strategy, reg, params) in enumerate(opt_data):
             def objective(x):
+                """ Set exponents, compute objective for every molecule in set
+                    Regularisation only applied once at end
+                """
                 strategy.set_active(x, basis, el)
-                total = 0.0
+                local_total = 0.0
                 for mol in molecules:
                     mol.basis = basis
                     success = api.run_calculation(evaluate=strategy.eval_type, mol=mol, params=strategy.params)
@@ -55,14 +115,14 @@ def collective_optimize(molecules, basis, opt_data=[], npass=3):
                     name  = strategy.eval_type + "_" + el.title()
                     mol.add_result(name, value)
                     result = molecule.get_delta(name)
-                    total += np.linalg.norm(result)
-                return total + reg(x)
+                    local_total += np.linalg.norm(result)
+                return local_total + reg(x)
             
             if i == 0:
                 strategy.initialise(basis, el)
             results[ix] = _atomic_opt(basis, el, alg, strategy, params, objective)
             total += results[ix].fun
-        print(f'Collective objective: {total}')
+        logging.info(f'Collective objective: {total}')
     return results
 
     

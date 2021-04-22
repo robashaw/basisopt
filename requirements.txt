@@ -1,3 +1,4 @@
+colorlog
 numpy
 scipy
 matplotlib

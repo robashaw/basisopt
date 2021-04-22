@@ -10,6 +10,47 @@ from mendeleev import element as md_element
 _INITIAL_GUESS = (0.3, 2.0, 8)
 
 class EvenTemperedStrategy(Strategy):
+    """ Implements a strategy for an even tempered basis set, where each angular
+        momentum shell is described by three parameters: (c, x, n)
+        Each exponent in that shell is then given by
+            y_k = c*(x**k) for k=0,...,n
+        
+        --------------------------- ALGORITHM ----------------------------
+        Evaluate: energy (can change to any RMSE-compatible property)
+        Loss: root-mean-square error
+        Guess: null, uses _INITIAL_GUESS above
+        Pre-conditioner: None
+        
+        Initialisation:
+            - Find minimum no. of shells needed
+            - max_l >= min_l
+            - generate initial parameters for each shell
+    
+        First run:
+            - optimize parameters for each shell once, sequentially
+    
+        Next shell in list not marked finished:
+            - re-optimise
+            - below threshold or n=max_n: mark finished
+            - above threshold: increment n
+        Repeat until all shells are marked finished. 
+    
+        Uses iteration, limited by two parameters:
+            max_n: max number of exponents in shell
+            target: threshold for objective function
+        ------------------------------------------------------------------
+    
+        Additional attributes:
+            shells (list): list of (c, x, n) parameter tuples
+            shell_done (list): list of flags for whether shell is finished (0) or not (1)
+            target (float): threshold for optimization delta
+            max_n (int): maximum number of primitives in shell expansion
+            max_l (int): maximum angular momentum shell to do;
+            if -1, does minimal configuration
+            first_run (bool): setting to True restarts optimization from beginning
+            last_objective (var): last value of objective function
+            
+    """
     def __init__(self, eval_type='energy', target=1e-5, max_n=18, max_l=-1):
         Strategy.__init__(self, eval_type=eval_type, pre=unit)
         self.name = 'EvenTemper'
@@ -22,6 +63,7 @@ class EvenTemperedStrategy(Strategy):
         self.first_run = True
     
     def set_basis_shells(self, basis, element):
+        """Expands parameters into a basis set"""
         basis[element] = even_temper_expansion(self.shells)
         
     def initialise(self, basis, element):

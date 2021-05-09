@@ -3,8 +3,8 @@ from basisopt.wrappers import Wrapper
 from basisopt.wrappers.dummy import DummyWrapper
 from basisopt.exceptions import InvalidMethodString
 import pytest
-from data.utils import almost_equal
-from data.shells import get_vdz_internal
+from tests.data.utils import almost_equal
+from tests.data.shells import get_vdz_internal
 import numpy as np
 
 def test_empty_wrappers():
@@ -44,7 +44,7 @@ def test_verify_method_string():
 
 def test_run():
     m = Molecule()
-    m.from_xyz("data/caffeine.xyz") # 24 atoms
+    m.from_xyz("tests/data/caffeine.xyz") # 24 atoms
     
     w = Wrapper()
     assert w.run("energy", m, {}) == -1
@@ -86,7 +86,7 @@ def test_all_available():
 def test_initialise():
     dw = DummyWrapper()
     m = Molecule()
-    m.from_xyz("data/caffeine.xyz")
+    m.from_xyz("tests/data/caffeine.xyz")
     
     dw.initialise(m)
     assert dw._value == 24

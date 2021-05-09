@@ -1,6 +1,6 @@
 from basisopt import bse_wrapper as bsew
 import basis_set_exchange as bse
-from data import shells as shell_data
+from tests.data import shells as shell_data
 import pytest
 
 def test_make_bse_shell():

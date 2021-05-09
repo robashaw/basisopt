@@ -1,7 +1,7 @@
 from basisopt.molecule import *
 from basisopt.exceptions import InvalidDiatomic
 import pytest
-from data.utils import almost_equal
+from tests.data.utils import almost_equal
 import numpy as np
 
 def test_default_molecule():
@@ -45,7 +45,7 @@ def test_get_delta():
     
 def test_from_xyz():
     m = Molecule()
-    m.from_xyz("data/caffeine.xyz")
+    m.from_xyz("tests/data/caffeine.xyz")
     assert m.natoms() == 24
     
     # test unique_atoms

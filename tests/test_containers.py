@@ -1,6 +1,6 @@
 from basisopt.containers import *
-from data import shells as shell_data
-from data.utils import almost_equal
+from tests.data import shells as shell_data
+from tests.data.utils import almost_equal
 from basisopt.exceptions import DataNotFound, InvalidResult
 import numpy as np
 import pytest
@@ -66,7 +66,7 @@ def test_add_get_child():
         r3.add_child(shell)
         
 def test_load_result():
-    r = Result().load("data/result_test.bin")
+    r = Result().load("tests/data/result_test.bin")
     assert r.name == 'Parent'
     assert len(r._children) == 2
     assert r.get_data("age") == 32

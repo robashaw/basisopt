@@ -1,6 +1,9 @@
 # containers
 
-from . import data, exceptions
+from . import data
+from .exceptions import *
+import pickle
+import logging
 import numpy as np
 from scipy.special import sph_harm
 
@@ -198,3 +201,17 @@ class Result:
                 return c
         raise DataNotFound
         
+    def save(self, filename):
+        """Pickles the Result object into a file"""
+        with open(filename, 'wb') as f:
+            pickle.dump(self, f)
+            f.close()
+        logging.info(f"Dumped object of type {type(data)} to {filename}")
+        
+    def load(self, filename):    
+        """Loads and returns a Result object from a file pickle"""
+        with open(filename, 'rb') as f:
+            data = pickle.load(f)
+            f.close()
+        logging.info(f"Loaded object of type {type(data)} from {filename}")
+        return data

@@ -131,7 +131,6 @@ class Wrapper:
         except KeyError:
             return False
     
-    @functools.cached_property        
     def all_available(self):
         """Returns a list of all available calculation types"""
         return [k for k, v in self._methods.items() if v._available]
@@ -148,7 +147,6 @@ class Wrapper:
         else:
             return []
     
-    @functools.cache
     def available_methods(self, prop):
         """Returns a list of all available methods to calculate a particular property
            

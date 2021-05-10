@@ -74,12 +74,12 @@ def test_method_is_available():
     
 def test_all_available():
     w = Wrapper()
-    assert len(w.all_available) == 0
+    assert len(w.all_available()) == 0
     assert len(w.available_properties("linear")) == 0
     assert len(w.available_methods("energy")) == 0
     
     dw = DummyWrapper()
-    assert len(dw.all_available) == 4
+    assert len(dw.all_available()) == 4
     assert len(dw.available_properties("linear")) == 4
     assert len(dw.available_methods("energy")) == 4
     

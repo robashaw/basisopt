@@ -1,12 +1,13 @@
 # Wrappers for testing functionality
 from basisopt.wrappers.wrapper import Wrapper, available
+import logging
 import numpy as np
 
 def _linear(x, a=1.0):
     return a*x
     
 def _exp(x, a=1.0):
-    return a*np.exp(b*x)
+    return a*np.exp(a*x)
     
 def _quadratic(x, a=1.0):
     return (1 + a*x*(1 + a*x))
@@ -38,6 +39,7 @@ class DummyWrapper(Wrapper):
             'quadratic' : ['energy'],
             'uniform'   : ['energy', 'dipole', 'quadrupole'],
         }
+        self._memory_set = False
         
     def convert_molecule(self, m):
         return m.natoms()

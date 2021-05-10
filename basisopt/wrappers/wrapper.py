@@ -1,6 +1,7 @@
 # Template for program wrappers
-from basisopt.exceptions import MethodNotAvailable
+from basisopt.exceptions import MethodNotAvailable, InvalidMethodString
 import functools
+import logging
 
 def available(func):
     """Decorator to mark a method as available"""
@@ -79,8 +80,14 @@ class Wrapper:
         
            Returns: 
                 True if available, False otherwise
+        
+           Raises:
+                InvalidMethodString
         """
         parts = str.split('.')
+        if len(parts) < 2:
+            raise InvalidMethodString
+        
         name = parts[0]
         method = parts[1]
         available = (name in self._method_strings)
@@ -105,7 +112,7 @@ class Wrapper:
         method_str = f"{molecule.method}.{evaluate}".lower()
         try:
             if self.verify_method_string(method_str): 
-                self._values[evaluate] = self._methods[evaluate](mol, tmp=tmp, **params)
+                self._values[evaluate] = self._methods[evaluate](molecule, tmp=tmp, **params)
                 return 0
             else:
                 raise MethodNotAvailable(method_str)
@@ -124,7 +131,6 @@ class Wrapper:
         except KeyError:
             return False
     
-    @functools.cached_property        
     def all_available(self):
         """Returns a list of all available calculation types"""
         return [k for k, v in self._methods.items() if v._available]
@@ -141,7 +147,6 @@ class Wrapper:
         else:
             return []
     
-    @functools.cache
     def available_methods(self, prop):
         """Returns a list of all available methods to calculate a particular property
            

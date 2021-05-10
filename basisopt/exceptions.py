@@ -24,6 +24,9 @@ class EmptyBasis(Exception):
     
 class InvalidResult(Exception):
     pass
+
+class InvalidMethodString(Exception):
+    pass
     
 class DataNotFound(Exception):
     pass

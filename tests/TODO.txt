@@ -1,3 +1,5 @@
-+ Continuous integration (* branch tests)
 + Unit tests for:
-	- all (*branch tests) 
+	- basis (* branch basisdev)
+	- opt (* branch optdev)
+	- testing
+	- viz

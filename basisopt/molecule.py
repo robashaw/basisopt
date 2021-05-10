@@ -171,7 +171,7 @@ def build_diatomic(mol_str, charge=0, mult=1):
        Raises:
             IndexError when rval not given in mol_str
             InvalidDiatomic when mol_str can't be parsed
-            error checking isn't exhaustive
+            error checking not exhaustive
     """
     molecule = Molecule(name=mol_str+"_Diatomic", charge=charge, mult=mult)
     # parse the mol string, form "Atom1Atom2,Separation(ang)"
@@ -179,34 +179,36 @@ def build_diatomic(mol_str, charge=0, mult=1):
     chars = list(parts[0])
     rval = float(parts[1])
     nchars = len(chars)
-    if nchars == 2:
-        # either something like NO or N2
-        if chars[1] == '2':
-            atom1 = atom2 = chars[0]
-        elif chars[1].islower() or chars[1].isdigit(): 
-            # monoatom, eg He, or multiatom eg C6
-            return InvalidDiatomic
-        else:
-            atom1 = chars[0]
-            atom2 = chars[1]
-    elif nchars==3:
-        if chars[2] == '2':
-            atom1 = atom2 = "".join(chars[:2])
-        elif chars[1].isupper():
-            atom1 = chars[0]
-            atom2 = "".join(chars[1:])
-        elif chars[1].isdigit():
-            # eg H2O
-            raise InvalidDiatomic
-        else:
+    atom1 = None
+    atom2 = None
+    if chars[0].isupper():
+        if nchars == 2:
+            # either something like NO or N2
+            if chars[1] == '2':
+                atom1 = atom2 = chars[0]
+            elif chars[1].isupper():
+                atom1 = chars[0]
+                atom2 = chars[1]              
+        elif nchars == 3:
+            if chars[2] == '2':
+                # eg Ne2
+                atom1 = atom2 = "".join(chars[:2])
+            elif chars[1].isupper():
+                # eg HLi
+                atom1 = chars[0]
+                atom2 = "".join(chars[1:])
+            elif chars[1].islower():
+                # eg LiH
+                atom1 = "".join(chars[:2])
+                atom2 = chars[2]
+        elif nchars==4 and chars[2].isupper():
+            # eg LiCl
             atom1 = "".join(chars[:2])
-            atom2 = chars[2]
-    elif nchars==4:
-        atom1 = "".join(chars[:2])
-        atom2 = "".join(chars[2:4])
-    else:
-        raise InvalidDiatomic
+            atom2 = "".join(chars[2:4])
     
+    if (atom1 is None) or (atom2 is None):
+        raise InvalidDiatomic
+        
     molecule.add_atom(element=atom1, coord=[0.0, 0.0, -0.5*rval])
     molecule.add_atom(element=atom2, coord=[0.0, 0.0,  0.5*rval])
     return molecule

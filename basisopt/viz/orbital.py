@@ -3,7 +3,7 @@ import numpy as np
 from mayavi import mlab
 import logging
 
-def contour3d(gto, ix=0,, m=0, n=100, lower=[-2, -2, -2], upper=[2, 2, 2], contours=5):
+def contour3d(gto, ix=0, m=0, n=100, lower=[-2, -2, -2], upper=[2, 2, 2], contours=5):
     """Plots a 3D plot of a GTO from a Shell object
        TODO: fix creation of np.mgrid to use the (n, lower, upper) arguments
     

@@ -1,3 +1,3 @@
 from .optimizers import *
-from .strategy import Strategy
+from .strategies import Strategy
 from .eventemper import EvenTemperedStrategy

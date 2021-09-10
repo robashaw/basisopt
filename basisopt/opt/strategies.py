@@ -90,7 +90,7 @@ class Strategy:
                 element: symbol of atom being optimized
         """
         elbasis = basis[element]
-        y = np.array(values)
+        y = self.pre(np.array(values))
         elbasis[self._step].exps = self.pre.inverse(y, **self.pre.params)
         
     def next(self, basis, element, objective):
@@ -105,7 +105,7 @@ class Strategy:
                 True if there is a next step, False if strategy is finished
         """
         self._step += 1
-        maxl = len(basis[element])-1
+        maxl = len(basis[element])
         return (maxl != self._step) 
             
     

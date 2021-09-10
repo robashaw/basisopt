@@ -92,14 +92,14 @@ def collective_optimize(molecules, basis, opt_data=[], npass=3):
             FailedCalculation
     """
     wrapper = api.get_backend()
-    results = []*len(opt_data)
+    results = []
     
     for i in range(npass):
         logging.info(f"Collective pass {i+1}")
         total = 0.0
         
         # loop over elements in opt_data, and collect objective into total
-        for ix, (el, alg, strategy, reg, params) in enumerate(opt_data):
+        for (el, alg, strategy, reg, params) in opt_data:
             def objective(x):
                 """ Set exponents, compute objective for every molecule in set
                     Regularisation only applied once at end
@@ -114,14 +114,15 @@ def collective_optimize(molecules, basis, opt_data=[], npass=3):
                     value = wrapper.get_value(strategy.eval_type)
                     name  = strategy.eval_type + "_" + el.title()
                     mol.add_result(name, value)
-                    result = molecule.get_delta(name)
+                    result = value - mol.get_reference(strategy.eval_type)
                     local_total += np.linalg.norm(result)
                 return local_total + reg(x)
             
             if i == 0:
                 strategy.initialise(basis, el)
-            results[ix] = _atomic_opt(basis, el, alg, strategy, params, objective)
-            total += results[ix].fun
+            res = _atomic_opt(basis, el, alg, strategy, params, objective)
+            total += res.fun
+            results.append(res)
         logging.info(f'Collective objective: {total}')
     return results
 

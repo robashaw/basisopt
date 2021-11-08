@@ -96,6 +96,10 @@ class Wrapper:
             available = (method in methods)
         return available
     
+    def clean(self):
+        """Cleans up any temporary files"""
+        pass
+
     def run(self, evaluate, molecule, params, tmp=""):
         """Runs a calculation with this backend
            MUST BE IMPLEMENTED IN ALL WRAPPERS

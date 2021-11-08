@@ -59,7 +59,7 @@ class Strategy:
                 basis: internal basis dictionary
                 element: symbol of the atom being optimized
         """
-        pass
+        self._step = -1
     
     @eval_type.setter
     def eval_type(self, name):
@@ -90,7 +90,7 @@ class Strategy:
                 element: symbol of atom being optimized
         """
         elbasis = basis[element]
-        y = self.pre(np.array(values))
+        y = np.array(values)
         elbasis[self._step].exps = self.pre.inverse(y, **self.pre.params)
         
     def next(self, basis, element, objective):

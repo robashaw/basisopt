@@ -5,6 +5,13 @@ import logging
 import colorlog
 import os
 
+try:
+    import dask
+    from basisopt.parallelise import *
+    _PARALLEL = True
+except:
+    _PARALLEL = False
+
 _BACKENDS = dict()
 _CURRENT_BACKEND = DummyWrapper()
 _TMP_DIR = ""
@@ -124,5 +131,26 @@ def run_calculation(evaluate='energy', mol=None, params={}):
         Returns:
             int: 0 on success, non-zero on failure
     """
-    return _CURRENT_BACKEND.run(evaluate, mol, params, tmp=_TMP_DIR)
+    result = _CURRENT_BACKEND.run(evaluate, mol, params, tmp=_TMP_DIR)
+    _CURRENT_BACKEND.clean()
+    return result
 
+def _one_job(mol, evaluate='energy', params={}):
+    success = _CURRENT_BACKEND.run(evaluate, mol, params, tmp=_TMP_DIR)
+    value   = (_CURRENT_BACKEND.get_value(evaluate))
+    _CURRENT_BACKEND.clean()
+    return mol.name,value
+
+def run_all(evaluate='energy', mols=[], params={}, parallel=False):
+    results = {}
+    if parallel and _PARALLEL:
+        kwargs = {"evaluate": evaluate, "params": params}
+        with dask.config.set({"multiprocessing.context": "fork"}):
+            tmp_results = distribute(3, _one_job, mols, **kwargs)
+        for (n, v) in tmp_results:
+            results[n] = v
+    else:
+        for m in mols:
+            name, value = _one_job(m, evaluate=evaluate, params=params)
+            results[name] = value
+    return results

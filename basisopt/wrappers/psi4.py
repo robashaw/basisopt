@@ -72,6 +72,9 @@ class Psi4Wrapper(Wrapper):
         g94_basis = internal_basis_converter(m.basis, fmt="psi4")
         psi4.basis_helper(g94_basis) 
     
+    def clean(self):
+        psi4.core.clean()
+
     def _get_properties(self, mol, name="prop", properties=[], tmp=""):
         """Helper function to retrieve a property value from Psi4
            after a calculation.

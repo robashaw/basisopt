@@ -73,7 +73,7 @@ def optimize(molecule, element=None, algorithm='l-bfgs-b', strategy=Strategy(), 
     strategy.initialise(molecule.basis, element)
     return _atomic_opt(molecule.basis, element, algorithm, strategy, opt_params, objective)    
         
-def collective_optimize(molecules, basis, opt_data=[], npass=3):
+def collective_optimize(molecules, basis, opt_data=[], npass=3, parallel=False):
     """General purpose optimizer for a collection of atomic bases
     
        Arguments:
@@ -108,18 +108,17 @@ def collective_optimize(molecules, basis, opt_data=[], npass=3):
                 local_total = 0.0
                 for mol in molecules:
                     mol.basis = basis
-                    success = api.run_calculation(evaluate=strategy.eval_type, mol=mol, params=strategy.params)
-                    if success != 0:
-                        raise FailedCalculation
-                    value = wrapper.get_value(strategy.eval_type)
+                
+                results = api.run_all(evaluate=strategy.eval_type, mols=molecules, params=strategy.params, parallel=parallel)
+                for mol in molecules:
+                    value = results[mol.name]
                     name  = strategy.eval_type + "_" + el.title()
                     mol.add_result(name, value)
                     result = value - mol.get_reference(strategy.eval_type)
                     local_total += np.linalg.norm(result)
                 return local_total + reg(x)
             
-            if i == 0:
-                strategy.initialise(basis, el)
+            strategy.initialise(basis, el)
             res = _atomic_opt(basis, el, alg, strategy, params, objective)
             total += res.fun
             results.append(res)

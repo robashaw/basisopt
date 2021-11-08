@@ -201,6 +201,18 @@ class Result:
                 return c
         raise DataNotFound
         
+    def search(self, name): 
+        results = {}
+        if name in self._data_keys:
+            for n in range(self._data_keys[name]):
+                resname = f"{name}{n+1}"
+                results[self.name+"_"+resname] = self._data_values[resname]
+        for c in self._children:
+            tmp = c.search(name)
+            for k, v in tmp.items():
+                results[k] = v
+        return results
+        
     def save(self, filename):
         """Pickles the Result object into a file"""
         with open(filename, 'wb') as f:

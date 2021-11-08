@@ -29,7 +29,7 @@ def rank_primitives(atomic, shells=None, eval_type='energy', params={}):
             FailedCalculation
     """
     mol = copy.copy(atomic._molecule)
-    basis = mol.basis[atomic.symbol]
+    basis = mol.basis[atomic._symbol]
     if shells is None:
         shells = [s for s in range(len(basis))] # do all
     

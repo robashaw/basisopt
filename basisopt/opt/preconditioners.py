@@ -23,7 +23,15 @@ def unit(x):
     """Identity function"""
     return x
 
-@inverse(_unit_inverse)
+def _positive_inverse(y, minval=1e-4, ratio=1.4):
+    x = np.copy(y)
+    for ix, v in enumerate(x):
+        if v < minval:
+            x[ix] = minval
+            minval *= ratio
+    return x
+    
+@inverse(_positive_inverse)
 def make_positive(x, minval=1e-4, ratio=1.4):
     """Returns x with all values >= minval
        If multiple values are < minval, the new values

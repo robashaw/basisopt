@@ -5,6 +5,7 @@ import numpy as np
 from scipy.special import sph_harm
 
 from . import data
+from .exceptions import DataNotFound, InvalidResult
 
 class Shell:
     """Lightweight container for basis set Shells.

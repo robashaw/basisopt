@@ -1,8 +1,8 @@
+import numpy as np
 from basisopt import api, data
 from basisopt.exceptions import PropertyNotAvailable
-from .preconditioners import make_positive
 from basisopt.basis.guesses import bse_guess
-import numpy as np
+from .preconditioners import make_positive
 
 class Strategy:
     """ Object to describe and handle basis set optimization strategies. 
@@ -106,6 +106,6 @@ class Strategy:
         """
         self._step += 1
         maxl = len(basis[element])
-        return (maxl != self._step) 
+        return maxl != self._step 
             
     

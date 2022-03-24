@@ -1,11 +1,12 @@
+import numpy as np
+from mendeleev import element as md_element
+
 from basisopt import api, data
 from basisopt.exceptions import PropertyNotAvailable
 from basisopt.basis import even_temper_expansion
 from basisopt.basis.guesses import null_guess
 from .preconditioners import unit
 from .strategies import Strategy
-import numpy as np
-from mendeleev import element as md_element
 
 _INITIAL_GUESS = (0.3, 2.0, 8)
 
@@ -55,6 +56,8 @@ class EvenTemperedStrategy(Strategy):
         Strategy.__init__(self, eval_type=eval_type, pre=unit)
         self.name = 'EvenTemper'
         self.shells = []
+        self.shell_done = []
+        self.last_objective = 0
         self.target = target
         self.guess = null_guess
         self.guess_params = {}
@@ -67,7 +70,7 @@ class EvenTemperedStrategy(Strategy):
         basis[element] = even_temper_expansion(self.shells)
         
     def initialise(self, basis, element):
-        if (self.max_l < 0):
+        if self.max_l < 0:
             el = md_element(element.title())
         l_list = [l for (n, l) in el.ec.conf.keys()]
         min_l = len(set(l_list))
@@ -79,7 +82,7 @@ class EvenTemperedStrategy(Strategy):
         self.last_objective = 0
     
     def get_active(self, basis, element):
-        (c, x, n) = self.shells[self._step]
+        (c, x, _) = self.shells[self._step]
         return np.array([c, x])
     
     def set_active(self, values, basis, element):
@@ -102,17 +105,17 @@ class EvenTemperedStrategy(Strategy):
                 (c, x, n) = self.shells[self._step]
                 self.shells[self._step] = (c, x, min(n+1, self.max_n))
         else: 
-            if (delta_objective < self.target):
+            if delta_objective < self.target:
                 self.shell_done[self._step] = 0
             
             self._step = (self._step + 1) % self.max_l            
             (c, x, n) = self.shells[self._step]
-            if (n == self.max_n):
+            if n == self.max_n:
                 self.shell_done[self._step] = 0
-            elif (self.shell_done[self._step] != 0):
+            elif self.shell_done[self._step] != 0:
                 self.shells[self._step] = (c, x, n+1)
                 
-            carry_on = (np.sum(self.shell_done) != 0)
+            carry_on = np.sum(self.shell_done) != 0
         
         return carry_on
             

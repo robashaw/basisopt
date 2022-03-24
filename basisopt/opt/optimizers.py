@@ -1,9 +1,10 @@
+import logging
+import numpy as np
 from scipy.optimize import minimize
-from .strategies import Strategy 
+ 
 from basisopt import api
 from basisopt.exceptions import FailedCalculation
-import numpy as np
-import logging
+from .strategies import Strategy
 
 # needs expansion to properly log optimization results, and handle different losses
 
@@ -21,18 +22,19 @@ def _atomic_opt(basis, element, algorithm, strategy, opt_params, objective):
         Returns:
             a scipy.optimize result object of the optimization
     """
-    logging.info(f"Starting optimization of {element}/{strategy.eval_type}")
-    logging.info(f"Algorithm: {algorithm}, Strategy: {strategy.name}")
+    logging.info("Starting optimization of %s/%s", element, strategy.eval_type)
+    logging.info("Algorithm: %s, Strategy: %s", algorithm, strategy.name)
     objective_value = objective(strategy.get_active(basis, element))
-    logging.info(f"Initial objective value: {objective_value}")  
+    logging.info("Initial objective value: %f", objective_value)  
     
     # Keep going until strategy says stop      
     while strategy.next(basis, element, objective_value):
-        logging.info(f"Doing step {strategy._step+1}")
+        logging.info("Doing step %d", strategy._step+1)
         guess = strategy.get_active(basis, element)
         res = minimize(objective, guess, method=algorithm, **opt_params)
         objective_value = res.fun
-        logging.info(f"Parameters: {res.x}\nObjective: {objective_value}\n")
+        info_str = f"Parameters: {res.x}\nObjective: {objective_value}\n"
+        logging.info(info_str)
     return res
 
 def optimize(molecule, element=None, algorithm='l-bfgs-b', strategy=Strategy(), reg=(lambda x: 0), opt_params={}):
@@ -91,11 +93,9 @@ def collective_optimize(molecules, basis, opt_data=[], npass=3, parallel=False):
       Raises:
             FailedCalculation
     """
-    wrapper = api.get_backend()
     results = []
-    
     for i in range(npass):
-        logging.info(f"Collective pass {i+1}")
+        logging.info("Collective pass %d", i+1)
         total = 0.0
         
         # loop over elements in opt_data, and collect objective into total
@@ -122,7 +122,7 @@ def collective_optimize(molecules, basis, opt_data=[], npass=3, parallel=False):
             res = _atomic_opt(basis, el, alg, strategy, params, objective)
             total += res.fun
             results.append(res)
-        logging.info(f'Collective objective: {total}')
+        logging.info('Collective objective: %f', total)
     return results
 
     

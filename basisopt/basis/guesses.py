@@ -1,10 +1,10 @@
 # ways of generating guesses for exponents
 # NEEDS GREATLY EXPANDING
+import numpy as np
 from basisopt import data
-from .basis import uncontract_shell, even_temper_expansion, fix_ratio
 from basisopt.containers import Shell
 from basisopt.bse_wrapper import fetch_basis 
-import numpy as np
+from .basis import uncontract_shell, even_temper_expansion, fix_ratio
 
 """ All guess functions need this signature
 func(atomic, params={}), where atomic is an AtomicBasis object

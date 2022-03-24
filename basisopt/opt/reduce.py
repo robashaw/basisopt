@@ -1,13 +1,15 @@
-import numpy as np
 import logging
+import numpy as np
+
 from basisopt.testing.rank import *
-from .strategies import Strategy
-from .preconditioners import make_positive
 from basisopt.basis.guesses import null_guess 
 from basisopt.basis.basis import uncontract_shell
 from basisopt.basis.atomic import AtomicBasis
+from .strategies import Strategy
+from .preconditioners import make_positive
 
 class ReduceStrategy(Strategy):
+    """TODO: Write strategy algorithm"""
     def __init__(self, starting_basis, eval_type='energy', method='scf', target=1e-5, shell_mins=[], max_l=-1, params={}):
         Strategy.__init__(self, eval_type=eval_type, pre=make_positive)
         self.name = 'Reduce'
@@ -20,6 +22,9 @@ class ReduceStrategy(Strategy):
         self.params = params
         self.shell_mins = shell_mins
         self.max_l = max_l
+        self.nexps = []
+        self.last_objective = 0
+        self.reduction_step = True
         
     def set_basis_shells(self, basis, element):
         if element in self.full_basis:
@@ -63,7 +68,8 @@ class ReduceStrategy(Strategy):
                 shell.exps[ix:] = exps[ix+1:] 
                 uncontract_shell(shell)
                 
-                logging.info(f"Removing exponent {exps[ix]} from shell with l={l}, error less than {min_errs[l]} Ha")
+                info_str = f"Removing exponent {exps[ix]} from shell with l={l}, error less than {min_errs[l]} Ha"
+                logging.info(info_str)
                 self.reduction_step = False
         
         if carry_on:

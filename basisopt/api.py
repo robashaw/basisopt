@@ -1,18 +1,19 @@
-from basisopt.wrappers.wrapper import Wrapper
-from basisopt.wrappers.dummy import DummyWrapper
-from basisopt.exceptions import MethodNotAvailable
 import logging
 import colorlog
 import os
 
+from basisopt.wrappers.wrapper import Wrapper
+from basisopt.wrappers.dummy import DummyWrapper
+from basisopt.exceptions import MethodNotAvailable, FailedCalculation
+
 try:
     import dask
-    from basisopt.parallelise import *
+    from basisopt.parallelise import distribute
     _PARALLEL = True
 except:
     _PARALLEL = False
 
-_BACKENDS = dict()
+_BACKENDS = {}
 _CURRENT_BACKEND = DummyWrapper()
 _TMP_DIR = ""
 
@@ -33,9 +34,9 @@ def set_backend(name):
         if _CURRENT_BACKEND._name != "Dummy":
             logging.warning(f"Overwriting previous backend")
         func()
-        logging.info(f"Backend set to {_CURRENT_BACKEND._name}")
+        logging.info("Backend set to %s", _CURRENT_BACKEND._name)
     except KeyError:
-        logging.error(f"{name} is not a registered backend for basisopt")
+        logging.error("%s is not a registered backend for basisopt", name)
         
 def get_backend():
     """Returns:
@@ -53,10 +54,10 @@ def set_tmp_dir(path):
     global _TMP_DIR
     # check if dir exists, and create if not
     if not os.path.isdir(path):
-        logging.info(f"Created directory at {path}")
+        logging.info("Created directory at %s", path)
         os.mkdir(path)
     _TMP_DIR = path
-    logging.info(f"Scratch directory set to {_TMP_DIR}")
+    logging.info("Scratch directory set to %s", _TMP_DIR)
     
 def get_tmp_dir():
     """Returns:
@@ -137,6 +138,8 @@ def run_calculation(evaluate='energy', mol=None, params={}):
 
 def _one_job(mol, evaluate='energy', params={}):
     success = _CURRENT_BACKEND.run(evaluate, mol, params, tmp=_TMP_DIR)
+    if not success:
+        raise FailedCalculation
     value   = (_CURRENT_BACKEND.get_value(evaluate))
     _CURRENT_BACKEND.clean()
     return mol.name,value

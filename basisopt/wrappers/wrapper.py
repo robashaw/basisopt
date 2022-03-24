@@ -1,7 +1,7 @@
 # Template for program wrappers
-from basisopt.exceptions import MethodNotAvailable, InvalidMethodString
 import functools
 import logging
+from basisopt.exceptions import MethodNotAvailable, InvalidMethodString
 
 def available(func):
     """Decorator to mark a method as available"""
@@ -71,11 +71,11 @@ class Wrapper:
         else:
             return None
     
-    def verify_method_string(self, str):
+    def verify_method_string(self, string):
         """Checks whether a method is available with this wrapper
         
            Arguments:
-                str (str): a string of the form "name.method", e.g. "rhf.energy"
+                string (str): a string of the form "name.method", e.g. "rhf.energy"
                 will check to see if 'energy' can be calculated with 'rhf'
         
            Returns: 
@@ -84,16 +84,16 @@ class Wrapper:
            Raises:
                 InvalidMethodString
         """
-        parts = str.split('.')
+        parts = string.split('.')
         if len(parts) < 2:
             raise InvalidMethodString
         
         name = parts[0]
         method = parts[1]
-        available = (name in self._method_strings)
+        available = name in self._method_strings
         if available:
             methods = self._method_strings[name]
-            available = (method in methods)
+            available = method in methods
         return available
     
     def clean(self):
@@ -121,10 +121,10 @@ class Wrapper:
             else:
                 raise MethodNotAvailable(method_str)
         except KeyError:
-            logging.error(f"There is no method {evaluate}")
+            logging.error("There is no method %s", evaluate)
             return -2
         except MethodNotAvailable:
-            logging.error(f"Unable to run {method_str} with {self._name} backend")
+            logging.error(f"Unable to run %s with %s backend", method_str, self._name)
             return -1
     
     def method_is_available(self, method='energy'):

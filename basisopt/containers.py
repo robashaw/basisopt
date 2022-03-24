@@ -1,11 +1,10 @@
 # containers
-
-from . import data
-from .exceptions import *
 import pickle
 import logging
 import numpy as np
 from scipy.special import sph_harm
+
+from . import data
 
 class Shell:
     """Lightweight container for basis set Shells.
@@ -47,13 +46,13 @@ class Shell:
         
         # Compute radial value
         radial_part = 0.0
-        for x, c in zip(self.exps, self.coefs[i]):
-            radial_part += c*np.exp(-x*r2)
+        for al, c in zip(self.exps, self.coefs[i]):
+            radial_part += c*np.exp(-al*r2)
         radial_part *= r**(lval)
         
         # Combine with angular value
         angular_part = np.real(sph_harm(m, lval, theta, phi))
-        return (radial_part*angular_part)
+        return radial_part*angular_part
 
 class Result:
     """ Container for storing and archiving all results,
@@ -178,13 +177,13 @@ class Result:
            Raises:
                 DataNotFound if the requested data doesn't exist
         """
-        if name in self._data_keys:
+        if name not in self._data_keys:
+            # Have to raise an exception as we cannot surmise data type
+            raise DataNotFound
+        else:
             index = self._data_keys[name] - step_back
             index = max(1, index)
             return self._data_values[name+str(index)]
-        else:
-            # Have to raise an exception as we cannot surmise data type
-            raise DataNotFound
     
     def add_child(self, child):
         """Adds a child Result to this Result"""
@@ -202,6 +201,10 @@ class Result:
         raise DataNotFound
         
     def search(self, name): 
+        """Searches for all data in this and all its children
+           with a given name, returning a dictionary indexed by
+           the name and which child it was found in
+        """
         results = {}
         if name in self._data_keys:
             for n in range(self._data_keys[name]):
@@ -218,12 +221,12 @@ class Result:
         with open(filename, 'wb') as f:
             pickle.dump(self, f)
             f.close()
-        logging.info(f"Dumped object of type {type(data)} to {filename}")
+        logging.info("Dumped object of type %s to %s", type(data), filename)
         
     def load(self, filename):    
         """Loads and returns a Result object from a file pickle"""
         with open(filename, 'rb') as f:
-            data = pickle.load(f)
+            pkl_data = pickle.load(f)
             f.close()
-        logging.info(f"Loaded object of type {type(data)} from {filename}")
-        return data
+        logging.info("Loaded object of type %s from %s", type(pkl_data), filename)
+        return pkl_data

@@ -74,7 +74,7 @@ class PropertyTest(Test):
     @eval_type.setter
     def eval_type(self, name):
         wrapper = api.get_backend()
-        if name in wrapper.all_available:
+        if name in wrapper.all_available():
             self._eval_type = name
         else:
             raise PropertyNotAvailable(name)

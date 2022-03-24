@@ -42,8 +42,7 @@ def get_even_temper_params(atom='H', accuracy=1e-5):
         return []
 
 """Essentially exact numerical Hartree-Fock energies for all atoms
-   in Hartree. Ref: Saito 2009, doi.org/10.1016/j.adt.2009.06.001
-"""
+   in Hartree. Ref: Saito 2009, doi.org/10.1016/j.adt.2009.06.001"""
 _ATOMIC_HF_ENERGIES = {
       1 : -0.5,
       2 : -2.86167999561,

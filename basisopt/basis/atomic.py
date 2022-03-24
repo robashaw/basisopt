@@ -1,10 +1,10 @@
-from mendeleev import element as md_element
-from mendeleev.econf import ElectronicConfiguration
+import logging
 import functools
 import numpy as np
-import logging
-from . import zetatools as zt
-from .basis import Basis, even_temper_expansion
+
+from mendeleev import element as md_element
+from mendeleev.econf import ElectronicConfiguration
+
 from basisopt import api, data
 from basisopt.molecule import Molecule
 from basisopt.bse_wrapper import fetch_basis
@@ -12,6 +12,8 @@ from basisopt.opt.optimizers import optimize
 from basisopt.opt.eventemper import EvenTemperedStrategy
 from basisopt.opt.strategies import Strategy
 from basisopt.exceptions import ElementNotSet
+from . import zetatools as zt
+from .basis import Basis, even_temper_expansion
 
 def needs_element(func):
     """Decorator that checks if the AtomicBasis has an element attribute
@@ -86,7 +88,7 @@ class AtomicBasis(Basis):
     def charge(self, new_charge):
         nelec = self._element.electrons - new_charge
         if nelec < 1:
-            logging.warning(f"A charge of {new_charge} would remove all electrons, setting to 0")
+            logging.warning("A charge of %d would remove all electrons, setting to 0", new_charge)
             self._charge = 0 
         else:
             self._charge = new_charge
@@ -104,7 +106,7 @@ class AtomicBasis(Basis):
     @needs_element
     def multiplicity(self, new_mult):
         if (new_mult < 1) or (new_mult-1 > self._element.electrons):
-            logging.warning(f"Multiplicity can't be set to {new_mult}, setting to 1")
+            logging.warning("Multiplicity can't be set to %d, setting to 1", new_mult)
             self._multiplicity = 1
         else:
             self._multiplicity = new_mult
@@ -118,7 +120,7 @@ class AtomicBasis(Basis):
     def config(self, new_config):
         minimal = self.minimal()
         if zt.compare(minimal, new_config) < 0:
-            logging.warning(f"Configuration {new_config} is insufficient, using minima config")
+            logging.warning("Configuration %s is insufficient, using minimal config", new_config)
             self._config = minimal
         else:
             self._config = new_config
@@ -141,9 +143,9 @@ class AtomicBasis(Basis):
             zeta_func = zt.QUALITIES[quality.lower()]
             self._config = zeta_func(self._element)
             config_string = zt.config_to_string(self._config)
-            logging.info(f"Primitive configuration of {config_string}")
+            logging.info("Primitive configuration of %s", config_string)
         except KeyError:
-            logging.warning(f"Could not find a {quality} strategy for configuration, using minimal")
+            logging.warning(f"Could not find a %s strategy for configuration, using minimal", quality)
             self._config = self.minimal()
     
     def as_xyz(self):
@@ -171,21 +173,21 @@ class AtomicBasis(Basis):
         """
         # get configuration
         self.configuration(quality=quality)
-        logging.info(f"Using the {strategy.name} building strategy")
-        logging.info(f"Method: {method}")
+        logging.info("Using the %s building strategy", strategy.name)
+        logging.info("Method: %s", method)
         
         # Set or compute reference value
         label,value = reference
         self._molecule.method = method
         self.strategy = strategy
-        logging.info(f"Reference type for this strategy is {strategy.eval_type}")
+        logging.info("Reference type for this strategy is %s", strategy.eval_type)
         if value is None:
             # Compute
             value = 0.0
             if api.which_backend() == 'Empty':
                 logging.warning(f"No backend currently set, can't compute reference value")
             else:
-                logging.info(f"Calculating reference value using {api.which_backend()} and {method}/{label}")
+                logging.info("Calculating reference value using {api.which_backend()} and %s/%s", method, label)
                 self._molecule.basis  = fetch_basis(label, self._symbol)
                 success = api.run_calculation(evaluate=strategy.eval_type, mol=self._molecule, params=params)
                 if success != 0:
@@ -193,10 +195,10 @@ class AtomicBasis(Basis):
                 else:
                     value = api.get_backend().get_value(strategy.eval_type)         
         self._molecule.add_reference(strategy.eval_type, value)
-        logging.info(f"Reference value set to {value}")
+        logging.info("Reference value set to %f", value)
         
         # Make a guess for the primitives
-        logging.info(f"Generating starting guess from {strategy.guess.__name__}")
+        logging.info("Generating starting guess from %s", strategy.guess.__name__)
         self._molecule.basis[self._symbol] = strategy.guess(self, params=strategy.guess_params)
         self._done_setup = True
         logging.info("Setup complete")
@@ -219,7 +221,7 @@ class AtomicBasis(Basis):
                 self.et_params 
         """
         self.et_params = data.get_even_temper_params(atom=self._symbol.title(), accuracy=accuracy)
-        if (len(self.et_params) == 0):
+        if len(self.et_params) == 0:
             # optimize new params
             if exact_ref:
                 reference = ('exact', data._ATOMIC_HF_ENERGIES[self._element.atomic_number])

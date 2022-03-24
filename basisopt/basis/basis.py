@@ -1,9 +1,9 @@
-import pickle
-from basisopt.containers import Result, Shell
-from basisopt import data
-import numpy as np
 import copy
 import logging
+import pickle
+import numpy as np
+from basisopt.containers import Result, Shell
+from basisopt import data
 
 def uncontract_shell(shell):
     """Converts a Shell into an uncontracted Shell
@@ -62,7 +62,7 @@ def fix_ratio(exps, ratio=1.4):
     """
     new_exps = np.sort(exps)
     for i in range(exps.size-1):
-        if (new_exps[i+1]/new_exps[i] < ratio):
+        if new_exps[i+1]/new_exps[i] < ratio:
             new_exps[i+1] = new_exps[i]*ratio
     return new_exps
     
@@ -81,21 +81,22 @@ class Basis:
     def __init__(self):
         self.results = Result()
         self._tests = []
+        self._molecule = None
             
     def save(self, filename):
         """Pickles the Basis object into a binary file"""
         with open(filename, 'wb') as f:
             pickle.dump(self, f)
             f.close()
-        logging.info(f"Dumped object of type {type(data)} to {filename}")
+        logging.info("Dumped object of type %s to %s", type(data), filename)
     
     def load(self, filename):
         """Loads and returns a Basis object from a binary file pickle"""
         with open(filename, 'rb') as f:
-            data = pickle.load(f)
+            pkl_data = pickle.load(f)
             f.close()
-        logging.info(f"Loaded object of type {type(data)} from {filename}")
-        return data
+        logging.info("Loaded object of type %s from %s", type(pkl_data), filename)
+        return pkl_data
     
     def register_test(self, test):
         """Add a Test object to the set of tests"""
@@ -111,15 +112,15 @@ class Basis:
     def run_test(self, name, params={}):
         t = self.get_test(name)
         if t is None:
-            logging.warning(f"No test with name {name}")
+            logging.warning("No test with name %s", name)
         else:
             t.result = t.calculate(self._molecule.basis, params=params)
-            logging.info(f"Test {name}: {t.result}")
+            logging.info("Test %s: %s", name, t.result)
     
     def run_all_tests(self, params={}):
         for t in self._tests:
             t.result = t.calculate(self._molecule.basis, params=params)
-            logging.info(f"Test {name}: {t.result}")
+            logging.info("Test %s: %s", name, t.result)
             
     def optimize(self, algorithm='Nelder-Mead', params={}):
         """All basis objects should implement an optimize method with this signature"""

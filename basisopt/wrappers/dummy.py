@@ -1,7 +1,7 @@
 # Wrappers for testing functionality
-from basisopt.wrappers.wrapper import Wrapper, available
 import logging
 import numpy as np
+from basisopt.wrappers.wrapper import Wrapper, available
 
 def _linear(x, a=1.0):
     return a*x
@@ -10,7 +10,7 @@ def _exp(x, a=1.0):
     return a*np.exp(a*x)
     
 def _quadratic(x, a=1.0):
-    return (1 + a*x*(1 + a*x))
+    return 1 + a*x*(1 + a*x)
     
 def _uniform(x, a=1.0):
     return a
@@ -40,6 +40,8 @@ class DummyWrapper(Wrapper):
             'uniform'   : ['energy', 'dipole', 'quadrupole'],
         }
         self._memory_set = False
+        self._value = 0
+        self._basis_value = 0
         
     def convert_molecule(self, m):
         return m.natoms()

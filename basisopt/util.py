@@ -1,6 +1,6 @@
 # utility functions
-import numpy as np
 import logging
+import numpy as np
 
 def fit_poly(x, y, n=6):
     """Fits a polynomial of order n to the set of (x [Bohr], y [Hartree]) coordinates given,
@@ -31,12 +31,10 @@ def fit_poly(x, y, n=6):
         logging.warning("Minimum not found in polynomial fit")
         # Set outputs to default values
         re = xref
-        pt = [0.0]*(n+1)
-        
+        pt = [0.0]*(n+1)  
     else:
         dx = crit_points[0]
         re = xref + dx # Equilibrium geometry
-        
         # Calculate 0th - nth Taylor series coefficients at true minimum
         pt = [p.deriv(i)(dx)/np.math.factorial(i) for i in range(n+1)]
     

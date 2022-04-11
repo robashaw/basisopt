@@ -31,9 +31,10 @@ def uncontract(basis, elements=None):
         elements = basis.keys() # do all
     new_basis = copy.copy(basis)
     for el in elements:
-        el_basis = new_basis[el]
-        for s in el_basis:
-            uncontract_shell(s)
+        if el in new_basis:
+            el_basis = new_basis[el]
+            for s in el_basis:
+                uncontract_shell(s)
     return new_basis
     
 def even_temper_expansion(params):

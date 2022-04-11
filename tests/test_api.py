@@ -1,7 +1,9 @@
-from basisopt import api
-from basisopt.wrappers import Wrapper
 import os
 import pytest
+import logging
+
+from basisopt import api
+from basisopt.wrappers import Wrapper
 
 def test_backend_registration():
     assert len(api._BACKENDS.keys()) > 0
@@ -17,6 +19,9 @@ def test_get_backend():
     assert isinstance(api.get_backend(), Wrapper)
     assert api.get_backend()._name == "Dummy"
     
+def test_which_backend():
+    assert api.which_backend() == "Dummy"
+    
 def test_get_set_tmp_dir():
     assert api.get_tmp_dir() == ""
     
@@ -31,4 +36,12 @@ def test_get_set_tmp_dir():
     
     if os.path.isdir(NEW_TMP):
         os.rmdir(NEW_TMP)
+
+def test_set_logger():
+    logger = logging.getLogger()
+    assert logger.getEffectiveLevel() == logging.INFO
+    
+    api.set_logger(level=logging.WARNING)
+    assert logger.getEffectiveLevel() == logging.WARNING
+    
     

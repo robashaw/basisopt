@@ -1,11 +1,13 @@
+import pytest
+import numpy as np
+
 from basisopt import Molecule
 from basisopt.wrappers import Wrapper
 from basisopt.wrappers.dummy import DummyWrapper
 from basisopt.exceptions import InvalidMethodString
-import pytest
+
 from tests.data.utils import almost_equal
 from tests.data.shells import get_vdz_internal
-import numpy as np
 
 def test_empty_wrappers():
     w = Wrapper()

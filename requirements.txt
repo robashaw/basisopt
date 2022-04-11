@@ -2,5 +2,6 @@ colorlog
 numpy
 scipy
 matplotlib
+pandas
 mendeleev
 basis_set_exchange

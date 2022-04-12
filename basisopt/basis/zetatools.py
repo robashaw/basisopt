@@ -79,14 +79,14 @@ def compare(c1, c2):
             > 0 if c2 is bigger than c1
     """
     result = len(c2.keys()) - len(c1.keys())
-    while result > -1:
+    if result > -1:
         for k, v in c1.items():
-            delta = c2[k] - v
+            delta = c2[k] - v    
             if delta < 0:
                 result = -1
             else:
                 result += delta
-        break
+                
     return result
 
 def nz(el, n):
@@ -102,7 +102,7 @@ def nz(el, n):
     config = enum_shells(el.ec.conf)
     valence = enum_shells(el.ec.get_valence().conf)
     for k, v in valence.items():
-        config[k] += n*v
+        config[k] += (n-1)*v
     return config
 
 def add_np(config, n):
@@ -130,48 +130,48 @@ def minimal(el):
 
 @register_quality
 def dz(el):
-    return nz(el, 1)
+    return nz(el, 2)
      
 @register_quality
 def tz(el):
-    return nz(el, 2)
+    return nz(el, 3)
 
 @register_quality    
 def qz(el):
-    return nz(el, 3)
-    
-@register_quality
-def n5z(el):
     return nz(el, 4)
     
 @register_quality
+def n5z(el):
+    return nz(el, 5)
+    
+@register_quality
 def dzp(el):
-    config = nz(el, 1)
+    config = nz(el, 2)
     return add_np(config, 1)
 
 @register_quality
 def dzpp(el):
-    config = nz(el, 1)
+    config = nz(el, 2)
     return add_np(config, 2)
     
 @register_quality
 def tzp(el):
-    config = nz(el, 2)
+    config = nz(el, 3)
     return add_np(config, 1)
 
 @register_quality
 def tzpp(el):
-    config = nz(el, 2)
+    config = nz(el, 3)
     return add_np(config, 2)
     
 @register_quality
 def qzp(el):
-    config = nz(el, 3)
+    config = nz(el, 4)
     return add_np(config, 1)
 
 @register_quality
 def qzpp(el):
-    config = nz(el, 3)
+    config = nz(el, 4)
     return add_np(config, 2)
  
 @register_quality  

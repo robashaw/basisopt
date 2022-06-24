@@ -5,6 +5,7 @@ from basisopt.testing.rank import *
 from basisopt.basis.guesses import null_guess 
 from basisopt.basis.basis import uncontract_shell
 from basisopt.basis.atomic import AtomicBasis
+from basisopt.util import bo_logger
 from .strategies import Strategy
 from .preconditioners import make_positive
 
@@ -69,7 +70,7 @@ class ReduceStrategy(Strategy):
                 uncontract_shell(shell)
                 
                 info_str = f"Removing exponent {exps[ix]} from shell with l={l}, error less than {min_errs[l]} Ha"
-                logging.info(info_str)
+                bo_logger.info(info_str)
                 self.reduction_step = False
         
         if carry_on:

@@ -2,6 +2,7 @@
 import functools
 import logging
 from basisopt.exceptions import MethodNotAvailable, InvalidMethodString
+from basisopt.util import bo_logger
 
 def available(func):
     """Decorator to mark a method as available"""
@@ -120,11 +121,11 @@ class Wrapper:
                 return 0
             else:
                 raise MethodNotAvailable(method_str)
-        except KeyError:
-            logging.error("There is no method %s", evaluate)
+        except KeyError as e:
+            bo_logger.error(e)
             return -2
         except MethodNotAvailable:
-            logging.error(f"Unable to run %s with %s backend", method_str, self._name)
+            bo_logger.error(f"Unable to run %s with %s backend", method_str, self._name)
             return -1
     
     def method_is_available(self, method='energy'):
@@ -160,33 +161,38 @@ class Wrapper:
         return [k for k, v in self._method_strings.items() if prop in v]
         
     @unavailable
-    def energy(self, mol, tmp=""):
+    def energy(self, mol, tmp="", **params):
         """Energy, Hartree"""
         raise NotImplementedException
         
     @unavailable
-    def dipole(self, mol, tmp=""):
+    def dipole(self, mol, tmp="", **params):
         """Dipole moment, numpy array, a.u."""
         raise NotImplementedException
         
     @unavailable
-    def quadrupole(self, mol, tmp=""):
+    def quadrupole(self, mol, tmp="", **params):
         """Quadrupole moment, numpy array, a.u."""
         raise NotImplementedException
         
     @unavailable
-    def trans_dipole(self, mol, tmp=""):
+    def trans_dipole(self, mol, tmp="", **params):
         """Transition dipole moment, numpy array, a.u."""
         raise NotImplementedException
     
     @unavailable
-    def trans_quadrupole(self, mol, tmp=""):
+    def trans_quadrupole(self, mol, tmp="", **params):
         """Transition quadrupole moment, numpy array, a.u."""
         raise NotImplementedException
     
     @unavailable
-    def polarizability(self, mol, tmp=""):
+    def polarizability(self, mol, tmp="", **params):
         """Dipole polarizability, a.u."""
+        raise NotImplementedException
+        
+    @unavailable
+    def jk_error(self, mol, tmp="", **params):
+        "JK density fitting error, Hartree"
         raise NotImplementedException
     
     

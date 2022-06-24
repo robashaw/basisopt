@@ -3,6 +3,7 @@ import logging
 import pickle
 import numpy as np
 from basisopt.containers import Result, Shell
+from basisopt.util import bo_logger
 from basisopt import data
 
 def uncontract_shell(shell):
@@ -81,6 +82,7 @@ class Basis:
     """
     def __init__(self):
         self.results = Result()
+        self.optt_results = None
         self._tests = []
         self._molecule = None
             
@@ -89,14 +91,14 @@ class Basis:
         with open(filename, 'wb') as f:
             pickle.dump(self, f)
             f.close()
-        logging.info("Dumped object of type %s to %s", type(data), filename)
+        bo_logger.info("Dumped object of type %s to %s", type(self), filename)
     
     def load(self, filename):
         """Loads and returns a Basis object from a binary file pickle"""
         with open(filename, 'rb') as f:
             pkl_data = pickle.load(f)
             f.close()
-        logging.info("Loaded object of type %s from %s", type(pkl_data), filename)
+        bo_logger.info("Loaded object of type %s from %s", type(pkl_data), filename)
         return pkl_data
     
     def register_test(self, test):
@@ -113,15 +115,15 @@ class Basis:
     def run_test(self, name, params={}):
         t = self.get_test(name)
         if t is None:
-            logging.warning("No test with name %s", name)
+            bo_logger.warning("No test with name %s", name)
         else:
-            t.result = t.calculate(self._molecule.basis, params=params)
-            logging.info("Test %s: %s", name, t.result)
+            t.result = t.calculate(self._molecule.method, self._molecule.basis, params=params)
+            bo_logger.info("Test %s: %s", name, t.result)
     
     def run_all_tests(self, params={}):
         for t in self._tests:
-            t.result = t.calculate(self._molecule.basis, params=params)
-            logging.info("Test %s: %s", name, t.result)
+            t.result = t.calculate(self._molecule.method, self._molecule.basis, params=params)
+            bo_logger.info("Test %s: %s", name, t.result)
             
     def optimize(self, algorithm='Nelder-Mead', params={}):
         """All basis objects should implement an optimize method with this signature"""

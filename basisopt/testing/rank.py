@@ -2,6 +2,7 @@
 from basisopt import api
 from basisopt.exceptions import FailedCalculation, EmptyBasis
 from basisopt.basis import uncontract_shell
+from basisopt.util import bo_logger
 import numpy as np
 import copy 
 import logging
@@ -113,7 +114,7 @@ def reduce_primitives(atomic, thresh=1e-4, shells=None, eval_type='energy', para
             value = e[r[start]]
         
         if start == (n-1):
-            logging.warning(f"Shell {s} with: l={shell.l}, x={shell.exps} now empty")
+            bo_logger.warning(f"Shell {s} with: l={shell.l}, x={shell.exps} now empty")
             shell.exps = []
             shell.coefs = []
         else:

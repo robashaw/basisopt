@@ -55,6 +55,7 @@ class Test(Result):
                 params (dict): parameters to pass to the backend Wrapper
         """
         raise NotImplementedException
+        
     
 class PropertyTest(Test):
     """Simplest implementation of Test, calculating some property, e.g. energy
@@ -90,7 +91,7 @@ class PropertyTest(Test):
         # retrieve result, archive _and_ return
         wrapper = api.get_backend()
         value = wrapper.get_value(self.eval_type)
-        self.add_data(self.name+self.eval_type, value)
+        self.add_data(self.name+"_"+self.eval_type, value)
         return value
         
         

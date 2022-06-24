@@ -2,6 +2,8 @@
 import logging
 import numpy as np
 
+bo_logger = logging.getLogger('basisopt')
+
 def fit_poly(x, y, n=6):
     """Fits a polynomial of order n to the set of (x [Bohr], y [Hartree]) coordinates given,
        and calculates data necessary for a Dunham analysis.
@@ -28,7 +30,7 @@ def fit_poly(x, y, n=6):
     xmax = max(xshift)+0.1
     crit_points = [x.real for x in p.deriv().r if np.abs(x.imag) < 1e-8 and xmin < x.real < xmax] 
     if len(crit_points) == 0:
-        logging.warning("Minimum not found in polynomial fit")
+        bo_logger.warning("Minimum not found in polynomial fit")
         # Set outputs to default values
         re = xref
         pt = [0.0]*(n+1)  

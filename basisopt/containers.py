@@ -6,6 +6,7 @@ from scipy.special import sph_harm
 
 from . import data
 from .exceptions import DataNotFound, InvalidResult
+from .util import bo_logger
 
 class Shell:
     """Lightweight container for basis set Shells.
@@ -222,12 +223,12 @@ class Result:
         with open(filename, 'wb') as f:
             pickle.dump(self, f)
             f.close()
-        logging.info("Dumped object of type %s to %s", type(data), filename)
+        bo_logger.info("Dumped object of type %s to %s", type(data), filename)
         
     def load(self, filename):    
         """Loads and returns a Result object from a file pickle"""
         with open(filename, 'rb') as f:
             pkl_data = pickle.load(f)
             f.close()
-        logging.info("Loaded object of type %s from %s", type(pkl_data), filename)
+        bo_logger.info("Loaded object of type %s from %s", type(pkl_data), filename)
         return pkl_data

@@ -100,7 +100,13 @@ def nz(el, n):
             a config dictionary
     """
     config = enum_shells(el.ec.conf)
-    valence = enum_shells(el.ec.get_valence().conf)
+    if el.symbol == 'H':
+        valence_conf = {(1, 's'): 1}
+    elif el.symbol == 'He':
+        valence_conf = {(1, 's'): 2}
+    else:
+        valence_conf = el.ec.get_valence().conf
+    valence = enum_shells(valence_conf)
     for k, v in valence.items():
         config[k] += (n-1)*v
     return config

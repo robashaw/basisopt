@@ -18,5 +18,5 @@ def contour3d(gto, ix=0, m=0, n=100, lower=[-2, -2, -2], upper=[2, 2, 2], contou
     """
     X, Y, Z = np.mgrid[-3:3:150j, -3:3:150j, -3:3:150j] # <- TODO
     f = gto.compute(X, Y, Z, i=ix, m=m)
-    logging.debug(f"Contour min: {np.min(f)}, max: {np.max(f)}")
+    bo_logger.debug(f"Contour min: {np.min(f)}, max: {np.max(f)}")
     mlab.contour3d(X, Y, Z, f, contours=contours, colormap='cool', transparent=True)

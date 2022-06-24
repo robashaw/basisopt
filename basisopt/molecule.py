@@ -2,6 +2,7 @@
 import logging
 import numpy as np
 from .exceptions import InvalidDiatomic
+from .util import bo_logger
 
 class Molecule:
     """A very loose definition of a molecule, in that it represents
@@ -105,9 +106,9 @@ class Molecule:
                 coords = np.array([float(w) for w in words[1:4]])
                 self.add_atom(element=element, coord=coords)
         except IOError as e:
-            logging.error("I/O error(%d): %s", e.errno, e.strerror)
+            bo_logger.error("I/O error(%d): %s", e.errno, e.strerror)
         except:
-            logging.error("Incorrect formatting in %s", filename)
+            bo_logger.error("Incorrect formatting in %s", filename)
         
     def to_xyz(self):
         """Converts Molecule to xyz file format

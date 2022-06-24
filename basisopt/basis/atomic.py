@@ -6,6 +6,7 @@ from mendeleev import element as md_element
 from mendeleev.econf import ElectronicConfiguration
 
 from basisopt import api, data
+from basisopt.util import bo_logger
 from basisopt.molecule import Molecule
 from basisopt.bse_wrapper import fetch_basis
 from basisopt.opt.optimizers import optimize
@@ -78,6 +79,13 @@ class AtomicBasis(Basis):
         if self._element is not None:
             self.charge = charge
             self.multiplicity = mult
+            
+    def save(self, filename):
+        """Pickles the AtomicBasis object into a binary file"""
+        with open(filename, 'wb') as f:
+            pickle.dump(self, f)
+            f.close()
+        bo_logger.info("Dumped object of type %s to %s", type(self), filename)
     
     @property
     def element(self):
@@ -93,7 +101,7 @@ class AtomicBasis(Basis):
             self._molecule._coords = [np.array([0.0, 0.0, 0.0])]
             self.results.name = self._molecule.name
         except:
-            logging.error("Please enter a valid element")
+            bo_logger.error("Please enter a valid element")
             
     @property
     def charge(self):
@@ -104,7 +112,7 @@ class AtomicBasis(Basis):
     def charge(self, new_charge):
         nelec = self._element.electrons - new_charge
         if nelec < 1:
-            logging.warning("A charge of %d would remove all electrons, setting to 0", new_charge)
+            bo_logger.warning("A charge of %d would remove all electrons, setting to 0", new_charge)
             self._charge = 0 
         else:
             self._charge = new_charge
@@ -114,15 +122,16 @@ class AtomicBasis(Basis):
     def multiplicity(self):
         return self._multiplicity
     
-    @needs_element
     def get_basis(self):
+        if self._element is None:
+            return []
         return self._molecule.basis[self._symbol]
 
     @multiplicity.setter
     @needs_element
     def multiplicity(self, new_mult):
         if (new_mult < 1) or (new_mult-1 > self._element.electrons):
-            logging.warning("Multiplicity can't be set to %d, setting to 1", new_mult)
+            bo_logger.warning("Multiplicity can't be set to %d, setting to 1", new_mult)
             self._multiplicity = 1
         else:
             self._multiplicity = new_mult
@@ -136,7 +145,7 @@ class AtomicBasis(Basis):
     def config(self, new_config):
         minimal = self.minimal()
         if zt.compare(minimal, new_config) < 0:
-            logging.warning("Configuration %s is insufficient, using minimal config", new_config)
+            bo_logger.warning("Configuration %s is insufficient, using minimal config", new_config)
             self._config = minimal
         else:
             self._config = new_config
@@ -159,9 +168,9 @@ class AtomicBasis(Basis):
             zeta_func = zt.QUALITIES[quality.lower()]
             self._config = zeta_func(self._element)
             config_string = zt.config_to_string(self._config)
-            logging.info("Primitive configuration of %s", config_string)
+            bo_logger.info("Primitive configuration of %s", config_string)
         except KeyError:
-            logging.warning(f"Could not find a %s strategy for configuration, using minimal", quality)
+            bo_logger.warning(f"Could not find a %s strategy for configuration, using minimal", quality)
             self._config = self.minimal()
     
     def as_xyz(self):
@@ -189,35 +198,35 @@ class AtomicBasis(Basis):
         """
         # get configuration
         self.configuration(quality=quality)
-        logging.info("Using the %s building strategy", strategy.name)
-        logging.info("Method: %s", method)
+        bo_logger.info("Using the %s building strategy", strategy.name)
+        bo_logger.info("Method: %s", method)
         
         # Set or compute reference value
         label,value = reference
         self._molecule.method = method
         self.strategy = strategy
-        logging.info("Reference type for this strategy is %s", strategy.eval_type)
+        bo_logger.info("Reference type for this strategy is %s", strategy.eval_type)
         if value is None:
             # Compute
             value = 0.0
             if api.which_backend() == 'Empty':
-                logging.warning(f"No backend currently set, can't compute reference value")
+                bo_logger.warning(f"No backend currently set, can't compute reference value")
             else:
-                logging.info("Calculating reference value using {api.which_backend()} and %s/%s", method, label)
+                bo_logger.info("Calculating reference value using %s and %s/%s", api.which_backend(), method, label)
                 self._molecule.basis  = fetch_basis(label, self._symbol)
                 success = api.run_calculation(evaluate=strategy.eval_type, mol=self._molecule, params=params)
                 if success != 0:
-                    logging.warning("Reference calculation failed")
+                    bo_logger.warning("Reference calculation failed")
                 else:
                     value = api.get_backend().get_value(strategy.eval_type)         
         self._molecule.add_reference(strategy.eval_type, value)
-        logging.info("Reference value set to %f", value)
+        bo_logger.info("Reference value set to %f", value)
         
         # Make a guess for the primitives
-        logging.info("Generating starting guess from %s", strategy.guess.__name__)
+        bo_logger.info("Generating starting guess from %s", strategy.guess.__name__)
         self._molecule.basis[self._symbol] = strategy.guess(self, params=strategy.guess_params)
         self._done_setup = True
-        logging.info("Setup complete")
+        bo_logger.info("Atomic basis setup complete")
         
     @needs_element
     def set_even_tempered(self, method='hf', accuracy=1e-5, max_n=18, max_l=-1, exact_ref=True, params={}):
@@ -260,9 +269,11 @@ class AtomicBasis(Basis):
                 see the relevant Wrapper object for options
         """
         if self._done_setup:
-            optimize(self._molecule, algorithm=algorithm, strategy=self.strategy, **params)
+            self.opt_results = optimize(self._molecule, algorithm=algorithm, strategy=self.strategy, **params)
         else:
-            logging.error("Please call setup first")
+            bo_logger.error("Please call setup first")
+            self.opt_results = None
+        return self.opt_results
         
     def contract(self):
         """Handles contraction of primitives"""

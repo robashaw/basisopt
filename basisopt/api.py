@@ -2,6 +2,8 @@ import logging
 import colorlog
 import os
 
+bo_logger = logging.getLogger('basisopt')
+
 from basisopt.wrappers.wrapper import Wrapper
 from basisopt.wrappers.dummy import DummyWrapper
 from basisopt.exceptions import MethodNotAvailable, FailedCalculation
@@ -15,7 +17,7 @@ except:
 
 _BACKENDS = {}
 _CURRENT_BACKEND = DummyWrapper()
-_TMP_DIR = ""
+_TMP_DIR = "."
 
 
 def register_backend(func):
@@ -23,7 +25,7 @@ def register_backend(func):
     _BACKENDS[func.__name__] = func
     return func
     
-def set_backend(name):
+def set_backend(name, path=""):
     """Sets the global backend for basisopt calculations
     
        Arguments:
@@ -32,11 +34,11 @@ def set_backend(name):
     try:
         func = _BACKENDS[name.lower()]
         if _CURRENT_BACKEND._name != "Dummy":
-            logging.warning(f"Overwriting previous backend")
-        func()
-        logging.info("Backend set to %s", _CURRENT_BACKEND._name)
+            bo_logger.warning(f"Overwriting previous backend")
+        func(path)
+        bo_logger.info("Backend set to %s", _CURRENT_BACKEND._name)
     except KeyError:
-        logging.error("%s is not a registered backend for basisopt", name)
+        bo_logger.error("%s is not a registered backend for basisopt", name)
         
 def get_backend():
     """Returns:
@@ -54,10 +56,10 @@ def set_tmp_dir(path):
     global _TMP_DIR
     # check if dir exists, and create if not
     if not os.path.isdir(path):
-        logging.info("Created directory at %s", path)
+        bo_logger.info("Created directory at %s", path)
         os.mkdir(path)
     _TMP_DIR = path
-    logging.info("Scratch directory set to %s", _TMP_DIR)
+    bo_logger.info("Scratch directory set to %s", _TMP_DIR)
     
 def get_tmp_dir():
     """Returns:
@@ -88,18 +90,17 @@ def set_logger(level=logging.INFO, filename=None):
         f'{log_format}'
     )
     colorlog.basicConfig(format=colorlog_format)
-    logger = logging.getLogger()
-    logger.setLevel(level)
+    bo_logger.setLevel(level)
     
     if filename is not None:
         fh = logging.FileHandler(filename)
         fh.setLevel(level)
         formatter = logging.Formatter(log_format)
         fh.setFormatter(formatter)
-        logger.addHandler(fh)
+        bo_logger.addHandler(fh)
 
 @register_backend
-def dummy():
+def dummy(path):
     """Sets backend to the DummyWrapper for testing and
        for when calculations aren't needed.
     """
@@ -107,20 +108,22 @@ def dummy():
     _CURRENT_BACKEND = DummyWrapper()
 
 @register_backend
-def psi4():
+def psi4(path):
     """ Tests Psi4 import and prepares to be used as calculation backend"""
     try:
         global _CURRENT_BACKEND
         from basisopt.wrappers.psi4 import Psi4Wrapper
         _CURRENT_BACKEND = Psi4Wrapper()
     except ImportError:
-        logging.error("Psi4 backend not found!")
+        bo_logger.error("Psi4 backend not found!")
 
 @register_backend
-def molpro():
-    """ Tests molpro import and prepares to be used as calculation backend"""
-    logging.error("MOLPRO backend not currently implemented")
-    raise NotImplementedException
+def orca(path):
+    """ Tests orca import and prepares to be used as calculation backend"""
+    global _CURRENT_BACKEND
+    from basisopt.wrappers.orca import OrcaWrapper
+    _CURRENT_BACKEND = OrcaWrapper(path)
+    bo_logger.info(f"ORCA install dir at: {path}")
 
 def run_calculation(evaluate='energy', mol=None, params={}):
     """ Interface to the wrapper used to run a calculation.
@@ -138,7 +141,7 @@ def run_calculation(evaluate='energy', mol=None, params={}):
 
 def _one_job(mol, evaluate='energy', params={}):
     success = _CURRENT_BACKEND.run(evaluate, mol, params, tmp=_TMP_DIR)
-    if not success:
+    if success != 0:
         raise FailedCalculation
     value   = (_CURRENT_BACKEND.get_value(evaluate))
     _CURRENT_BACKEND.clean()

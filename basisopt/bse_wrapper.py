@@ -76,9 +76,26 @@ def bse_to_internal(basis):
     """
     new_basis = {}
     for z,e in basis['elements'].items():
-        shells = [make_internal_shell(s) for s in e['electron_shells']]
+        shells = {}
+        for s in e['electron_shells']:
+            internal = make_internal_shell(s)
+            if internal.l not in shells:
+                shells[internal.l] = internal
+            else:
+                sl = shells[internal.l]
+                nx = len(internal.exps)
+                sl.exps = np.concatenate([sl.exps, internal.exps])
+                nc = len(sl.coefs[0])
+                for i, c in enumerate(sl.coefs):
+                    sl.coefs[i] = np.concatenate([c, np.zeros(nx)])
+                for c in internal.coefs:
+                    sl.coefs.append(np.concatenate([np.zeros(nc), c]))    
         el = bse.lut.element_sym_from_Z(z)
-        new_basis[el] = shells
+        new_basis[el] = []
+        for l in ['s', 'p', 'd', 'f', 'g', 'h', 'i']:
+            if l not in shells:
+                break
+            new_basis[el].append(shells[l])
     return new_basis
 
 def internal_basis_converter(basis, fmt='gaussian94'):

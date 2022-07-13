@@ -7,7 +7,7 @@ from basisopt.testing import PropertyTest
 bo.set_backend('psi4')
 bo.set_tmp_dir('tmp/')
 m = bo.Molecule(name="water")
-m.from_xyz("water.xyz")
+m.from_xyz("water.xyz") 
 
 mb = MolecularBasis(name="single")
 mb.add_molecule(m)

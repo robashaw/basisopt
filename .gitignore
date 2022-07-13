@@ -1,4 +1,6 @@
 tmp/
+timer.dat
+*.pkl
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -1,7 +1,8 @@
 from setuptools import setup
+exec(open('basisopt/version.py').read())
 
 setup(name='basisopt',
-      version='1.0.0a',
+      version=__version__,
       packages=['basisopt',
                 'basisopt.basis',
                 'basisopt.wrappers',

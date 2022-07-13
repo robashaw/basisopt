@@ -32,9 +32,12 @@ def _atomic_opt(basis, element, algorithm, strategy, opt_params, objective):
     while strategy.next(basis, element, objective_value):
         bo_logger.info("Doing step %d", strategy._step+1)
         guess = strategy.get_active(basis, element)
-        res = minimize(objective, guess, method=algorithm, **opt_params)
-        objective_value = res.fun
-        info_str = f"Parameters: {res.x}\nObjective: {objective_value}\n"
+        if len(guess) > 0:
+            res = minimize(objective, guess, method=algorithm, **opt_params)
+            objective_value = res.fun
+            info_str = f"Parameters: {res.x}\nObjective: {objective_value}\n"
+        else:
+            info_str = f"Skipping empty shell"
         bo_logger.info(info_str)
     return res
 

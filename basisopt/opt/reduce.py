@@ -26,6 +26,7 @@ class ReduceStrategy(Strategy):
         self.nexps = []
         self.last_objective = 0
         self.reduction_step = True
+        self.first_step = True 
         
     def set_basis_shells(self, basis, element):
         if element in self.full_basis:
@@ -35,17 +36,26 @@ class ReduceStrategy(Strategy):
     
     def initialise(self, basis, element):
         self._step = -1
+        self.first_step = True
         self.set_basis_shells(basis, element)
         bel = basis[element]
         self.nexps = [len(s.exps) for s in bel]
         if self.max_l == -1:
-            self.max_l = len(self.nexps)
+            self.max_l = len(self.nexps)-1
         self.last_objective = 0
         self.reduction_step = True
         
     def next(self, basis, element, objective):
         carry_on = True
+        if self._step == self.max_l:
+            self._step = -1
+            self.reduction_step = True
+        
         if self.reduction_step:
+            if self.first_step:
+                self.last_objective = objective
+                self.first_step = False
+                
             delta_objective = np.abs(self.last_objective - objective)
             self.last_objective = objective
             possible_changes = [(n - m) > 0 for n, m in zip(self.nexps, self.shell_mins)]
@@ -55,7 +65,10 @@ class ReduceStrategy(Strategy):
                 at = AtomicBasis(name=element)
                 at._molecule.basis = basis
                 at._molecule.method = self.method
-                errors, ranks = rank_primitives(at, eval_type=self.eval_type, params=self.params)
+                shells_to_rank = [s for s in range(self.max_l+1)
+                                  if basis[element][s].exps.size != 0]
+                errors, ranks = rank_primitives(at, shells=shells_to_rank,
+                                eval_type=self.eval_type, params=self.params)
                 min_errs = np.array([e[r[0]] for e, r in zip(errors, ranks)])
                 for l in range(self.max_l):
                     if not possible_changes[l]:
@@ -70,13 +83,11 @@ class ReduceStrategy(Strategy):
                 uncontract_shell(shell)
                 
                 info_str = f"Removing exponent {exps[ix]} from shell with l={l}, error less than {min_errs[l]} Ha"
+                self.nexps[l] -= 1
                 bo_logger.info(info_str)
                 self.reduction_step = False
         
         if carry_on:
             self._step += 1
-            if self._step == self.max_l:
-                self._step = -1
-                self.reduction_step = True
         
         return carry_on

@@ -2,6 +2,7 @@
 import functools
 import logging
 import copy
+import pickle
 from .basis import Basis
 from .atomic import AtomicBasis
 from basisopt import api

@@ -1,11 +1,14 @@
 # base test types
 import numpy as np
-from .test import Test
+
+from mendeleev import element as md_element
+
 from basisopt.molecule import Molecule, build_diatomic
 from basisopt import api, data
 from basisopt.util import fit_poly
-from basisopt.exceptions import InvalidDiatomic
-from mendeleev import element as md_element
+from basisopt.exceptions import InvalidDiatomic, FailedCalculation
+
+from .test import Test
 
 _VALUE_NAMES = ["Ee", "Re", "BRot", "ARot", "We", "Wx", "Wy", "De", "D0"]
 
@@ -151,6 +154,8 @@ class DunhamTest(Test):
             self.molecule._coords[0] = np.array([0.0, 0.0, -0.5*r])
             self.molecule._coords[1] = np.array([0.0, 0.0,  0.5*r])
             success = api.run_calculation(evaluate='energy', mol=self.molecule, params=params)
+            if success != 0:
+                raise FailedCalculation
             energies.append(wrapper.get_value('energy'))
            
         # perform the analysis

@@ -69,14 +69,8 @@ class MolecularBasis(Basis):
         instance.basis = dict_to_basis(d.get("basis", {}))
         instance._atoms = d.get("atoms", set())
         instance._done_setup = d.get("done_setup", False)
-        
-        atomic_bases = d.get("atomic_bases", {})
-        for k, ab in atomic_bases.items():
-            instance._atomic_bases[k] = AtomicBasis.from_dict(ab)
-            
-        molecules = d.get("molecules", {})
-        for k, m in molecules.items():
-            instance._molecules[k] = Molecule.from_dict(m)
+        instance._atomic_bases = d.get("atomic_bases", {})
+        instance._molecules = d.get("molecules", {})
         return instance
         
     def add_molecule(self, molecule):

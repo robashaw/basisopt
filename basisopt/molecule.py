@@ -3,7 +3,7 @@ import logging
 import numpy as np
 from monty.json import MSONable
 from .exceptions import InvalidDiatomic
-from .util import bo_logger
+from .util import bo_logger, dict_decode
 from .containers import basis_to_dict, dict_to_basis
 
 class Molecule(MSONable):
@@ -190,6 +190,7 @@ class Molecule(MSONable):
            Returns:
                 Molecule
         """
+        d = dict_decode(d)
         name = d.get("name", "Untitled")
         charge = d.get("charge", 0)
         mult = d.get("multiplicity", 1)
@@ -197,7 +198,7 @@ class Molecule(MSONable):
         instance.method = d.get("method", "")
         instance.basis  = dict_to_basis(d.get("basis", {}))
         instance._atom_names = d.get("atom_names", [])
-        instance._coords = d.get("coords", [])
+        instance.coords = d.get("coords", [])
         instance._results = d.get("results", {})
         instance._references = d.get("references", {})
         return instance    

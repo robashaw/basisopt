@@ -7,7 +7,7 @@ from scipy.special import sph_harm
 
 from . import data
 from .exceptions import DataNotFound, InvalidResult
-from .util import bo_logger
+from .util import bo_logger, dict_decode
 
 class Shell(MSONable):
     """Lightweight container for basis set Shells.
@@ -48,13 +48,11 @@ class Shell(MSONable):
            Returns:
                 Shell object
         """
+        d = dict_decode(d)
         instance = cls()
         instance.l = d.get('l', 's')
-        exps = d.get('exps', {'data': []})
-        instance.exps = np.array(exps['data'], dtype=np.float64)
-        coefs = d.get('coefs', [])
-        instance.coefs = [np.array(c['data'], dtype=np.float64)
-                         for c in coefs]
+        instance.exps = d.get('exps', np.array([]))
+        instance.coefs = d.get('coefs', [])
         return instance
         
     def compute(self, x, y, z, i=0, m=0):
@@ -113,8 +111,8 @@ def dict_to_basis(d):
        Returns:
             internal basis set
     """
-    return {k: [Shell.from_dict(s) for s in v]
-            for k,v in d.items()}
+    return d #{k: [Shell.from_dict(s) for s in v]
+             # for k,v in d.items()}
 
 class Result(MSONable):
     """ Container for storing and archiving all results,
@@ -317,6 +315,7 @@ class Result(MSONable):
         """Creates Result from dictionary representation,
            including recursive creation of children.
         """
+        d = dict_decode(d)
         name = d.get("name", "Empty")
         instance = cls(name=name)
         instance._data_keys = d.get("data_keys", {})

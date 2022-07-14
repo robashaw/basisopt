@@ -7,7 +7,7 @@ from mendeleev import element as md_element
 from mendeleev.econf import ElectronicConfiguration
 
 from basisopt import api, data
-from basisopt.util import bo_logger
+from basisopt.util import bo_logger, dict_decode
 from basisopt.molecule import Molecule
 from basisopt.bse_wrapper import fetch_basis
 from basisopt.opt.optimizers import optimize
@@ -26,8 +26,7 @@ def needs_element(func):
     def wrapper(basis, *args, **kwargs):
         if basis.element is None:
             raise ElementNotSet
-        else:
-            func(basis, *args, **kwargs)
+        func(basis, *args, **kwargs)
     return wrapper
 
 class AtomicBasis(Basis):
@@ -91,6 +90,7 @@ class AtomicBasis(Basis):
         element = basis._molecule.name[:-5]
         charge = basis._molecule.charge
         mult = basis._molecule.multiplicity
+
         instance = cls(name=element, charge=charge, mult=mult)
         instance.results = basis.results
         instance.opt_results = basis.opt_results
@@ -99,11 +99,6 @@ class AtomicBasis(Basis):
         instance.et_params = d.get("et_params", None)
         instance.strategy_dict = d.get("strategy", None)
         if instance.strategy_dict:
-            instance.strategy = Strategy.from_dict(instance.strategy_dict)
-            if instance.strategy.name != "Default":
-                bo_logger.warning("Strategy loaded as Default type; " +
-                                  f"reload with {instance.strategy.name}.from_dict " +
-                                   "on obj.strategy_dict")
             instance._done_setup = d.get("done_setup", False)
             instance.config = d.get("config", {})
         return instance
@@ -170,8 +165,7 @@ class AtomicBasis(Basis):
         """Returns the minimal basis configuration for this atom"""
         if self._element is None:
             return {}
-        else:
-            return zt.minimal(self._element)
+        return zt.minimal(self._element)
     
     @needs_element
     def configuration(self, quality='dz'):
@@ -186,7 +180,7 @@ class AtomicBasis(Basis):
             config_string = zt.config_to_string(self._config)
             bo_logger.info("Contracted configuration of %s", config_string)
         except KeyError:
-            bo_logger.warning(f"Could not find a %s strategy for configuration, using minimal", quality)
+            bo_logger.warning("Could not find a %s strategy for configuration, using minimal", quality)
             self._config = self.minimal()
     
     def as_xyz(self):
@@ -226,7 +220,7 @@ class AtomicBasis(Basis):
             # Compute
             value = 0.0
             if api.which_backend() == 'Empty':
-                bo_logger.warning(f"No backend currently set, can't compute reference value")
+                bo_logger.warning("No backend currently set, can't compute reference value")
             else:
                 bo_logger.info("Calculating reference value using %s and %s/%s", api.which_backend(), method, label)
                 self._molecule.basis  = fetch_basis(label, self._symbol)
@@ -268,7 +262,7 @@ class AtomicBasis(Basis):
                 reference = ('exact', data._ATOMIC_HF_ENERGIES[self._element.atomic_number])
             else:
                 reference = ('cc-pV5Z', None)
-            strategy = EvenTemperedStrategy()
+            strategy = EvenTemperedStrategy(max_n=max_n, max_l=max_l)
             self.setup(method=method, strategy=strategy, reference=reference, params=params)
             self.optimize(algorithm='Nelder-Mead', params=params)
             self.et_params = strategy.shells

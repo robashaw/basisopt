@@ -1,11 +1,12 @@
 # funcitonality to rank basis shells
+import numpy as np
+import copy 
+import logging
+
 from basisopt import api
 from basisopt.exceptions import FailedCalculation, EmptyBasis
 from basisopt.basis import uncontract_shell
 from basisopt.util import bo_logger
-import numpy as np
-import copy 
-import logging
 
 def rank_primitives(atomic, shells=None, eval_type='energy', params={}):
     """Systematically eliminates exponents from shells in an AtomicBasis
@@ -32,15 +33,14 @@ def rank_primitives(atomic, shells=None, eval_type='energy', params={}):
     mol = copy.copy(atomic._molecule)
     basis = mol.basis[atomic._symbol]
     if shells is None:
-        shells = [s for s in range(len(basis))] # do all
+        shells = list(range(len(basis))) # do all
     
     # Calculate reference value
-    if(api.run_calculation(evaluate=eval_type, mol=mol, params=params) != 0):
+    if api.run_calculation(evaluate=eval_type, mol=mol, params=params) != 0:
         raise FailedCalculation
-    else:
-        reference = api.get_backend().get_value(eval_type)
-        # prefix result  as being for ranking
-        atomic._molecule.add_reference('rank_' + eval_type, reference)
+    reference = api.get_backend().get_value(eval_type)
+    # prefix result  as being for ranking
+    atomic._molecule.add_reference('rank_' + eval_type, reference)
     
     errors = []
     ranks  = []
@@ -63,9 +63,8 @@ def rank_primitives(atomic, shells=None, eval_type='energy', params={}):
             success = api.run_calculation(evaluate=eval_type, mol=mol, params=params)
             if success != 0:
                 raise FailedCalculation
-            else:
-                value = api.get_backend().get_value(eval_type)
-                err[i] = np.abs(value - reference)
+            value = api.get_backend().get_value(eval_type)
+            err[i] = np.abs(value - reference)
         
         errors.append(err)
         ranks.append(np.argsort(err))
@@ -98,7 +97,7 @@ def reduce_primitives(atomic, thresh=1e-4, shells=None, eval_type='energy', para
     mol = copy.copy(atomic._molecule)
     basis = mol.basis[atomic.symbol]
     if shells is None:
-        shells = [s for s in range(len(basis))] # do all
+        shells = list(range(len(basis))) # do all
     # first rank the primitives
     errors, ranks = rank_primitives(atomic, shells=shells, eval_type=eval_type, params=params)
     

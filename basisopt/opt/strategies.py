@@ -1,7 +1,7 @@
 import numpy as np
 from monty.json import MSONable
 from basisopt import api, data
-from basisopt.util import bo_logger
+from basisopt.util import bo_logger, dict_decode
 from basisopt.exceptions import PropertyNotAvailable
 from basisopt.basis.guesses import bse_guess
 from .preconditioners import make_positive
@@ -144,6 +144,7 @@ class Strategy(MSONable):
        
     @classmethod 
     def from_dict(cls, d):
+        d = dict_decode(d)
         eval_type = d.get("eval_type", 'energy')
         instance = cls(eval_type=eval_type)
         instance.name = d.get("name", "Default")

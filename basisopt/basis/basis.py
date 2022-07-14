@@ -4,7 +4,7 @@ import pickle
 import numpy as np
 from monty.json import MSONable
 from basisopt.containers import Result, Shell
-from basisopt.util import bo_logger
+from basisopt.util import bo_logger, dict_decode
 from basisopt.molecule import Molecule
 from basisopt import data
 
@@ -149,13 +149,10 @@ class Basis(MSONable):
        
     @classmethod 
     def from_dict(cls, d):
+        d = dict_decode(d)
         instance = cls()
         instance.results = d.get("results", Result())
         instance.opt_results = d.get("opt_results", None)
-        molecule = d.get("molecule", None)
-        if molecule:
-            instance._molecule = Molecule.from_dict(molecule) 
-        tests = d.get("tests", [])
-        for t in tests:
-            instance._tests.append(Test.from_dict(t))
+        instance._molecule = d.get("molecule", None)
+        instance._tests = d.get("tests", [])
         return instance

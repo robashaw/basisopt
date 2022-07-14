@@ -36,6 +36,11 @@ def write_json(filename, obj):
     else:
         bo_logger.error(f"{obj_type} cannot be converted to JSON format")
 
+def dict_decode(d):
+    decoder = MontyDecoder()
+    return {k: decoder.process_decoded(v)
+             for k, v in d.items()}
+
 
 def fit_poly(x, y, n=6):
     """Fits a polynomial of order n to the set of (x [Bohr], y [Hartree]) coordinates given,

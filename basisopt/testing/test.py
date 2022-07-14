@@ -3,7 +3,7 @@ from basisopt.molecule import Molecule
 from basisopt.bse_wrapper import fetch_basis
 from basisopt.containers import Result
 from basisopt import api
-from basisopt.exceptions import EmptyCalculation
+from basisopt.exceptions import EmptyCalculation, FailedCalculation
 
 class Test(Result):
     """Abstract Test class, a type of Result, for a way of testing a basis set.
@@ -67,13 +67,11 @@ class Test(Result):
     
     @classmethod
     def from_dict(cls, d):
+        result = Result.from_dict(d)
         name = d.get("name", "Empty")
         ref  = d.get("reference", None)
         molecule = d.get("molecule", None)
-        if molecule:
-            molecule = Molecule.from_dict(molecule)
         instance = cls(name, reference=ref, mol=molecule)
-        result = Result.from_dict(d)
         instance._data_keys = result._data_keys
         instance._data_values = result._data_values
         instance._children = result._children
@@ -120,6 +118,8 @@ class PropertyTest(Test):
         self.molecule.basis = basis
         self.molecule.method = method
         success = api.run_calculation(evaluate=self.eval_type, mol=self.molecule, params=params)
+        if success != 0:
+            raise FailedCalculation
         
         # retrieve result, archive _and_ return
         wrapper = api.get_backend()

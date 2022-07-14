@@ -30,6 +30,7 @@ def set_backend(name, path=""):
     
        Arguments:
             name (str): the name of the program to use 
+            path (str): 
     """
     try:
         func = _BACKENDS[name.lower()]
@@ -140,6 +141,7 @@ def run_calculation(evaluate='energy', mol=None, params={}):
     return result
 
 def _one_job(mol, evaluate='energy', params={}):
+    """Internal helper to run a single job in a distributed array"""
     success = _CURRENT_BACKEND.run(evaluate, mol, params, tmp=_TMP_DIR)
     if success != 0:
         raise FailedCalculation
@@ -148,6 +150,17 @@ def _one_job(mol, evaluate='energy', params={}):
     return mol.name,value
 
 def run_all(evaluate='energy', mols=[], params={}, parallel=False):
+    """Runs calculations over a set of molecules, optionally in parallel
+    
+       Arguments:
+            evaluate (str): the property to evaluate
+            mols (list): a list of Molecule objects to run
+            params (dict): parameters for backend
+            parallel (bool): if True, will try to run distributed
+    
+       Returns:
+            a dictionary  of the form {molecule name: value}
+    """
     results = {}
     if parallel and _PARALLEL:
         kwargs = {"evaluate": evaluate, "params": params}

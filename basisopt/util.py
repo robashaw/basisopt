@@ -1,8 +1,41 @@
 # utility functions
 import logging
 import numpy as np
+import json
+from monty.json import MSONable, MontyEncoder, MontyDecoder
 
+"""The internal logging object"""
 bo_logger = logging.getLogger('basisopt')
+
+def read_json(filename):
+    """Reads an MSONable object from file
+     
+       Arguments:
+            filename (str): path to JSON file
+       
+       Returns:
+            object
+    """
+    with open(filename, 'r') as f:
+        obj = json.load(f, cls=MontyDecoder)
+    bo_logger.info(f"Read {type(obj).__name__} from {filename}")
+    return obj
+
+def write_json(filename, obj):
+    """Writes an MSONable object to file
+    
+       Arguments:
+            filename (str): path to JSON file
+            obj (MSONable): object to be written
+    """
+    obj_type = type(obj).__name__
+    if isinstance(obj, MSONable):
+        bo_logger.info(f"Writing {obj_type} to {filename}")
+        with open(filename, 'w') as f:
+            json.dump(obj, f, cls=MontyEncoder)
+    else:
+        bo_logger.error(f"{obj_type} cannot be converted to JSON format")
+
 
 def fit_poly(x, y, n=6):
     """Fits a polynomial of order n to the set of (x [Bohr], y [Hartree]) coordinates given,

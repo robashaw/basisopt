@@ -85,8 +85,41 @@ class DunhamTest(Test):
             self.from_string(mol_str, charge=charge, mult=mult)
             
         self.reduced_mass()
+    
+    def as_dict(self):
+        d = super(DunhamTest, self).as_dict()
+        d["@module"] = type(self).__module__
+        d["@class"] = type(self).__name__
+        d["poly_order"] = self.poly_order
+        d["step"] = self.step
+        d["Emax"] = self.Emax
+        return d
+    
+    @classmethod
+    def from_dict(cls, d):
+        test = Test.from_dict(d)
+        instance = cls(test.name,
+                       poly_order=d.get("poly_order", 6),
+                       step=d.get("step", 0.05),
+                       Emax=d.get("Emax", 0)
+                      )
+        instance.molecule = test.molecule
+        instance.reference = test.reference
+        instance._data_keys = test._data_keys
+        instance._data_values = test._data_values
+        instance._children = test._children
+        instance.depth = test.depth
+        return instance
         
     def from_string(self, mol_str, charge=0, mult=1):
+        """Makes a diatomic molecule from string to use in test
+        
+           Arguments:
+                mol_str (str): string of diatomic and separation in Angstrom
+                               e.g. "NO,1.3", "H2,0.9", "LiH,1.1" etc
+                charge (int): overall charge of diatomic
+                mult (int): spin multipilicity of diatomic
+        """
         self.molecule = build_diatomic(mol_str, charge=charge, mult=mult)
         
     def reduced_mass(self):

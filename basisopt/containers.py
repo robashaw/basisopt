@@ -2,13 +2,14 @@
 import pickle
 import logging
 import numpy as np
+from monty.json import MSONable
 from scipy.special import sph_harm
 
 from . import data
 from .exceptions import DataNotFound, InvalidResult
 from .util import bo_logger
 
-class Shell:
+class Shell(MSONable):
     """Lightweight container for basis set Shells.
     
        Attributes:
@@ -21,6 +22,40 @@ class Shell:
         self.l = 's'
         self.exps = np.array([])
         self.coefs = []
+        
+    def as_dict(self):
+        """ Converts Shell to MSONable dictionary
+           
+            Returns:
+                dictionary representation of Shell
+        """
+        d = {
+            "@module": type(self).__module__,
+            "@class": type(self).__name__,
+            "l": self.l,
+            "exps": self.exps,
+            "coefs": self.coefs
+        }
+        return d
+        
+    @classmethod
+    def from_dict(cls, d):
+        """Creates Shell object from dictionary representation
+        
+           Arguments:
+                d (dict): dictionary of Shell attributes
+          
+           Returns:
+                Shell object
+        """
+        instance = cls()
+        instance.l = d.get('l', 's')
+        exps = d.get('exps', {'data': []})
+        instance.exps = np.array(exps['data'], dtype=np.float64)
+        coefs = d.get('coefs', [])
+        instance.coefs = [np.array(c['data'], dtype=np.float64)
+                         for c in coefs]
+        return instance
         
     def compute(self, x, y, z, i=0, m=0):
         """ Computes the value of the (spherical) GTO at a given point
@@ -56,15 +91,40 @@ class Shell:
         angular_part = np.real(sph_harm(m, lval, theta, phi))
         return radial_part*angular_part
 
-class Result:
+def basis_to_dict(basis):
+    """Converts an internal basis set of the form
+       {atom: [shells]} to an MSONable dictionary
+    
+       Arguments:
+            basis (dict): internal basis set
+    
+       Returns:
+            json-writable dictionary 
+    """
+    return {k: [s.as_dict() for s in v]
+            for k,v in basis.items()}
+
+def dict_to_basis(d):
+    """Converts an MSON dictionary to an internal basis
+    
+       Arguments:
+            d (dict): dictionary of basis set attributes
+    
+       Returns:
+            internal basis set
+    """
+    return {k: [Shell.from_dict(s) for s in v]
+            for k,v in d.items()}
+
+class Result(MSONable):
     """ Container for storing and archiving all results,
         e.g. of tests, calculations, and optimizations.
     
         Attributes:
             name (str): identifier for result
             depth (int): a Result object contains children,
-            so a depth of 1 indicates no parents, 2 indicates 
-            one parent, etc.
+                so a depth of 1 indicates no parents, 2 indicates 
+                one parent, etc.
         
         Private attributes:
             _data_keys (dict): dictionary with the format
@@ -232,3 +292,38 @@ class Result:
             f.close()
         bo_logger.info("Loaded object of type %s from %s", type(pkl_data), filename)
         return pkl_data
+        
+    def as_dict(self):
+        """Converts Result (and all children) to an MSONable dictionary"""
+        d = {
+            "@module": type(self).__module__,
+            "@class": type(self).__name__,
+            "name": self.name,
+            "data_keys": self._data_keys,
+            "data_values": self._data_values,
+            "depth": self.depth,
+            "children": []
+        }
+        
+        for c in self._children:
+            cd = c.as_dict()
+            del cd["@module"]
+            del cd["@class"]
+            d['children'].append(cd)
+        return d
+    
+    @classmethod
+    def from_dict(cls, d):
+        """Creates Result from dictionary representation,
+           including recursive creation of children.
+        """
+        name = d.get("name", "Empty")
+        instance = cls(name=name)
+        instance._data_keys = d.get("data_keys", {})
+        instance._data_values = d.get("data_values", {})
+        instance.depth = d.get("depth", 1)
+        children = d.get("children", [])
+        for c in children:
+            child = Result.from_dict(c)
+            instance.add_child(child)
+        return instance

@@ -17,7 +17,7 @@ class Test(Result):
             calculate(self, method, basis, params={})
     """
     def __init__(self, name, reference=None, mol=None, xyz_file=None, charge=0, mult=1):
-        Result.__init__(self, name)
+        super(Test, self).__init__(self, name)
         self.reference = reference
         self.molecule = None
         
@@ -56,6 +56,29 @@ class Test(Result):
         """
         raise NotImplementedException
         
+    def as_dict(self):
+        d = super(Test, self).as_dict()        
+        d["@module"] = type(self).__module__
+        d["@class"]  = type(self).__name__
+        d["reference"] = self.reference
+        if self.molecule:
+            d["molecule"] = self.molecule.as_dict()
+        return d
+    
+    @classmethod
+    def from_dict(cls, d):
+        name = d.get("name", "Empty")
+        ref  = d.get("reference", None)
+        molecule = d.get("molecule", None)
+        if molecule:
+            molecule = Molecule.from_dict(molecule)
+        instance = cls(name, reference=ref, mol=molecule)
+        result = Result.from_dict(d)
+        instance._data_keys = result._data_keys
+        instance._data_values = result._data_values
+        instance._children = result._children
+        instance.depth = result.depth
+        return instance
     
 class PropertyTest(Test):
     """Simplest implementation of Test, calculating some property, e.g. energy
@@ -81,6 +104,16 @@ class PropertyTest(Test):
             raise PropertyNotAvailable(name)
     
     def calculate(self, method, basis, params={}):
+        """Calculates the test value
+        
+           Arguments:
+                method (str): the method to use, e.g. 'scf'
+                basis (dict): internal basis object
+                params (dict): parameters to pass to backend
+        
+           Returns:
+                the value from the calculation
+        """
         if self.molecule is None:
             raise EmptyCalculation
         # run calculation
@@ -93,5 +126,24 @@ class PropertyTest(Test):
         value = wrapper.get_value(self.eval_type)
         self.add_data(self.name+"_"+self.eval_type, value)
         return value
+        
+    def as_dict(self):
+        d = super(PropertyTest, self).as_dict()        
+        d["@module"] = type(self).__module__
+        d["@class"]  = type(self).__name__
+        d["eval_type"] = self.eval_type
+        return d
+    
+    @classmethod
+    def from_dict(cls, d):
+        test = Test.from_dict(d)
+        prop = d.get("eval_type", 'energy')
+        instance = cls(test.name, prop=prop, mol=test.molecule)
+        instance.reference = test.reference
+        instance._data_keys = test._data_keys
+        instance._data_values = test._data_values
+        instance._children = test._children
+        instance.depth = test.depth
+        return instance
         
         

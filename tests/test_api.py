@@ -23,7 +23,7 @@ def test_which_backend():
     assert api.which_backend() == "Dummy"
     
 def test_get_set_tmp_dir():
-    assert api.get_tmp_dir() == ""
+    assert api.get_tmp_dir() == "."
     
     NEW_TMP = "_tmp/"
     api.set_tmp_dir(NEW_TMP)
@@ -38,7 +38,7 @@ def test_get_set_tmp_dir():
         os.rmdir(NEW_TMP)
 
 def test_set_logger():
-    logger = logging.getLogger()
+    logger = logging.getLogger('basisopt')
     assert logger.getEffectiveLevel() == logging.INFO
     
     api.set_logger(level=logging.WARNING)

@@ -1,9 +1,10 @@
 from . import api
+from .util import bo_logger
 
 if api._PARALLEL:
     from distributed import LocalCluster, Client, wait
 else:
-    print("Dask not installed, parallelisation not available")
+    bo_logger.warning("Dask not installed, parallelisation not available")
     
 def chunk(x, n_chunks):    
     """Chunks an array into roughly equal-sized subarrays

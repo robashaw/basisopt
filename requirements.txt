@@ -3,5 +3,6 @@ numpy
 scipy
 matplotlib
 pandas
+monty
 mendeleev
 basis_set_exchange

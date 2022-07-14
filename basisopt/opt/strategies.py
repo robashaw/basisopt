@@ -1,10 +1,12 @@
 import numpy as np
+from monty.json import MSONable
 from basisopt import api, data
+from basisopt.util import bo_logger
 from basisopt.exceptions import PropertyNotAvailable
 from basisopt.basis.guesses import bse_guess
 from .preconditioners import make_positive
 
-class Strategy:
+class Strategy(MSONable):
     """ Object to describe and handle basis set optimization strategies. 
         All strategy types should inherit from here, and give a description
         of the approach in the docs. This is a MINIMAL implementation, so all
@@ -13,17 +15,16 @@ class Strategy:
         This class also acts as a 'Default' optimization strategy. The alg is
         as follows:
         
-        --------------------------- ALGORITHM ----------------------------
-        Evaluate: energy (can change to any RMSE-compatible property)
-        Loss: root-mean-square error
-        Guess: cc-pVDZ
-        Pre-conditioner: any (default, make sure exponents are positive)
-        
-        No initialisation needed.
-        Optimize each shell in increasing order of angular momentum,
-        so self._step = l+1, ends when self._step = max_l+1
-        No iteration by default. 
-        ------------------------------------------------------------------
+        Algorithm:
+            Evaluate: energy (can change to any RMSE-compatible property)
+            Loss: root-mean-square error
+            Guess: cc-pVDZ
+            Pre-conditioner: any (default, make sure exponents are positive)
+            
+            No initialisation needed.
+            Optimize each shell in increasing order of angular momentum,
+            so self._step = l+1, ends when self._step = max_l+1
+            No iteration by default. 
     
         Attributes:
             name (str): identifier
@@ -33,6 +34,11 @@ class Strategy:
             guess_params (dict): parameters to pass to guess
             pre (func): function to precondition exponents - must have an inverse attribute
             pre.params (dict): parameters to pass to the preconditioner
+            last_objective (float): last value of objective function
+            delta_objective (float): change in value of objective function from last step
+            first_run (bool): if True, next is yet to be called
+    
+            loss (callable): function to calculate loss - currently fixed to RMSE
     
         Private attributes:
             _step (int): tracks what step of optimization we're on
@@ -47,6 +53,12 @@ class Strategy:
         self._step = -1
         self.pre = pre
         self.pre.params = {}
+        self.last_objective = 0
+        self.delta_objective = 0
+        self.first_run = True
+        
+        # currently fixed, to be expanded later
+        self.loss = np.linalg.norm
     
     @property
     def eval_type(self):
@@ -60,6 +72,9 @@ class Strategy:
                 element: symbol of the atom being optimized
         """
         self._step = -1
+        self.last_objective = 0
+        self.delta_objective = 0
+        self.first_run = True
     
     @eval_type.setter
     def eval_type(self, name):
@@ -104,8 +119,43 @@ class Strategy:
             Returns:
                 True if there is a next step, False if strategy is finished
         """
+        self.delta_objective = np.abs(objective - self.last_objective)
+        self.last_objective = objective
         self._step += 1
+        self.first_run = False
         maxl = len(basis[element])
         return maxl != self._step 
+        
+    def as_dict(self):
+        d = {
+            "@module": type(self).__module__,
+            "@class": type(self).__name__,
+            "name": self.name,
+            "eval_type": self._eval_type,
+            "params": self.params,
+            "guess_params": self.guess_params,
+            "step": self._step,
+            "pre_params": self.pre.params,
+            "last_objective": self.last_objective,
+            "delta_objective": self.delta_objective,
+            "first_run": self.first_run
+        }
+        return d
+       
+    @classmethod 
+    def from_dict(cls, d):
+        eval_type = d.get("eval_type", 'energy')
+        instance = cls(eval_type=eval_type)
+        instance.name = d.get("name", "Default")
+        instance.params = d.get("params", {})
+        instance.guess_params = d.get("guess_params", {})
+        instance.pre_params = d.get("pre_params", {})
+        instance._step = d.get("step", -1)
+        instance.last_objective = d.get("last_objective", 0.)
+        instance.delta_objective = d.get("delta_objective", 0.)
+        instance.first_run = d.get("first_run", True)
+        bo_logger.warning("Loading a Strategy from json uses " +
+                          "default preconditioner and guess functions")
+        return instance
             
     

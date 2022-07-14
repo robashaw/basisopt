@@ -21,25 +21,31 @@ def _atomic_opt(basis, element, algorithm, strategy, opt_params, objective):
             func(x) where x is a 1D numpy array of floats
     
         Returns:
-            a scipy.optimize result object of the optimization
+            a dictionary of scipy.optimize result objects for each step in the opt
     """
     bo_logger.info("Starting optimization of %s/%s", element, strategy.eval_type)
     bo_logger.info("Algorithm: %s, Strategy: %s", algorithm, strategy.name)
     objective_value = objective(strategy.get_active(basis, element))
     bo_logger.info("Initial objective value: %f", objective_value)  
     
-    # Keep going until strategy says stop      
+    # Keep going until strategy says stop
+    results = {}  
+    ctr = 1    
     while strategy.next(basis, element, objective_value):
         bo_logger.info("Doing step %d", strategy._step+1)
         guess = strategy.get_active(basis, element)
         if len(guess) > 0:
             res = minimize(objective, guess, method=algorithm, **opt_params)
             objective_value = res.fun
-            info_str = f"Parameters: {res.x}\nObjective: {objective_value}\n"
+            info_str = "\n".join([f"Parameters: {res.x}", 
+                                  f"Objective: {objective_value}",
+                                  f"Delta: {objective_value - strategy.last_objective}"])
+            results[f"atomicopt{ctr}"] = res
+            ctr += 1
         else:
             info_str = f"Skipping empty shell"
         bo_logger.info(info_str)
-    return res
+    return results
 
 def optimize(molecule, element=None, algorithm='l-bfgs-b', strategy=Strategy(), reg=(lambda x: 0), opt_params={}):
     """General purpose optimizer for a single atomic basis
@@ -53,7 +59,7 @@ def optimize(molecule, element=None, algorithm='l-bfgs-b', strategy=Strategy(), 
             opt_params (dict): parameters to pass to scipy.optimize.minimize
     
         Returns:
-            scipy.optimize result object
+            dictionary of scipy.optimize result objects for each step in the opt
     
         Raises:
             FailedCalculation
@@ -73,7 +79,7 @@ def optimize(molecule, element=None, algorithm='l-bfgs-b', strategy=Strategy(), 
             raise FailedCalculation
         molecule.add_result(strategy.eval_type, wrapper.get_value(strategy.eval_type))
         result = molecule.get_delta(strategy.eval_type)
-        return np.linalg.norm(result) + reg(x)
+        return strategy.loss(result) + reg(x)
     
     # Initialise and run optimization
     strategy.initialise(molecule.basis, element)
@@ -86,23 +92,26 @@ def collective_optimize(molecules, basis, opt_data=[], npass=3, parallel=False):
             molecules (list): list of Molecule objects to be included in objective
             basis: internal basis dictionary, will be used for all molecules
             opt_data (list): list of tuples, with one tuple for each atomic basis to be
-            optimized: (element, algorithm, strategy, regularizer, opt_params) - see the 
-            signature of _atomic_opt or optimize
+                optimized, (element, algorithm, strategy, regularizer, opt_params) - see the 
+                signature of _atomic_opt or optimize
             npass (int): number of passes to do, i.e. it will optimize each atomic basis
-            listed in opt_data in order, then loop back and iterate npass times
+                listed in opt_data in order, then loop back and iterate npass times
+            parallel (bool): if True, will try to run Molecule calcs in parallel
     
       Returns:
-            list of scipy.optimize result objects from last pass, in same order as opt_data
+            dictionary of dictionaries of scipy.optimize results for each step,
+            corresponding to tuple in opt_data
     
       Raises:
             FailedCalculation
     """
-    results = []
+    results = {}
     for i in range(npass):
         bo_logger.info("Collective pass %d", i+1)
         total = 0.0
         
         # loop over elements in opt_data, and collect objective into total
+        ctr = 1
         for (el, alg, strategy, reg, params) in opt_data:
             def objective(x):
                 """ Set exponents, compute objective for every molecule in set
@@ -125,7 +134,8 @@ def collective_optimize(molecules, basis, opt_data=[], npass=3, parallel=False):
             strategy.initialise(basis, el)
             res = _atomic_opt(basis, el, alg, strategy, params, objective)
             total += res.fun
-            results.append(res)
+            results[f"pass{i}_opt{ctr}"] = res
+            ctr += 1
         bo_logger.info('Collective objective: %f', total)
     return results
 

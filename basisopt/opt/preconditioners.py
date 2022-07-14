@@ -24,6 +24,7 @@ def unit(x):
     return x
 
 def _positive_inverse(y, minval=1e-4, ratio=1.4):
+    """Inverse of make_positive"""
     x = np.copy(y)
     for ix, v in enumerate(x):
         if v < minval:

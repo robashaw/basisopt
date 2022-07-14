@@ -1,3 +1,2 @@
-from .optimizers import *
+from .optimizers import optimize, collective_optimize
 from .strategies import Strategy
-from .eventemper import EvenTemperedStrategy

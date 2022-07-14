@@ -1,10 +1,12 @@
 # molecule
 import logging
 import numpy as np
+from monty.json import MSONable
 from .exceptions import InvalidDiatomic
 from .util import bo_logger
+from .containers import basis_to_dict, dict_to_basis
 
-class Molecule:
+class Molecule(MSONable):
     """A very loose definition of a molecule, in that it represents
        an object with which calculations can be done. 
     
@@ -156,7 +158,50 @@ class Molecule:
         c1 = self._coords[atom1]
         c2 = self._coords[atom2]
         return np.linalg.norm(c1 - c2)
+    
+    def as_dict(self):
+        """Converts Molecule to MSONable dictionary
+           
+           Returns:
+                dictionary representing the molecule
+        """
+        d = {
+                 "@module": type(self).__module__,
+                  "@class": type(self).__name__,
+                    "name": self.name,
+                  "charge": self.charge,
+            "multiplicity": self.multiplicity,
+                  "method": self.method,
+                   "basis": basis_to_dict(self.basis),
+              "atom_names": self._atom_names,
+                  "coords": self._coords,
+                 "results": self._results,
+              "references": self._references
+        }
+        return d
         
+    @classmethod
+    def from_dict(cls, d):
+        """Creates a Molecule from a dictionary
+        
+           Arguments:
+                d (dict): dictionary with Molecule attributes
+        
+           Returns:
+                Molecule
+        """
+        name = d.get("name", "Untitled")
+        charge = d.get("charge", 0)
+        mult = d.get("multiplicity", 1)
+        instance = cls(name=name, charge=charge, mult=mult)
+        instance.method = d.get("method", "")
+        instance.basis  = dict_to_basis(d.get("basis", {}))
+        instance._atom_names = d.get("atom_names", [])
+        instance._coords = d.get("coords", [])
+        instance._results = d.get("results", {})
+        instance._references = d.get("references", {})
+        return instance    
+    
 def build_diatomic(mol_str, charge=0, mult=1):
     """Builds a diatomic molecule from a string
     

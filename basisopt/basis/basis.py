@@ -2,8 +2,10 @@ import copy
 import logging
 import pickle
 import numpy as np
+from monty.json import MSONable
 from basisopt.containers import Result, Shell
 from basisopt.util import bo_logger
+from basisopt.molecule import Molecule
 from basisopt import data
 
 def uncontract_shell(shell):
@@ -68,7 +70,7 @@ def fix_ratio(exps, ratio=1.4):
             new_exps[i+1] = new_exps[i]*ratio
     return new_exps
     
-class Basis:
+class Basis(MSONable):
     """Abstract parent class object representing a basis type
        All basis types must inherit from here to work, see e.g. AtomicBasis, MolecularBasis
     
@@ -82,7 +84,7 @@ class Basis:
     """
     def __init__(self):
         self.results = Result()
-        self.optt_results = None
+        self.opt_results = None
         self._tests = []
         self._molecule = None
             
@@ -100,6 +102,9 @@ class Basis:
             f.close()
         bo_logger.info("Loaded object of type %s from %s", type(pkl_data), filename)
         return pkl_data
+        
+    def get_basis(self):
+        return self._molecule.basis
     
     def register_test(self, test):
         """Add a Test object to the set of tests"""
@@ -113,6 +118,7 @@ class Basis:
         return None
         
     def run_test(self, name, params={}):
+        """Runs a test with the given name, printing result"""
         t = self.get_test(name)
         if t is None:
             bo_logger.warning("No test with name %s", name)
@@ -121,6 +127,7 @@ class Basis:
             bo_logger.info("Test %s: %s", name, t.result)
     
     def run_all_tests(self, params={}):
+        """Runs all the tests in basis, printing results"""
         for t in self._tests:
             t.result = t.calculate(self._molecule.method, self._molecule.basis, params=params)
             bo_logger.info("Test %s: %s", name, t.result)
@@ -128,3 +135,27 @@ class Basis:
     def optimize(self, algorithm='Nelder-Mead', params={}):
         """All basis objects should implement an optimize method with this signature"""
         raise NotImplementedException
+        
+    def as_dict(self):
+        d = {
+            "@module": type(self).__module__,
+            "@class": type(self).__name__,
+            "results": self.results.as_dict(),
+            "opt_results": self.opt_results,
+            "tests": [t.as_dict() for t in self._tests],
+            "molecule": self._molecule.as_dict()
+        }
+        return d
+       
+    @classmethod 
+    def from_dict(cls, d):
+        instance = cls()
+        instance.results = d.get("results", Result())
+        instance.opt_results = d.get("opt_results", None)
+        molecule = d.get("molecule", None)
+        if molecule:
+            instance._molecule = Molecule.from_dict(molecule) 
+        tests = d.get("tests", [])
+        for t in tests:
+            instance._tests.append(Test.from_dict(t))
+        return instance

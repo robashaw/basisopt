@@ -1,28 +1,13 @@
 import logging
 import functools
 import numpy as np
+import pickle
 
 from mendeleev import element as md_element
 from mendeleev.econf import ElectronicConfiguration
 
 from basisopt import api, data
 from basisopt.util import bo_logger
-from basisopt.molecule import Molecule
-from basisopt.bse_wrapper import fetch_basis
-from basisopt.opt.optimizers import optimize
-from basisopt.opt.eventemper import EvenTemperedStrategy
-from basisopt.opt.strategies import Strategy
-from basisopt.exceptions import ElementNotSet
-from . import zetatools as zt
-from .basis import Basis, even_temper_expansion
-import logging
-import functools
-import numpy as np
-
-from mendeleev import element as md_element
-from mendeleev.econf import ElectronicConfiguration
-
-from basisopt import api, data
 from basisopt.molecule import Molecule
 from basisopt.bse_wrapper import fetch_basis
 from basisopt.opt.optimizers import optimize
@@ -87,6 +72,42 @@ class AtomicBasis(Basis):
             f.close()
         bo_logger.info("Dumped object of type %s to %s", type(self), filename)
     
+    def as_dict(self):
+        d = super(AtomicBasis, self).as_dict()
+        d["@module"] = type(self).__module__
+        d["@class"]  = type(self).__name__
+        d["et_params"] = self.et_params
+        
+        if hasattr(self, 'strategy'):
+            if isinstance(self.strategy, Strategy):
+                d["strategy"] = self.strategy.as_dict()
+                d["config"] = self.config
+                d["done_setup"] = self._done_setup
+        return d
+    
+    @classmethod
+    def from_dict(cls, d):
+        basis = Basis.from_dict(d)
+        element = basis._molecule.name[:-5]
+        charge = basis._molecule.charge
+        mult = basis._molecule.multiplicity
+        instance = cls(name=element, charge=charge, mult=mult)
+        instance.results = basis.results
+        instance.opt_results = basis.opt_results
+        instance._tests = basis._tests
+        instance._molecule = basis._molecule
+        instance.et_params = d.get("et_params", None)
+        instance.strategy_dict = d.get("strategy", None)
+        if instance.strategy_dict:
+            instance.strategy = Strategy.from_dict(instance.strategy_dict)
+            if instance.strategy.name != "Default":
+                bo_logger.warning("Strategy loaded as Default type; " +
+                                  f"reload with {instance.strategy.name}.from_dict " +
+                                   "on obj.strategy_dict")
+            instance._done_setup = d.get("done_setup", False)
+            instance.config = d.get("config", {})
+        return instance
+    
     @property
     def element(self):
         return self._element
@@ -121,11 +142,6 @@ class AtomicBasis(Basis):
     @property
     def multiplicity(self):
         return self._multiplicity
-    
-    def get_basis(self):
-        if self._element is None:
-            return []
-        return self._molecule.basis[self._symbol]
 
     @multiplicity.setter
     @needs_element
@@ -168,7 +184,7 @@ class AtomicBasis(Basis):
             zeta_func = zt.QUALITIES[quality.lower()]
             self._config = zeta_func(self._element)
             config_string = zt.config_to_string(self._config)
-            bo_logger.info("Primitive configuration of %s", config_string)
+            bo_logger.info("Contracted configuration of %s", config_string)
         except KeyError:
             bo_logger.warning(f"Could not find a %s strategy for configuration, using minimal", quality)
             self._config = self.minimal()

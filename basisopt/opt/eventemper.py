@@ -3,7 +3,7 @@ from mendeleev import element as md_element
 
 from basisopt import api, data
 from basisopt.exceptions import PropertyNotAvailable
-from basisopt.basis import even_temper_expansion
+from basisopt.basis.basis import even_temper_expansion
 from basisopt.basis.guesses import null_guess
 from .preconditioners import unit
 from .strategies import Strategy
@@ -16,30 +16,29 @@ class EvenTemperedStrategy(Strategy):
         Each exponent in that shell is then given by
             y_k = c*(x**k) for k=0,...,n
         
-        --------------------------- ALGORITHM ----------------------------
-        Evaluate: energy (can change to any RMSE-compatible property)
-        Loss: root-mean-square error
-        Guess: null, uses _INITIAL_GUESS above
-        Pre-conditioner: None
-        
-        Initialisation:
-            - Find minimum no. of shells needed
-            - max_l >= min_l
-            - generate initial parameters for each shell
-    
-        First run:
-            - optimize parameters for each shell once, sequentially
-    
-        Next shell in list not marked finished:
-            - re-optimise
-            - below threshold or n=max_n: mark finished
-            - above threshold: increment n
-        Repeat until all shells are marked finished. 
-    
-        Uses iteration, limited by two parameters:
-            max_n: max number of exponents in shell
-            target: threshold for objective function
-        ------------------------------------------------------------------
+        Algorithm: 
+            Evaluate: energy (can change to any RMSE-compatible property)
+            Loss: root-mean-square error
+            Guess: null, uses _INITIAL_GUESS above
+            Pre-conditioner: None
+            
+            Initialisation:
+                - Find minimum no. of shells needed
+                - max_l >= min_l
+                - generate initial parameters for each shell
+            
+            First run:
+                - optimize parameters for each shell once, sequentially
+            
+            Next shell in list not marked finished:
+                - re-optimise
+                - below threshold or n=max_n: mark finished
+                - above threshold: increment n
+            Repeat until all shells are marked finished. 
+            
+            Uses iteration, limited by two parameters:
+                max_n: max number of exponents in shell
+                target: threshold for objective function
     
         Additional attributes:
             shells (list): list of (c, x, n) parameter tuples
@@ -47,23 +46,48 @@ class EvenTemperedStrategy(Strategy):
             target (float): threshold for optimization delta
             max_n (int): maximum number of primitives in shell expansion
             max_l (int): maximum angular momentum shell to do;
-            if -1, does minimal configuration
-            first_run (bool): setting to True restarts optimization from beginning
-            last_objective (var): last value of objective function
-            
+            if -1, does minimal configuration     
     """
     def __init__(self, eval_type='energy', target=1e-5, max_n=18, max_l=-1):
-        Strategy.__init__(self, eval_type=eval_type, pre=unit)
+        super(EvenTemperedStrategy, self).__init__(eval_type=eval_type, pre=unit)
         self.name = 'EvenTemper'
         self.shells = []
         self.shell_done = []
-        self.last_objective = 0
         self.target = target
         self.guess = null_guess
         self.guess_params = {}
         self.max_n = max_n
         self.max_l = max_l
-        self.first_run = True
+        
+    def as_dict(self):
+        d = super(EvenTemperedStrategy, self).as_dict()
+        d["@module"] = type(self).__module__
+        d["@class"] = type(self).__name__
+        d["shells"] = self.shells
+        d["shell_done"] = self.shell_done
+        d["target"] = self.target 
+        d["max_n"] = self.max_n
+        d["max_l"] = self.max_l
+        return d
+        
+    @classmethod
+    def from_dict(cls, d):
+        strategy = Strategy.from_dict(d)
+        instance = cls(
+                       eval_type=d.get("eval_type", 'energy'),
+                       target=d.get("target", 1e-5),
+                       max_n=d.get("max_n", 18),
+                       max_l=d.get("max_l", -1)
+                      )
+        instance.name = strategy.name
+        instance.params = strategy.params
+        instance.first_run = strategy.first_run
+        instance._step = strategy._step
+        instance.last_objective = strategy.last_objective
+        instance.delta_objective = strategy.delta_objective
+        instance.shells = d.get("shells", [])
+        instance.shell_done = d.get("shell_done", [])
+        return instance
     
     def set_basis_shells(self, basis, element):
         """Expands parameters into a basis set"""
@@ -79,7 +103,9 @@ class EvenTemperedStrategy(Strategy):
         self.shells = [_INITIAL_GUESS] * self.max_l
         self.shell_done = [1] * self.max_l
         self.set_basis_shells(basis, element)
-        self.last_objective = 0
+        self.last_objective = 0.
+        self.delta_objective = 0.
+        self.first_run = True
     
     def get_active(self, basis, element):
         (c, x, _) = self.shells[self._step]
@@ -93,7 +119,7 @@ class EvenTemperedStrategy(Strategy):
         self.set_basis_shells(basis, element)
     
     def next(self, basis, element, objective):
-        delta_objective = np.abs(self.last_objective - objective)
+        self.delta_objective = np.abs(self.last_objective - objective)
         self.last_objective = objective
         
         carry_on = True
@@ -105,7 +131,7 @@ class EvenTemperedStrategy(Strategy):
                 (c, x, n) = self.shells[self._step]
                 self.shells[self._step] = (c, x, min(n+1, self.max_n))
         else: 
-            if delta_objective < self.target:
+            if self.delta_objective < self.target:
                 self.shell_done[self._step] = 0
             
             self._step = (self._step + 1) % self.max_l            

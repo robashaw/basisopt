@@ -52,7 +52,7 @@ class AtomicBasis(Basis):
             _symbol (str): atomic symbol in lowercase
     """
     def __init__(self, name='H', charge=0, mult=1):
-        Basis.__init__(self)
+        super(AtomicBasis, self).__init__()
 
         self._element = None
         self._molecule = Molecule(name=name+'_atom')
@@ -97,8 +97,8 @@ class AtomicBasis(Basis):
         instance._tests = basis._tests
         instance._molecule = basis._molecule
         instance.et_params = d.get("et_params", None)
-        instance.strategy_dict = d.get("strategy", None)
-        if instance.strategy_dict:
+        instance.strategy = d.get("strategy", None)
+        if instance.strategy:
             instance._done_setup = d.get("done_setup", False)
             instance.config = d.get("config", {})
         return instance

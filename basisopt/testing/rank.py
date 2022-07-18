@@ -8,7 +8,8 @@ from basisopt.exceptions import FailedCalculation, EmptyBasis
 from basisopt.basis import uncontract_shell
 from basisopt.util import bo_logger
 
-def rank_primitives(atomic, shells=None, eval_type='energy', params={}):
+def rank_primitives(atomic, shells=None, eval_type='energy',
+                    basis_type='orbital', params={}):
     """Systematically eliminates exponents from shells in an AtomicBasis
        to determine how much they contribute to the target property
     
@@ -17,6 +18,7 @@ def rank_primitives(atomic, shells=None, eval_type='energy', params={}):
             shells (list): list of indices for shells in the AtomicBasis
             to be ranked. If None, will rank all shells
             eval_type (str): property to evaluate (e.g. energy)
+            basis_type (str): "orbital/jfit/jkfit"
             params (dict): parameters  to pass to the backend, 
             see relevant Wrapper for options
     
@@ -31,7 +33,13 @@ def rank_primitives(atomic, shells=None, eval_type='energy', params={}):
             FailedCalculation
     """
     mol = copy.copy(atomic._molecule)
-    basis = mol.basis[atomic._symbol]
+    if basis_type == 'jfit':
+        basis = mol.jbasis[atomic._symbol]
+    elif basis_type == 'jkfit':
+        basis = mol.jkbasis[atomic._symbol]
+    else:
+        basis = mol.basis[atomic._symbol]
+    
     if shells is None:
         shells = list(range(len(basis))) # do all
     

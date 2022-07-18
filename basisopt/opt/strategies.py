@@ -1,6 +1,7 @@
 import numpy as np
 from monty.json import MSONable
 from basisopt import api, data
+from basisopt.containers import basis_to_dict
 from basisopt.util import bo_logger, dict_decode
 from basisopt.exceptions import PropertyNotAvailable
 from basisopt.basis.guesses import bse_guess
@@ -37,7 +38,9 @@ class Strategy(MSONable):
             last_objective (float): last value of objective function
             delta_objective (float): change in value of objective function from last step
             first_run (bool): if True, next is yet to be called
-    
+            basis_type (str): "orbital/jfit/jkfit", allows for strategy to be applied to auxiliary bases
+            orbital_basis (dict): if using on auxiliary basis, need to specify orbital basis here
+        
             loss (callable): function to calculate loss - currently fixed to RMSE
     
         Private attributes:
@@ -56,6 +59,9 @@ class Strategy(MSONable):
         self.last_objective = 0
         self.delta_objective = 0
         self.first_run = True
+        
+        self.basis_type = 'orbital'
+        self.orbital_basis = None
         
         # currently fixed, to be expanded later
         self.loss = np.linalg.norm
@@ -138,8 +144,11 @@ class Strategy(MSONable):
             "pre_params": self.pre.params,
             "last_objective": self.last_objective,
             "delta_objective": self.delta_objective,
-            "first_run": self.first_run
+            "first_run": self.first_run,
+            "basis_type": self.basis_type,
         }
+        if self.orbital_basis:
+            d['orbital_basis'] = basis_to_dict(self.orbital_basis)
         return d
        
     @classmethod 
@@ -155,6 +164,8 @@ class Strategy(MSONable):
         instance.last_objective = d.get("last_objective", 0.)
         instance.delta_objective = d.get("delta_objective", 0.)
         instance.first_run = d.get("first_run", True)
+        instance.basis_type = d.get("basis_type", "orbital")
+        instance.orbital_basis = d.get("orbital_basis", None)
         bo_logger.warning("Loading a Strategy from json uses " +
                           "default preconditioner and guess functions")
         return instance

@@ -2,6 +2,7 @@ import logging
 import numpy as np
 import copy
 
+from basisopt.molecule import build_diatomic
 from basisopt.testing.rank import *
 from basisopt.basis.guesses import null_guess 
 from basisopt.basis.basis import uncontract_shell
@@ -45,7 +46,9 @@ class ReduceStrategy(Strategy):
             nexps (list(int)): number of exponents in each ang. momentum shell
             reduction_step (bool): if True, an exponent will be removed when next is called
     """
-    def __init__(self, starting_basis, eval_type='energy', method='scf', target=1e-5, shell_mins=[], max_l=-1, params={}):
+    def __init__(self, starting_basis, eval_type='energy', method='scf',
+                 target=1e-5, shell_mins=[], max_l=-1, reopt_all=True, 
+                 params={}):
         Strategy.__init__(self, eval_type=eval_type, pre=make_positive)
         self.name = 'Reduce'
         self.full_basis = starting_basis 
@@ -55,6 +58,7 @@ class ReduceStrategy(Strategy):
         self.method = method
         self.guess  = self._guess
         self.guess_params = {}
+        self.reopt_all = reopt_all
         self.params = params
         self.shell_mins = shell_mins
         self.max_l = max_l
@@ -75,6 +79,7 @@ class ReduceStrategy(Strategy):
         d["max_l"] = self.max_l
         d["shells"] = self.shells
         d["method"] = self.method
+        d["reopt_all"] = self.reopt_all
         d["shell_mins"] = self.shell_mins
         d["nexps"] = self.nexps
         d["reduction_step"] = self.reduction_step
@@ -92,6 +97,7 @@ class ReduceStrategy(Strategy):
                        target=d.get("target", 1e-5),
                        shell_mins=d.get("shell_mins", []),
                        max_l=d.get("max_l", -1),
+                       reopt_all=d.get("reopt_all", True),
                        params=strategy.params
                       )
         instance.saved_basis = saved_basis
@@ -123,7 +129,7 @@ class ReduceStrategy(Strategy):
         
     def next(self, basis, element, objective):
         carry_on = True
-        if self._step == self.max_l:
+        if (self._step == self.max_l) or (not self.reopt_all):
             self._step = -1
             self.reduction_step = True
         
@@ -142,13 +148,25 @@ class ReduceStrategy(Strategy):
                              and (True in possible_changes)
             if carry_on:
                 at = AtomicBasis(name=element)
-                at._molecule.basis = basis
+                if self.basis_type in ['jfit', 'jkfit']:
+                    at._molecule = build_diatomic(f"{element.title()}H,1.5")
+                    if at._molecule.nelectrons() % 2 == 1:
+                        at._molecule.charge = 1
+                    if self.basis_type == "jfit":
+                        at._molecule.jbasis = basis
+                    else:
+                        at._molecule.jkbasis = basis
+                    at._molecule.basis = self.orbital_basis
+                else:
+                    at._molecule.basis = basis
                 at._molecule.method = self.method
                 shells_to_rank = [s for s in range(self.max_l+1)
                                   if (basis[element][s].exps.size != 0)
                                   and possible_changes[s]]
                 errors, ranks = rank_primitives(at, shells=shells_to_rank,
-                                eval_type=self.eval_type, params=self.params)
+                                eval_type=self.eval_type, 
+                                basis_type=self.basis_type,
+                                params=self.params)
                 min_errs = np.array([e[r[0]] for e, r in zip(errors, ranks)])
                 min_ix = np.argmin(min_errs)
                 l = shells_to_rank[min_ix]
@@ -160,19 +178,30 @@ class ReduceStrategy(Strategy):
                 shell.exps[ix:] = exps[ix+1:] 
                 uncontract_shell(shell)
                 
-                info_str = f"Removing exponent {exps[ix]} from shell with l={l}, error less than {min_errs[l]} Ha"
+                info_str = f"Removing exponent {exps[ix]} from " +\
+                 f"shell with l={l}, error less than {min_errs[min_ix]} Ha"
                 self.nexps[l] -= 1
                 bo_logger.info(info_str)
+                if not self.reopt_all:
+                    self._step = l
                 self.reduction_step = False
         
         if carry_on:
-            self._step += 1
+            if self.reopt_all:
+                self._step += 1                
         else:
             if self.delta_objective > self.target:
-                bo_logger.info("Change in objective over target, reverting to basis from last step")
+                bo_logger.info("Change in objective over target"+\
+                " reverting to basis from last step")
                 basis[element] = self.saved_basis[element]
             else:
                 bo_logger.info("Reached minimum basis size")
+                if not self.reopt_all:
+                    bo_logger.info("Doing one last opt pass")
+                    self.reopt_all = True
+                    self._step = 0
+                    self.reduction_step = False
+                    return True
             bo_logger.info("Finished reduction")
         
         return carry_on

@@ -98,7 +98,7 @@ def plot_exponents(basis, atoms=[], split_by_shell=True,
                      linelengths=0.5, colors=colors)
             
         if split_by_shell:
-            ax.set_xticks([i for i in range(len(flat_basis))])
+            ax.set_xticks([i for i in range(len(flat_bases))])
             ax.set_xticklabels([s.l for v in bas.values() for s in v])
         else:
             ax.set_xticks([i for i in range(len(bas))])

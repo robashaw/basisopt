@@ -1,5 +1,7 @@
 # data
 import numpy as np
+from functools import cache
+from mendeleev import element as md_element
 
 # Conversion factors
 TO_CM = 219474.63067
@@ -7,6 +9,11 @@ TO_EV = 27.2113839
 TO_BOHR = 1.88973
 TO_ANGSTROM = 0.5291761
 FORCE_MASS = 1822.88853
+
+@cache 
+def atomic_number(element):
+    el = md_element(element)
+    return el.atomic_number
 
 """Dictionary converting letter-value angular momenta to l quantum number"""
 AM_DICT = {

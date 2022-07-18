@@ -1,8 +1,10 @@
 # molecule
 import logging
+from functools import cache
 import numpy as np
 from monty.json import MSONable
 from .exceptions import InvalidDiatomic
+from .data import atomic_number
 from .util import bo_logger, dict_decode
 from .containers import basis_to_dict, dict_to_basis
 
@@ -16,6 +18,8 @@ class Molecule(MSONable):
             multiplicity (int): spin multiplicity, i.e. 2S+1
             method (str): name of calculation method, e.g. 'hf' or 'ccsd(t)'
             basis (dict): internal basis dictionary, which has (k, v) pairs
+            jbasis (dict): internal basis dictionary for Coulomb fitting set
+            jkbasis (dict): internal basis dictionary for Coulomb+Exchange fitting set
             of the form (element_symbol : array of Shell objects)
             
        Private attributes:
@@ -32,10 +36,21 @@ class Molecule(MSONable):
         self.multiplicity = mult
         self.method = ""
         self.basis = {}
+        self.jbasis = None
+        self.jkbasis = None
         self._atom_names = []
         self._coords = []
         self._results = {}
         self._references = {}
+        
+    @cache
+    def nelectrons(self):
+        unique = self.unique_atoms()
+        nel = 0
+        for a in unique:
+            nel += self._atom_names.count(a) *\
+                        atomic_number(a)
+        return nel
         
     def add_atom(self, element='H', coord=[0.0, 0.0, 0.0]): 
         """Adds an atom to the molecule
@@ -178,6 +193,10 @@ class Molecule(MSONable):
                  "results": self._results,
               "references": self._references
         }
+        if self.jbasis:
+            d["jbasis"] = basis_to_dict(self.jbasis)
+        if self.jkbasis:
+            d["jkbasis"] = basis_to_dict(self.jkbasis)
         return d
         
     @classmethod
@@ -197,6 +216,8 @@ class Molecule(MSONable):
         instance = cls(name=name, charge=charge, mult=mult)
         instance.method = d.get("method", "")
         instance.basis  = dict_to_basis(d.get("basis", {}))
+        instance.jbasis = d.get("jbasis", None)
+        instance.jkbasis = d.get("jkbasis", None) 
         instance._atom_names = d.get("atom_names", [])
         instance.coords = d.get("coords", [])
         instance._results = d.get("results", {})

@@ -54,6 +54,7 @@ class Wrapper:
             'trans_dipole'     : self.trans_dipole,
             'trans_quadrupole' : self.trans_quadrupole,
             'polarizability'   : self.polarizability,
+            'jk_error'         : self.jk_error
         } 
         
         self._method_strings = {}

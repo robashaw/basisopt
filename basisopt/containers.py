@@ -111,8 +111,15 @@ def dict_to_basis(d):
        Returns:
             internal basis set
     """
-    return d #{k: [Shell.from_dict(s) for s in v]
-             # for k,v in d.items()}
+    if len(d) > 0:
+        key = list(d.keys())[0]
+        shell = d[key]
+        if len(shell) > 0:
+            obj = type(shell[0]).__name__
+            if obj != 'Shell':
+                return {k: [Shell.from_dict(s) for s in v]
+                        for k,v in d.items()}
+    return d
 
 class Result(MSONable):
     """ Container for storing and archiving all results,

@@ -2,6 +2,7 @@
 import logging
 import numpy as np
 from basisopt.wrappers.wrapper import Wrapper, available
+from basisopt.molecule import Molecule
 
 def _linear(x, a=1.0):
     return a*x
@@ -43,10 +44,17 @@ class DummyWrapper(Wrapper):
         self._value = 0
         self._basis_value = 0
         
-    def convert_molecule(self, m):
+    def convert_molecule(self, m: Molecule) -> int:
+        """Dummy molecule converter"""
         return m.natoms()
     
-    def initialise(self, m, name="", tmp=""):
+    def initialise(self, 
+                   m: Molecule,
+                   name: str="", 
+                   tmp: str=""):
+        """Initialises calc by converting molecule,
+           setting globals and self._basis_value
+        """
         # deal with molecule conversion
         self._value = self.convert_molecule(m)
         

@@ -1,6 +1,4 @@
 + Implement:
-	- MolecularBasis (* branch basisdev)
-	- JKFitBasis (* branch basisdev)
 	- MP2FitBasis 
 	- OptRIBasis
 	- MidbondBasis (* branch basisdev)

@@ -1,7 +1,12 @@
 from setuptools import setup
+exec(
+    open('basisopt/version.py', 'r',
+         encoding='utf-8').read()
+)
 
 setup(name='basisopt',
-      version='1.0.0a',
+      python_requires='>3.9.0',
+      version=__version__,
       packages=['basisopt',
                 'basisopt.basis',
                 'basisopt.wrappers',

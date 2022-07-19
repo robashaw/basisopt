@@ -44,8 +44,8 @@ def bse_guess(atomic, params={'name': 'cc-pvdz'}):
        Params:
             name (str): name of desired basis set
     """
-    basis = fetch_basis(params['name'], [atomic.symbol])
-    return basis[atomic.symbol]
+    basis = fetch_basis(params['name'], [atomic._symbol])
+    return basis[atomic._symbol]
 
 def even_tempered_guess(atomic, params={}):
     """Takes guess from an even-tempered expansion

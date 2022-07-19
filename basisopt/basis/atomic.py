@@ -1,11 +1,16 @@
+from typing import Any, Callable, Optional
 import logging
 import functools
+import pickle
+
 import numpy as np
 
-from mendeleev import element as md_element
+from mendeleev import element as MDElement
 from mendeleev.econf import ElectronicConfiguration
 
 from basisopt import api, data
+from basisopt.containers import InternalBasis, OptResult
+from basisopt.util import bo_logger, dict_decode
 from basisopt.molecule import Molecule
 from basisopt.bse_wrapper import fetch_basis
 from basisopt.opt.optimizers import optimize
@@ -15,7 +20,7 @@ from basisopt.exceptions import ElementNotSet
 from . import zetatools as zt
 from .basis import Basis, even_temper_expansion
 
-def needs_element(func):
+def needs_element(func: Callable) -> Callable:
     """Decorator that checks if the AtomicBasis has an element attribute
        Raises:
             ElementNotSet if no element found
@@ -24,8 +29,7 @@ def needs_element(func):
     def wrapper(basis, *args, **kwargs):
         if basis.element is None:
             raise ElementNotSet
-        else:
-            func(basis, *args, **kwargs)
+        func(basis, *args, **kwargs)
     return wrapper
 
 class AtomicBasis(Basis):
@@ -33,16 +37,16 @@ class AtomicBasis(Basis):
        a single atom. 
     
        Attributes:
-            et_params (list): even tempered expansion parameters
+            et_params (data.ETParams): even tempered expansion parameters
             charge (int): net charge on atom
             multiplicity (int): spin multiplicity of atom
             config (dict): configuration of basis, (k, v) pairs
-            of form (angular momentum: no. of functions)
-            e.g. 's': 5, 'p': 4, etc.
+                of form (angular momentum: no. of functions)
+                e.g. 's': 5, 'p': 4, etc.
 
        Special attribute:
-            element-> gets Mendeleev Element object of atom (_element)
-                   -> set with atomic symbol 
+            element: gets Mendeleev Element object of atom (_element)
+                     set with atomic symbol 
     
        Private Attributes:
             _element (mendeleev Element): object set via element
@@ -50,8 +54,11 @@ class AtomicBasis(Basis):
             _done_setup (bool): flag for whether ready for optimize
             _symbol (str): atomic symbol in lowercase
     """
-    def __init__(self, name='H', charge=0, mult=1):
-        Basis.__init__(self)
+    def __init__(self, 
+                 name: str='H',
+                 charge: int=0,
+                 mult: int=1):
+        super().__init__()
 
         self._element = None
         self._molecule = Molecule(name=name+'_atom')
@@ -62,78 +69,114 @@ class AtomicBasis(Basis):
         if self._element is not None:
             self.charge = charge
             self.multiplicity = mult
+            
+    def save(self, filename: str):
+        """Pickles the AtomicBasis object into a binary file"""
+        with open(filename, 'wb') as f:
+            pickle.dump(self, f)
+            f.close()
+        bo_logger.info("Dumped object of type %s to %s", type(self), filename)
+    
+    def as_dict(self) -> dict[str, Any]:
+        """Returns MSONable dictionary of AtomicBasis"""
+        d = super().as_dict()
+        d["@module"] = type(self).__module__
+        d["@class"]  = type(self).__name__
+        d["et_params"] = self.et_params
+        
+        if hasattr(self, 'strategy'):
+            if isinstance(self.strategy, Strategy):
+                d["strategy"] = self.strategy.as_dict()
+                d["config"] = self.config
+                d["done_setup"] = self._done_setup
+        return d
+    
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> object:
+        """Creates an AtomicBasis from MSONable dictionary"""
+        basis = Basis.from_dict(d)
+        element = basis._molecule.name[:-5]
+        charge = basis._molecule.charge
+        mult = basis._molecule.multiplicity
+
+        instance = cls(name=element, charge=charge, mult=mult)
+        instance.results = basis.results
+        instance.opt_results = basis.opt_results
+        instance._tests = basis._tests
+        instance._molecule = basis._molecule
+        instance.et_params = d.get("et_params", None)
+        instance.strategy = d.get("strategy", None)
+        if instance.strategy:
+            instance._done_setup = d.get("done_setup", False)
+            instance.config = d.get("config", {})
+        return instance
     
     @property
-    def element(self):
+    def element(self) -> MDElement:
         return self._element
 
     @element.setter
-    def element(self, name):
+    def element(self, name: str):
         try:
-            self._element = md_element(name.title())
+            self._element = MDElement(name.title())
             self._symbol = name.lower() 
             self._molecule.name = name + '_atom' 
             self._molecule._atom_names = [name]
             self._molecule._coords = [np.array([0.0, 0.0, 0.0])]
             self.results.name = self._molecule.name
         except:
-            logging.error("Please enter a valid element")
+            bo_logger.error("Please enter a valid element")
             
     @property
-    def charge(self):
+    def charge(self) -> int:
         return self._charge
 
     @charge.setter
     @needs_element
-    def charge(self, new_charge):
+    def charge(self, new_charge: int):
         nelec = self._element.electrons - new_charge
         if nelec < 1:
-            logging.warning("A charge of %d would remove all electrons, setting to 0", new_charge)
+            bo_logger.warning("A charge of %d would remove all electrons, setting to 0", new_charge)
             self._charge = 0 
         else:
             self._charge = new_charge
         self._molecule.charge = self._charge
 
     @property
-    def multiplicity(self):
+    def multiplicity(self) -> int:
         return self._multiplicity
-    
-    @needs_element
-    def get_basis(self):
-        return self._molecule.basis[self._symbol]
 
     @multiplicity.setter
     @needs_element
-    def multiplicity(self, new_mult):
+    def multiplicity(self, new_mult: int):
         if (new_mult < 1) or (new_mult-1 > self._element.electrons):
-            logging.warning("Multiplicity can't be set to %d, setting to 1", new_mult)
+            bo_logger.warning("Multiplicity can't be set to %d, setting to 1", new_mult)
             self._multiplicity = 1
         else:
             self._multiplicity = new_mult
         self._molecule.multiplicity = self._multiplicity
             
     @property
-    def config(self):
+    def config(self) -> zt.Configuration:
         return self._config        
     
     @config.setter
-    def config(self, new_config):
+    def config(self, new_config: zt.Configuration):
         minimal = self.minimal()
         if zt.compare(minimal, new_config) < 0:
-            logging.warning("Configuration %s is insufficient, using minimal config", new_config)
+            bo_logger.warning("Configuration %s is insufficient, using minimal config", new_config)
             self._config = minimal
         else:
             self._config = new_config
     
-    def minimal(self):
+    def minimal(self) -> zt.Configuration:
         """Returns the minimal basis configuration for this atom"""
         if self._element is None:
             return {}
-        else:
-            return zt.minimal(self._element)
+        return zt.minimal(self._element)
     
     @needs_element
-    def configuration(self, quality='dz'):
+    def configuration(self, quality: str='dz'):
         """Sets the basis set configuration to a desired quality
         
            Arguments:
@@ -143,17 +186,22 @@ class AtomicBasis(Basis):
             zeta_func = zt.QUALITIES[quality.lower()]
             self._config = zeta_func(self._element)
             config_string = zt.config_to_string(self._config)
-            logging.info("Primitive configuration of %s", config_string)
+            bo_logger.info("Contracted configuration of %s", config_string)
         except KeyError:
-            logging.warning(f"Could not find a %s strategy for configuration, using minimal", quality)
+            bo_logger.warning("Could not find a %s strategy for configuration, using minimal", quality)
             self._config = self.minimal()
     
-    def as_xyz(self):
+    def as_xyz(self) -> str:
         """Returns the atom as an xyz file string"""
         return self._molecule.to_xyz()
     
     @needs_element
-    def setup(self, method='ccsd(t)', quality='dz', strategy=Strategy(), reference=('cc-pvqz', None), params={}):
+    def setup(self, 
+              method: str='ccsd(t)',
+              quality: str='dz',
+              strategy: Strategy=Strategy(),
+              reference: tuple[str, Optional[InternalBasis]]=('cc-pvqz', None),
+              params: dict[str, Any]={}):
         """Sets up the basis ready for optimization. Must be called before optimize is called
         
            Arguments:
@@ -164,47 +212,53 @@ class AtomicBasis(Basis):
                 (name, value) OR (basis_name, None). The latter will calculate the reference by downloading the
                 requested basis from the BSE
                 params (dict): dictionary of parameters to pass to the backend - see the relevant Wrapper object
-                for options
+                    for options
         
-            Sets:
-                self.strategy
-                self.config
-                self._done_setup - cannot call optimize until this flag is True
+           Sets:
+                self.strategy (Strategy): optimization strategy
+                self.config (Configuration): basis set configuration
+                self._done_setup (bool): cannot call optimize until this flag is True
         """
         # get configuration
         self.configuration(quality=quality)
-        logging.info("Using the %s building strategy", strategy.name)
-        logging.info("Method: %s", method)
+        bo_logger.info("Using the %s building strategy", strategy.name)
+        bo_logger.info("Method: %s", method)
         
         # Set or compute reference value
         label,value = reference
         self._molecule.method = method
         self.strategy = strategy
-        logging.info("Reference type for this strategy is %s", strategy.eval_type)
+        bo_logger.info("Reference type for this strategy is %s", strategy.eval_type)
         if value is None:
             # Compute
             value = 0.0
             if api.which_backend() == 'Empty':
-                logging.warning(f"No backend currently set, can't compute reference value")
+                bo_logger.warning("No backend currently set, can't compute reference value")
             else:
-                logging.info("Calculating reference value using {api.which_backend()} and %s/%s", method, label)
+                bo_logger.info("Calculating reference value using %s and %s/%s", api.which_backend(), method, label)
                 self._molecule.basis  = fetch_basis(label, self._symbol)
                 success = api.run_calculation(evaluate=strategy.eval_type, mol=self._molecule, params=params)
                 if success != 0:
-                    logging.warning("Reference calculation failed")
+                    bo_logger.warning("Reference calculation failed")
                 else:
                     value = api.get_backend().get_value(strategy.eval_type)         
         self._molecule.add_reference(strategy.eval_type, value)
-        logging.info("Reference value set to %f", value)
+        bo_logger.info("Reference value set to %f", value)
         
         # Make a guess for the primitives
-        logging.info("Generating starting guess from %s", strategy.guess.__name__)
+        bo_logger.info("Generating starting guess from %s", strategy.guess.__name__)
         self._molecule.basis[self._symbol] = strategy.guess(self, params=strategy.guess_params)
         self._done_setup = True
-        logging.info("Setup complete")
+        bo_logger.info("Atomic basis setup complete")
         
     @needs_element
-    def set_even_tempered(self, method='hf', accuracy=1e-5, max_n=18, max_l=-1, exact_ref=True, params={}):
+    def set_even_tempered(self, 
+                          method: str='hf',
+                          accuracy: float=1e-5,
+                          max_n: int=18,
+                          max_l: int=-1, 
+                          exact_ref: bool=True, 
+                          params: dict[str, Any]={}):
         """Looks up or computes an even tempered basis expansion for the atom
         
            Arguments:
@@ -227,7 +281,7 @@ class AtomicBasis(Basis):
                 reference = ('exact', data._ATOMIC_HF_ENERGIES[self._element.atomic_number])
             else:
                 reference = ('cc-pV5Z', None)
-            strategy = EvenTemperedStrategy()
+            strategy = EvenTemperedStrategy(max_n=max_n, max_l=max_l)
             self.setup(method=method, strategy=strategy, reference=reference, params=params)
             self.optimize(algorithm='Nelder-Mead', params=params)
             self.et_params = strategy.shells
@@ -235,21 +289,27 @@ class AtomicBasis(Basis):
             self._molecule.basis[self._symbol] = even_temper_expansion(self.et_params)
     
     @needs_element
-    def optimize(self, algorithm='Nelder-Mead', params={}):
+    def optimize(self,
+                 algorithm: str='Nelder-Mead',
+                 params: dict[str, Any]={}) -> OptResult:
         """Runs the basis optimization
             
            Arguments:
                 algorithm (str): optimization algorithm to use, see scipy.optimize for options
                 params (dict): dictionary of parameters to pass to the backend - 
-                see the relevant Wrapper object for options
+                    see the relevant Wrapper object for options
+           
+           Returns:
+                 opt_results (OptResult): a dictionary of scipy results from each opt step
         """
         if self._done_setup:
-            optimize(self._molecule, algorithm=algorithm, strategy=self.strategy, **params)
+            self.opt_results = optimize(self._molecule, algorithm=algorithm, strategy=self.strategy, **params)
         else:
-            logging.error("Please call setup first")
+            bo_logger.error("Please call setup first")
+            self.opt_results = None
+        return self.opt_results
         
     def contract(self):
         """Handles contraction of primitives"""
         raise NotImplementedException
     
-        

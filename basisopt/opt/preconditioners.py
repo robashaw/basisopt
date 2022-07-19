@@ -1,7 +1,9 @@
 # preconditioners, needs expanding
+from typing import Callable
 import numpy as np
+Preconditioner = Callable[[np.ndarray, ...], np.ndarray]
 
-def inverse(inv_func):
+def inverse(inv_func: Preconditioner) -> Preconditioner:
     """Decorator that adds an inverse function as an attribute
        All preconditioners must be decorated with an inverse,
        which should usually have the same signature as the parent.
@@ -14,7 +16,7 @@ def inverse(inv_func):
         return func
     return decorator
     
-def _unit_inverse(y, minval=1e-4, ratio=1.4):
+def _unit_inverse(y: np.ndarray, minval=1e-4, ratio=1.4):
     """Default, does nothing"""
     return y
     
@@ -24,6 +26,7 @@ def unit(x):
     return x
 
 def _positive_inverse(y, minval=1e-4, ratio=1.4):
+    """Inverse of make_positive"""
     x = np.copy(y)
     for ix, v in enumerate(x):
         if v < minval:

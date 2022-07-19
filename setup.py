@@ -2,6 +2,7 @@ from setuptools import setup
 exec(open('basisopt/version.py').read())
 
 setup(name='basisopt',
+      python_requires='>3.9.0',
       version=__version__,
       packages=['basisopt',
                 'basisopt.basis',

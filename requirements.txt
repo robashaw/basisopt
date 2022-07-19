@@ -1,8 +1,8 @@
-colorlog
-numpy
-scipy
-matplotlib
-pandas
-monty
-mendeleev
-basis_set_exchange
+colorlog>=6.6.0
+numpy>=1.21.6
+scipy>=1.8.1
+matplotlib>=3.5.2
+pandas>=1.3.5
+monty>=2022.4.26
+mendeleev==0.9.0
+basis_set_exchange>=0.9

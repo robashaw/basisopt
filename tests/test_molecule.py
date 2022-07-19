@@ -14,6 +14,13 @@ def test_default_molecule():
     assert len(m.unique_atoms()) == 0
     assert m.natoms() == 0
     
+def test_nelectrons():
+    m = Molecule()
+    nel = m.nelectrons()
+    assert m.nelectrons() == 0
+    m.from_xyz("tests/data/caffeine.xyz")
+    assert m.nelectrons() == 102
+    
 def test_add_atom():
     m = Molecule()
     

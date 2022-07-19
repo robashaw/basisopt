@@ -17,6 +17,15 @@ def test_shell_compute():
         for (c, v) in shell_data._compute_values:
             value = s.compute(*c)
             assert almost_equal(value, v[ix], thresh=1e-10)
+            
+def test_basis_dict():
+    hbas = shell_data.get_vdz_internal()
+    d = basis_to_dict(hbas)
+    assert 'h' in d
+    b = dict_to_basis(d)
+    assert 'h' in b
+    for s, s_ in zip(hbas['h'], b['h']):
+        assert s.exps.size == s_.exps.size
 
 def test_default_result():
     r = Result()

@@ -1,7 +1,6 @@
 # molecule
 import logging
 import numpy as np
-from functools import cache
 from typing import Any
 from monty.json import MSONable
 from .exceptions import InvalidDiatomic
@@ -47,7 +46,6 @@ class Molecule(MSONable):
         self._results = {}
         self._references = {}
         
-    @cache
     def nelectrons(self) -> int:
         unique = self.unique_atoms()
         nel = 0

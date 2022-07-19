@@ -1,6 +1,6 @@
 # data
-import numpy as np
 from functools import cache
+import numpy as np
 from mendeleev import element as md_element
 
 # Conversion factors

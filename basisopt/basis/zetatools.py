@@ -1,7 +1,7 @@
 # zeta_tools
-import numpy as np
-
 from typing import Callable
+
+import numpy as np
 
 from mendeleev import element as MDElement
 from mendeleev.econf import ElectronicConfiguration

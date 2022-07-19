@@ -1,5 +1,8 @@
 from setuptools import setup
-exec(open('basisopt/version.py').read())
+exec(
+    open('basisopt/version.py', 'r',
+         encoding='utf-8').read()
+)
 
 setup(name='basisopt',
       python_requires='>3.9.0',

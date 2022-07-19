@@ -1,6 +1,5 @@
-import numpy as np
-
 from typing import Any
+import numpy as np
 
 from mendeleev import element as md_element
 
@@ -57,7 +56,7 @@ class EvenTemperedStrategy(Strategy):
                  target: float=1e-5,
                  max_n: int=18,
                  max_l: int=-1):
-        super(EvenTemperedStrategy, self).__init__(eval_type=eval_type, pre=unit)
+        super().__init__(eval_type=eval_type, pre=unit)
         self.name = 'EvenTemper'
         self.shells = []
         self.shell_done = []
@@ -69,7 +68,7 @@ class EvenTemperedStrategy(Strategy):
         
     def as_dict(self) -> dict[str, Any]:
         """Returns MSONable dictionary of object"""
-        d = super(EvenTemperedStrategy, self).as_dict()
+        d = super().as_dict()
         d["@module"] = type(self).__module__
         d["@class"] = type(self).__name__
         d["shells"] = self.shells

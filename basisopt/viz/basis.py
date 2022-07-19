@@ -1,8 +1,7 @@
 # correlation consistent plots
+from typing import Callable
 import numpy as np
 import matplotlib.pyplot as plt
-
-from typing import Callable
 
 from basisopt.basis import Basis
 from basisopt.containers import OptResult, InternalBasis
@@ -12,7 +11,6 @@ def extract_steps(opt_results: OptResult,
     """Get the given key value for each step
        in an opt_results dictionary
     """
-    nsteps = len(opt_results)
     steps, values = [], []
     for k, d in opt_results.items():
         steps.append(int(k[9:]))
@@ -53,11 +51,11 @@ def plot_objective(basis: Basis,
                 steps[key], values[key] = extract_steps(results,
                                                         key='fun')
                 break
-            else:
-                steps[k], values[k] = extract_steps(v, key='fun')
+            steps[k], values[k] = extract_steps(v, key='fun')
         
-        for k in steps.keys():
-            ax.plot(x_transform(steps[k]), y_transform(values[k]), 
+        for k, v in steps.items():
+            ax.plot(x_transform(v),
+                    y_transform(values[k]), 
                     'x', ms=8, label=k)
         if (len(steps)) > 1:
             ax.legend()
@@ -104,16 +102,16 @@ def plot_exponents(basis: InternalBasis,
                 flat_bases.append(flat_basis)
             else:
                 flat_bases = flat_basis
-        colors = ['C{}'.format(i) for i in range(len(flat_bases))]
+        colors = [f"C{i}" for i in range(len(flat_bases))]
         ax.eventplot(flat_bases, orientation='vertical',
                      linelengths=0.5, colors=colors)
             
         if split_by_shell:
-            ax.set_xticks([i for i in range(len(flat_bases))])
+            ax.set_xticks(list(range(len(flat_bases))))
             ax.set_xticklabels([s.l for v in bas.values() for s in v])
         else:
-            ax.set_xticks([i for i in range(len(bas))])
-            ax.set_xticklabels([k for k in bas.keys()])
+            ax.set_xticks(list(range(len(bas))))
+            ax.set_xticklabels(list(bas.keys()))
         
         if log_scale:
             ax.set_ylabel(r"$\log_{10}$ (exponent)")

@@ -1,8 +1,7 @@
+from typing import Any
+import copy
 import logging
 import numpy as np
-import copy
-
-from typing import Any
 
 from basisopt.molecule import build_diatomic
 from basisopt.testing.rank import *
@@ -58,7 +57,7 @@ class ReduceStrategy(Strategy):
                  max_l: int=-1,
                  reopt_all: bool=True, 
                  params: dict[str, Any]={}):
-        Strategy.__init__(self, eval_type=eval_type, pre=make_positive)
+        super().__init__(eval_type=eval_type, pre=make_positive)
         self.name = 'Reduce'
         self.full_basis = starting_basis 
         self.saved_basis = None
@@ -82,7 +81,7 @@ class ReduceStrategy(Strategy):
             
     def as_dict(self) -> dict[str, Any]:
         """Returns MSONable dictionary of object"""
-        d = super(ReduceStrategy, self).as_dict()
+        d = super().as_dict()
         d["@module"] = type(self).__module__
         d["@class"] = type(self).__name__
         d["full_basis"] = basis_to_dict(self.full_basis)

@@ -25,7 +25,7 @@ class Test(Result):
                  xyz_file: Optional[str]=None,
                  charge: int=0,
                  mult: int=1):
-        super(Test, self).__init__(self, name)
+        super().__init__(name)
         self.reference = reference
         self.molecule = None
         
@@ -80,7 +80,7 @@ class Test(Result):
         raise NotImplementedException
         
     def as_dict(self):
-        d = super(Test, self).as_dict()        
+        d = super().as_dict()        
         d["@module"] = type(self).__module__
         d["@class"]  = type(self).__name__
         d["reference"] = self.reference
@@ -114,7 +114,8 @@ class PropertyTest(Test):
                  xyz_file: Optional[str]=None,
                  charge: int=0,
                  mult: int=1):
-        Test.__init__(self, name, mol=mol, xyz_file=xyz_file, charge=charge, mult=mult)
+        super().__init__(name, mol=mol, xyz_file=xyz_file,
+                         charge=charge, mult=mult)
         self._eval_type = ''
         self.eval_type  = prop
     
@@ -160,7 +161,7 @@ class PropertyTest(Test):
         return value
         
     def as_dict(self):
-        d = super(PropertyTest, self).as_dict()        
+        d = super().as_dict()        
         d["@module"] = type(self).__module__
         d["@class"]  = type(self).__name__
         d["eval_type"] = self.eval_type

@@ -1,7 +1,7 @@
 # Template for program wrappers
+from typing import Any, Callable
 import functools
 
-from typing import Any, Callable
 from basisopt.exceptions import MethodNotAvailable, InvalidMethodString
 from basisopt.util import bo_logger
 from basisopt.molecule import Molecule
@@ -134,7 +134,7 @@ class Wrapper:
             bo_logger.error(e)
             return -2
         except MethodNotAvailable:
-            bo_logger.error(f"Unable to run %s with %s backend", method_str, self._name)
+            bo_logger.error("Unable to run %s with %s backend", method_str, self._name)
             return -1
     
     def method_is_available(self, method: str='energy') -> bool:

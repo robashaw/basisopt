@@ -1,13 +1,11 @@
 # utility functions
-import logging
-import numpy as np
-import json
-
 from typing import Any
+import logging
+import json
+import numpy as np
 from monty.json import MSONable, MontyEncoder, MontyDecoder
 
-"""The internal logging object"""
-bo_logger = logging.getLogger('basisopt')
+bo_logger = logging.getLogger('basisopt') # internal logging object
 
 def read_json(filename: str) -> MSONable:
     """Reads an MSONable object from file
@@ -18,9 +16,10 @@ def read_json(filename: str) -> MSONable:
        Returns:
             object
     """
-    with open(filename, 'r') as f:
+    with open(filename, 'r', encoding='utf-8') as f:
         obj = json.load(f, cls=MontyDecoder)
-    bo_logger.info(f"Read {type(obj).__name__} from {filename}")
+    bo_logger.info("Read %s from %s",
+                   type(obj).__name__, filename)
     return obj
 
 def write_json(filename: str, obj: MSONable):
@@ -33,10 +32,11 @@ def write_json(filename: str, obj: MSONable):
     obj_type = type(obj).__name__
     if isinstance(obj, MSONable):
         bo_logger.info(f"Writing {obj_type} to {filename}")
-        with open(filename, 'w') as f:
+        with open(filename, 'w', encoding='utf-8') as f:
             json.dump(obj, f, cls=MontyEncoder)
     else:
-        bo_logger.error(f"{obj_type} cannot be converted to JSON format")
+        bo_logger.error("%s cannot be converted to JSON format",
+                        obj_type)
 
 def dict_decode(d: dict[str, Any]) -> dict[str, Any]:
     decoder = MontyDecoder()

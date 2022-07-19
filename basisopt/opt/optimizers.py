@@ -1,8 +1,7 @@
+from typing import Any, Callable, Optional
 import logging
 import numpy as np
 from scipy.optimize import minimize
-
-from typing import Any, Callable, Optional
  
 from basisopt import api
 from basisopt.molecule import Molecule
@@ -53,7 +52,7 @@ def _atomic_opt(basis: InternalBasis,
             results[f"atomicopt{ctr}"] = res
             ctr += 1
         else:
-            info_str = f"Skipping empty shell"
+            info_str = "Skipping empty shell"
         bo_logger.info(info_str)
     return results
 

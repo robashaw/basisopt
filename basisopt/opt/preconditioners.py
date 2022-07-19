@@ -1,7 +1,6 @@
 # preconditioners, needs expanding
-import numpy as np
-
 from typing import Callable
+import numpy as np
 Preconditioner = Callable[[np.ndarray, ...], np.ndarray]
 
 def inverse(inv_func: Preconditioner) -> Preconditioner:

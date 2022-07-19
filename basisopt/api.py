@@ -37,7 +37,7 @@ def set_backend(name: str, path: str=""):
     try:
         func = _BACKENDS[name.lower()]
         if _CURRENT_BACKEND._name != "Dummy":
-            bo_logger.warning(f"Overwriting previous backend")
+            bo_logger.warning("Overwriting previous backend")
         func(path)
         bo_logger.info("Backend set to %s", _CURRENT_BACKEND._name)
     except KeyError:
@@ -127,7 +127,7 @@ def orca(path: str):
     global _CURRENT_BACKEND
     from basisopt.wrappers.orca import OrcaWrapper
     _CURRENT_BACKEND = OrcaWrapper(path)
-    bo_logger.info(f"ORCA install dir at: {path}")
+    bo_logger.info("ORCA install dir at: %s", path)
 
 def run_calculation(evaluate: str='energy',
                     mol: Molecule=None,

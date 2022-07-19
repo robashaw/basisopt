@@ -1,10 +1,10 @@
 # Wrappers for psi4 functionality
 import os
 import subprocess
+from typing import Any
+
 import numpy as np
 import mendeleev as md
-
-from typing import Any
 
 from basisopt.wrappers.wrapper import Wrapper, available
 from basisopt.bse_wrapper import internal_basis_converter
@@ -13,12 +13,16 @@ from basisopt.containers import InternalBasis
 from basisopt.exceptions import FailedCalculation
 
 class OrcaWrapper(Wrapper):
-    """Wrapper for Orca 5"""
+    """Wrapper for Orca 5
+    
+       Private attribute:
+            pwd (str): the present working directory
+    """
     def __init__(self, orca_path: str):
         """Args:
                 orca_path (str): path to the orca executable
         """
-        super(OrcaWrapper, self).__init__(name='Orca')
+        super().__init__(name='Orca')
         self._path = orca_path
         self._method_strings = {
             'hf'            : ['energy', 'dipole', 'quadrupole', 'polarizability', 'jk_error'],
@@ -36,6 +40,7 @@ class OrcaWrapper(Wrapper):
             'casscf'        : ['energy', 'trans_dipole', 'trans_quadrupole'],
             'rasscf'        : ['energy', 'trans_dipole', 'trans_quadrupole']
         }
+        self._pwd = "."
         
     def convert_molecule(self, m: Molecule) -> str:
         """Convert an internal Molecule object
@@ -153,7 +158,8 @@ class OrcaWrapper(Wrapper):
         basis += "end\n"
         
         # write to file
-        with open(f"{prefix}.inp", 'w') as f:
+        with open(f"{prefix}.inp", 'w',
+                  encoding='utf-8') as f:
             f.write(cmd)
             f.write(mol)
             f.write(basis)
@@ -170,7 +176,7 @@ class OrcaWrapper(Wrapper):
                   program (str): the orca executable to use 
         """
         run_cmd = f"{self._path}/{program} {prefix}.inp > {prefix}.out"
-        subprocess.run(run_cmd, shell=True)
+        subprocess.run(run_cmd, shell=True, check=True)
         
     def _read_property_file(self, 
                             prefix: str,
@@ -271,7 +277,7 @@ class OrcaWrapper(Wrapper):
                 prefix (str): the prefix for the orca run files
         """
         run_cmd = f"rm {prefix}*"
-        subprocess.run(run_cmd, shell=True)
+        subprocess.run(run_cmd, shell=True, check=True)
         os.chdir(self._pwd)
         
     def _property_calc(self, 
@@ -331,12 +337,12 @@ class OrcaWrapper(Wrapper):
         if 'energy' not in mol._references:
             params["command_line"] = cmd
             mol.add_reference('energy', self.energy(mol, tmp=tmp, **params))
-        ref_value = mol.get_reference('energy')
         
         if fit_type == "jk":
             cmd += " RIJK"
         else:
             cmd += " RIJONX"
+            
         params["command_line"] = cmd
         mol.add_result('energy', self.energy(mol, tmp=tmp, **params))
         return mol.get_delta('energy')

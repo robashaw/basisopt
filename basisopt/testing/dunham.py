@@ -1,7 +1,6 @@
-# base test types
-import numpy as np
-
+# duham test
 from typing import Any, Optional
+import numpy as np
 
 from mendeleev import element as md_element
 
@@ -98,10 +97,12 @@ class DunhamTest(Test):
                  poly_order: int=6,
                  step: float=0.05,
                  Emax: float=0):
-        Test.__init__(self, name, mol=mol, charge=charge, mult=mult)
+        super().__init__(name, mol=mol, charge=charge, mult=mult)
         self.poly_order = max(3, poly_order)
         self.step = step
         self.Emax = Emax
+        self.poly = None
+        self.shift = 0.
         
         if len(mol_str) != 0:
             self.from_string(mol_str, charge=charge, mult=mult)
@@ -109,7 +110,7 @@ class DunhamTest(Test):
         self.reduced_mass()
     
     def as_dict(self):
-        d = super(DunhamTest, self).as_dict()
+        d = super().as_dict()
         d["@module"] = type(self).__module__
         d["@class"] = type(self).__name__
         d["poly_order"] = self.poly_order

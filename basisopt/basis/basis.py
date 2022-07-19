@@ -1,9 +1,12 @@
+from typing import Any, Optional, Union
 import copy
 import logging
 import pickle
+
 import numpy as np
+
 from monty.json import MSONable
-from typing import Any, Optional, Union
+
 from basisopt.containers import Result, Shell, InternalBasis
 from basisopt.data import ETParams
 from basisopt.util import bo_logger, dict_decode

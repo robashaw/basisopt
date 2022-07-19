@@ -1,6 +1,6 @@
 # regularisers, needs expanding
-import numpy as np
 from typing import Callable
+import numpy as np
 
 Regulariser = Callable[[np.ndarray], float]
 

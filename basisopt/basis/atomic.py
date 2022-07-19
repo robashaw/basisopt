@@ -1,9 +1,9 @@
+from typing import Any, Callable, Optional
 import logging
 import functools
-import numpy as np
 import pickle
 
-from typing import Any, Callable, Optional
+import numpy as np
 
 from mendeleev import element as MDElement
 from mendeleev.econf import ElectronicConfiguration
@@ -58,7 +58,7 @@ class AtomicBasis(Basis):
                  name: str='H',
                  charge: int=0,
                  mult: int=1):
-        super(AtomicBasis, self).__init__()
+        super().__init__()
 
         self._element = None
         self._molecule = Molecule(name=name+'_atom')
@@ -79,7 +79,7 @@ class AtomicBasis(Basis):
     
     def as_dict(self) -> dict[str, Any]:
         """Returns MSONable dictionary of AtomicBasis"""
-        d = super(AtomicBasis, self).as_dict()
+        d = super().as_dict()
         d["@module"] = type(self).__module__
         d["@class"]  = type(self).__name__
         d["et_params"] = self.et_params

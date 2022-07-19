@@ -1,9 +1,8 @@
 # funcitonality to rank basis shells
-import numpy as np
+from typing import Any, Optional
 import copy 
 import logging
-
-from typing import Any, Optional
+import numpy as np
 
 from basisopt import api
 from basisopt.exceptions import FailedCalculation, EmptyBasis
@@ -132,7 +131,7 @@ def reduce_primitives(atomic: AtomicBasis,
             value = e[r[start]]
         
         if start == (n-1):
-            bo_logger.warning(f"Shell {s} with: l={shell.l}, x={shell.exps} now empty")
+            bo_logger.warning("Shell %d with l=%d now empty", s, shell.l)
             shell.exps = []
             shell.coefs = []
         else:

@@ -1,6 +1,6 @@
-import numpy as np
-
 from typing import Any, Optional, Union
+
+import numpy as np
 
 from basisopt.util import bo_logger, dict_decode
 from basisopt.containers import InternalBasis, OptResult
@@ -25,7 +25,7 @@ class JKFitBasis(Basis):
                  mult=1, 
                  mol: Optional[Molecule]=None,
                  jonly: bool=False):
-        super(JKFitBasis, self).__init__()
+        super().__init__()
         self.name = name
         if mol:
             self._molecule = mol
@@ -40,7 +40,7 @@ class JKFitBasis(Basis):
     
     def as_dict(self) -> dict[str, Any]:
         """Returns MSONable dictionary of JKFitBasis"""
-        d = super(JKFitBasis, self).as_dict()
+        d = super().as_dict()
         d["@module"] = type(self).__module__
         d["@class"]  = type(self).__name__
         d["name"] = self.name
@@ -189,7 +189,7 @@ def jkfit_collection(element: str,
     for basis, config in basis_pairs:
         new_jk = JKFitBasis(name=element, charge=charge, mult=mult, mol=mol, jonly=jonly)
         new_jk.setup(basis, guess=guess, config=config, method=method, params=params)
-        res = new_jk.optimize(algorithm=algorithm, params=opt_params)
+        _ = new_jk.optimize(algorithm=algorithm, params=opt_params)
         results.append(new_jk)
         if jonly:
             guess = new_jk._molecule.jbasis

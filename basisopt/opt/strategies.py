@@ -1,7 +1,6 @@
+from typing import Any
 import numpy as np
 from monty.json import MSONable
-
-from typing import Any
 
 from basisopt import api, data
 from basisopt.containers import basis_to_dict, InternalBasis

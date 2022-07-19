@@ -1,8 +1,7 @@
 # Wrappers for psi4 functionality
-import psi4
-import logging
-
 from typing import Any
+import logging
+import psi4
 
 from basisopt.wrappers.wrapper import Wrapper, available
 from basisopt.bse_wrapper import internal_basis_converter
@@ -12,7 +11,7 @@ from basisopt.molecule import Molecule
 class Psi4Wrapper(Wrapper):
     """Wrapper for Psi4"""
     def __init__(self):
-        super(Psi4Wrapper, self).__init__(name='Psi4')
+        super().__init__(name='Psi4')
         self._method_strings = {
             'scf'       : ['energy', 'dipole', 'quadrupole'],
             'hf'        : ['energy', 'dipole', 'quadrupole'],
@@ -55,9 +54,8 @@ class Psi4Wrapper(Wrapper):
         if m in ['scf', 'hf']:
             return 'SCF'
         elif m in ['cisd']:
-            return 'CI'
-        else:
-            return method.upper()
+            return 'CI'        
+        return method.upper()
             
     def _command_string(self, method: str, **params) -> str:
         """Helper function to turn an internal method
@@ -133,7 +131,7 @@ class Psi4Wrapper(Wrapper):
                 
         self.initialise(mol, name=name, tmp=tmp, **params)
         runstring = self._command_string(mol.method, **params)
-        E, wfn = psi4.properties(runstring, return_wfn=True, properties=properties)
+        _, wfn = psi4.properties(runstring, return_wfn=True, properties=properties)
         
         results = {}
         for p, s in zip(properties, strings):

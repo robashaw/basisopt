@@ -1,11 +1,10 @@
-
+from typing import Any, Callable, Optional, Union
 import functools
 import logging
 import copy
 import pickle
-import numpy as np
 
-from typing import Any, Callable, Optional, Union
+import numpy as np
 
 from basisopt import api
 from basisopt.molecule import Molecule
@@ -37,7 +36,7 @@ class MolecularBasis(Basis):
     def __init__(self, 
                  name: str='Empty',
                  molecules: list[Molecule]=[]):
-        super(MolecularBasis, self).__init__()
+        super().__init__()
         self.name = name
         self.basis = {}
         self._molecules = {}
@@ -56,7 +55,7 @@ class MolecularBasis(Basis):
         
     def as_dict(self) -> dict[str, Any]:
         """Returns as MSONable dictionary"""
-        d = super(MolecularBasis, self).as_dict()
+        d = super().as_dict()
         d["@module"] = type(self).__module__
         d["@class"] = type(self).__name__
         d["basis"] = basis_to_dict(self.basis)
@@ -86,7 +85,8 @@ class MolecularBasis(Basis):
     def add_molecule(self, molecule: Molecule):
         """Adds a Molecule object to the optimization pool"""
         if molecule.name in self._molecules:
-            bo_logger.warning(f"Molecule with name {molecule.name} being overwritten")
+            bo_logger.warning("Molecule with name %s being overwritten", 
+                              molecule.name)
         self._molecules[molecule.name] = molecule
         for atom in molecule.unique_atoms():
             self._atoms.add(atom.lower())
@@ -95,9 +95,8 @@ class MolecularBasis(Basis):
         """Returns a Molecule with the given name, if it exists, otherwise None"""
         if name in self._molecules:
             return self._molecules[name]
-        else:
-            bo_logger.warning(f"No molecule with name {name}")
-            return None
+        bo_logger.warning("No molecule with name %s", name)
+        return None
             
     def get_basis(self) -> InternalBasis:
         """Returns the basis set used for all molecules"""
@@ -109,8 +108,7 @@ class MolecularBasis(Basis):
         """
         if atom in self._atomic_bases:
             return self._atomic_bases[atom]
-        else:
-            return None
+        return None
     
     def unique_atoms(self) -> list[str]:
         """Returns list of unique atoms across all molecules"""
@@ -118,7 +116,7 @@ class MolecularBasis(Basis):
         
     def molecules(self) -> list[Molecule]:
         """Returns a list of all the Molecule objects"""
-        return [m for m in self._molecules.values()]
+        return list(self._molecules.values())
         
     def run_test(self,
                  name: str, 
@@ -138,6 +136,7 @@ class MolecularBasis(Basis):
                 Dicionary of results for each test, indexed by molecule name
         """
         t = self.get_test(name)
+        results = {}
         if t is None:
             bo_logger.warning("No test with name %s", name)
         else:
@@ -161,14 +160,13 @@ class MolecularBasis(Basis):
                                               params=params)
                     child.add_data(f"{m.name}_ref", t.reference)
                     
-            results = {}
             for m in self.molecules():
                 t.result = t.calculate(m.method, self.basis, params=params)
                 child.add_data(m.name, t.result)
                 results[m.name] = t.result
                 if do_print:
                     bo_logger.info("%s: %s", m.name, str(t.result))  
-            return results  
+        return results  
                 
     def run_all_tests(self,
                       params: dict[str, Any]={}, 
@@ -192,7 +190,7 @@ class MolecularBasis(Basis):
         bo_logger.info(header)
         for m in self.molecules():
             res_string = f"{m.name}"
-            for k, v in results.items():
+            for v in results.values():
                 res_string += f"\t{v[m.name]}"
             bo_logger.info(res_string)
             
@@ -224,7 +222,7 @@ class MolecularBasis(Basis):
                       for k, v in self._atomic_bases.items()}
         if reference is not None:
             if api.which_backend() == 'Empty':
-                bo_logger.warning(f"No backend currently set, can't compute reference value")
+                bo_logger.warning("No backend currently set, can't compute reference value")
             else:
                 ref_basis = fetch_basis(reference, self.unique_atoms())
                 for m in self.molecules():

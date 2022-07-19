@@ -1,7 +1,9 @@
 # molecule
-import logging
-import numpy as np
 from typing import Any
+import logging
+
+import numpy as np
+
 from monty.json import MSONable
 from .exceptions import InvalidDiatomic
 from .data import atomic_number

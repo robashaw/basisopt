@@ -1,12 +1,14 @@
 import logging
 import colorlog
 import os
-
-bo_logger = logging.getLogger('basisopt')
+from typing import Any, Callable
 
 from basisopt.wrappers.wrapper import Wrapper
 from basisopt.wrappers.dummy import DummyWrapper
 from basisopt.exceptions import MethodNotAvailable, FailedCalculation
+from basisopt.molecule import Molecule
+
+bo_logger = logging.getLogger('basisopt')
 
 try:
     import dask
@@ -20,17 +22,17 @@ _CURRENT_BACKEND = DummyWrapper()
 _TMP_DIR = "."
 
 
-def register_backend(func):
+def register_backend(func: Callable[[str, str], None]) -> Callable[[str, str], None]:
     """Registers a function to set the backend for basisopt"""
     _BACKENDS[func.__name__] = func
     return func
     
-def set_backend(name, path=""):
+def set_backend(name: str, path: str=""):
     """Sets the global backend for basisopt calculations
     
        Arguments:
             name (str): the name of the program to use 
-            path (str): 
+            path (str): absolute path to the program executable
     """
     try:
         func = _BACKENDS[name.lower()]
@@ -41,13 +43,13 @@ def set_backend(name, path=""):
     except KeyError:
         bo_logger.error("%s is not a registered backend for basisopt", name)
         
-def get_backend():
+def get_backend() -> Wrapper:
     """Returns:
-        backend: the Wrapper object for the current backend
+        backend (Wrapper): the Wrapper object for the current backend
     """
     return _CURRENT_BACKEND        
     
-def set_tmp_dir(path):
+def set_tmp_dir(path: str):
     """Sets the working directory for all backend calculations,
        creating the directory if it doesn't already exist.
     
@@ -62,19 +64,20 @@ def set_tmp_dir(path):
     _TMP_DIR = path
     bo_logger.info("Scratch directory set to %s", _TMP_DIR)
     
-def get_tmp_dir():
+def get_tmp_dir() -> str:
     """Returns:
         Path to the current scratch/temp directory
     """
     return _TMP_DIR
 
-def which_backend():
+def which_backend() -> str:
     """Returns:
         str: The name of the currently registered backend
     """
     return _CURRENT_BACKEND._name
     
-def set_logger(level=logging.INFO, filename=None):
+def set_logger(level: int=logging.INFO,
+               filename: str=None):
     """Initialises Python logging, formatting it nicely,
        and optionally printing to a file.
     """
@@ -101,7 +104,7 @@ def set_logger(level=logging.INFO, filename=None):
         bo_logger.addHandler(fh)
 
 @register_backend
-def dummy(path):
+def dummy(path: str):
     """Sets backend to the DummyWrapper for testing and
        for when calculations aren't needed.
     """
@@ -109,7 +112,7 @@ def dummy(path):
     _CURRENT_BACKEND = DummyWrapper()
 
 @register_backend
-def psi4(path):
+def psi4(path: str):
     """ Tests Psi4 import and prepares to be used as calculation backend"""
     try:
         global _CURRENT_BACKEND
@@ -119,18 +122,21 @@ def psi4(path):
         bo_logger.error("Psi4 backend not found!")
 
 @register_backend
-def orca(path):
+def orca(path: str):
     """ Tests orca import and prepares to be used as calculation backend"""
     global _CURRENT_BACKEND
     from basisopt.wrappers.orca import OrcaWrapper
     _CURRENT_BACKEND = OrcaWrapper(path)
     bo_logger.info(f"ORCA install dir at: {path}")
 
-def run_calculation(evaluate='energy', mol=None, params={}):
+def run_calculation(evaluate: str='energy',
+                    mol: Molecule=None,
+                    params: dict[Any, Any]={}) -> int:
     """ Interface to the wrapper used to run a calculation.
     
         Arguments:
             evaluate (str): The function to be called for the computation
+            mol (Molecule): molecule to run the calculation on
             params (dict): A dictionary of parameters needed for the computation
     
         Returns:
@@ -140,16 +146,21 @@ def run_calculation(evaluate='energy', mol=None, params={}):
     _CURRENT_BACKEND.clean()
     return result
 
-def _one_job(mol, evaluate='energy', params={}):
+def _one_job(mol: Molecule,
+             evaluate: str='energy',
+             params: dict[Any, Any]={}) -> tuple[str, Any]:
     """Internal helper to run a single job in a distributed array"""
     success = _CURRENT_BACKEND.run(evaluate, mol, params, tmp=_TMP_DIR)
     if success != 0:
         raise FailedCalculation
     value   = (_CURRENT_BACKEND.get_value(evaluate))
     _CURRENT_BACKEND.clean()
-    return mol.name,value
+    return mol.name, value
 
-def run_all(evaluate='energy', mols=[], params={}, parallel=False):
+def run_all(evaluate: str='energy',
+            mols: list[Molecule]=[],
+            params: dict[Any, Any]={},
+            parallel: bool=False) -> dict[str, Any]:
     """Runs calculations over a set of molecules, optionally in parallel
     
        Arguments:

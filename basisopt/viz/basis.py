@@ -2,7 +2,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def extract_steps(opt_results, key="fun"):
+from typing import Callable
+
+from basisopt.basis import Basis
+from basisopt.containers import OptResult, InternalBasis
+
+def extract_steps(opt_results: OptResult,
+                  key: str="fun"):
     """Get the given key value for each step
        in an opt_results dictionary
     """
@@ -13,9 +19,11 @@ def extract_steps(opt_results, key="fun"):
         values.append(d.get(key, 0.))
     return steps, np.array(values)
     
-def plot_objective(basis, figsize=(9, 9),
-                   x_transform=lambda x: x,
-                   y_transform=lambda y: y):
+Transform = Callable[[np.ndarray], np.ndarray]
+def plot_objective(basis: Basis,
+                   figsize: tuple[float, float]=(9, 9),
+                   x_transform: Transform=lambda x: x,
+                   y_transform: Transform=lambda y: y) -> tuple[object, object]:
     """ Create a matplotlib figure of the objective function value
         at each step of an optimization, separated by atom type if 
         multiple atoms given.
@@ -57,8 +65,11 @@ def plot_objective(basis, figsize=(9, 9),
         raise TypeError("Not a suitable Basis object")
     return fig, ax
     
-def plot_exponents(basis, atoms=[], split_by_shell=True,
-                   log_scale=True, figsize=(9, 9)):
+def plot_exponents(basis: InternalBasis,
+                   atoms: list[str]=[], 
+                   split_by_shell: bool=True,
+                   log_scale: bool=True,
+                   figsize: tuple[float, float]=(9, 9)) -> tuple[object, list[object]]:
     """ Creates event plots to visualize exponents in a basis set.
                    
         Arguments:

@@ -1,6 +1,12 @@
 # zeta_tools
-from basisopt import data
 import numpy as np
+
+from typing import Callable
+
+from mendeleev import element as MDElement
+from mendeleev.econf import ElectronicConfiguration
+from basisopt import data
+
 
 """Dictionary of possible basis configuration 'qualities'
    A quality corresponds to a manner of calculating how many basis
@@ -19,13 +25,15 @@ import numpy as np
         cc_pvNz:            correlation consistent, N=d,t,q,5
 """
 QUALITIES = {}
+Configuration = dict[str, int]
+Quality = Callable[[MDElement], Configuration]
 
-def register_quality(func):
+def register_quality(func: Quality) -> Quality:
     """Decorator to make a quality function available"""
     QUALITIES[func.__name__] = func
     return func
 
-def get_next_l(l_list):
+def get_next_l(l_list: list[str]) -> str:
     """Given a list of existing angular momenta, gives
        the angular momentum symbol one higher.
     
@@ -39,7 +47,7 @@ def get_next_l(l_list):
     next_l = np.max(values) + 1
     return data.INV_AM_DICT[next_l]
 
-def enum_shells(conf):
+def enum_shells(conf: ElectronicConfiguration) -> Configuration:
     """Enumerates the number of functions of each angular momentum
     
        Arguments:
@@ -56,7 +64,7 @@ def enum_shells(conf):
         config[l] += 1
     return config
     
-def config_to_string(conf):
+def config_to_string(conf: Configuration) -> str:
     """Converts a configuration dictionary into a string, e.g.
        '4s3p2d1f'
     """
@@ -70,7 +78,8 @@ def config_to_string(conf):
         value_string += new_string
     return value_string
     
-def compare(c1, c2):
+def compare(c1: Configuration,
+            c2: Configuration) -> int:
     """Compares two configuration dictionaries
     
        Returns:
@@ -89,7 +98,7 @@ def compare(c1, c2):
                 
     return result
 
-def nz(el, n):
+def nz(el: MDElement, n: int) -> Configuration:
     """Helper function to generate n-zeta split valence configs
     
        Arguments:
@@ -111,7 +120,7 @@ def nz(el, n):
         config[k] += (n-1)*v
     return config
 
-def add_np(config, n):
+def add_np(config: Configuration, n: int) -> Configuration:
     """Helper function to add n polarization functions
     
        Arguments:

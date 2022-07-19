@@ -1,8 +1,11 @@
 import numpy as np
 
+from typing import Any, Optional, Union
+
 from basisopt.util import bo_logger, dict_decode
+from basisopt.containers import InternalBasis, OptResult
 from basisopt.bse_wrapper import fetch_basis
-from basisopt.molecule import build_diatomic
+from basisopt.molecule import Molecule, build_diatomic
 from basisopt.opt import optimize, Strategy
 from basisopt.opt.reduce import ReduceStrategy
 
@@ -12,8 +15,16 @@ class JKFitBasis(Basis):
     """Object for preparation and optimization of a an auxiliary basis set
        for a single atom, for the fitting of the Coulomb (and optionally Exchange)
        integrals in a Hartree-Fock or DFT calculation. 
+    
+       Attributes:
+            basis_type (str): "jfit/jkfit" for coulomb vs coulomb+exchange fitting
     """
-    def __init__(self, name='H', charge=0, mult=1, mol=None, jonly=False):
+    def __init__(self, 
+                 name: str='H', 
+                 charge: int=0, 
+                 mult=1, 
+                 mol: Optional[Molecule]=None,
+                 jonly: bool=False):
         super(JKFitBasis, self).__init__()
         self.name = name
         if mol:
@@ -27,7 +38,8 @@ class JKFitBasis(Basis):
             self.basis_type = "jfit"
         self._done_setup = False
     
-    def as_dict(self):
+    def as_dict(self) -> dict[str, Any]:
+        """Returns MSONable dictionary of JKFitBasis"""
         d = super(JKFitBasis, self).as_dict()
         d["@module"] = type(self).__module__
         d["@class"]  = type(self).__name__
@@ -41,7 +53,8 @@ class JKFitBasis(Basis):
         return d
     
     @classmethod
-    def from_dict(cls, d):
+    def from_dict(cls, d: dict[str, Any]) -> object:
+        """Creates JKFitBasis from MSONable dictionary"""
         basis = Basis.from_dict(d)
         mol = basis._molecule
         charge = basis._molecule.charge
@@ -58,20 +71,30 @@ class JKFitBasis(Basis):
             instance._done_setup = d.get("done_setup", False)
         return instance
     
-    def get_basis(self):
+    def get_basis(self) -> InternalBasis:
+        """Returns jfit or jkfit basis, depending on
+           basis_type attribute
+        """
         if self.basis_type == 'jfit':
             return self._molecule.jbasis
         return self._molecule.jkbasis
     
-    def setup(self, basis, guess=None, config=None, method='rhf', params={}):
+    def setup(self, 
+              basis: InternalBasis,
+              guess: Optional[Union[str, InternalBasis]]=None,
+              config: Optional[list[int]]=None,
+              method: str='rhf',
+              params: dict[str, Any]={}):
         """Sets up the basis ready for optimization. Must be called before optimize is called
         
            Arguments:
-                basis
-                guess
-                config
-                method
-                params
+                basis (InternalBasis): the orbital basis to use
+                guess (str or InternalBasis): the starting guess for jkfit basis 
+                config (list[int] or None): the desired number of functions per
+                     shell in angular momentum order; if None, will just optimize
+                     the whole starting guess
+                method (str): the calculation method to use 
+                params (dict): parameters to pass to the backend
         
            Sets:
                 self.strategy
@@ -109,7 +132,9 @@ class JKFitBasis(Basis):
             self._molecule.jkbasis = starting_basis
         self._done_setup = True
     
-    def optimize(self, algorithm='Nelder-Mead', params={}):
+    def optimize(self, 
+                 algorithm: str='Nelder-Mead',
+                 params: dict[str, Any]={}) -> OptResult:
         """Runs the basis optimization
             
            Arguments:
@@ -129,11 +154,35 @@ class JKFitBasis(Basis):
         return self.opt_results
         
 
-def jkfit_collection(element, starting_guess, basis_pairs=[],
-                     charge=0, mult=1, mol=None, jonly=False,
-                     method='rhf', algorithm='Nelder-Mead', 
-                     opt_params={}, params={}):
-    """ 
+def jkfit_collection(element: str,
+                     starting_guess: Union[str, InternalBasis],
+                     basis_pairs: list[tuple[InternalBasis, Optional[list[int]]]]=[],
+                     charge: int=0,
+                     mult: int=1,
+                     mol: Optional[Molecule]=None,
+                     jonly: bool=False,
+                     method: str='rhf',
+                     algorithm: str='Nelder-Mead', 
+                     opt_params: dict[str, Any]={},
+                     params: dict[str, Any]={}) -> list[JKFitBasis]:
+    """ Optimizes a collection of JKFit basis sets, in the style of cc-pVnZ basis sets,
+        i.e. V5Z -> VQZ -> VTZ, by reducing the fitting set size and reoptimizing at each step.
+                     
+        Arguments:
+            element (str): the atomic element being optimized
+            starting_guess (str or InternalBasis): the initial J(K)Fit basis to use
+            basis_pairs (list of tuples): the orbital basis/configuration pairs, in order,
+                    e.g. [(v5z, None), (vqz, [10, 5, 3, 2, 1, 0]), (vtz, [10, 5, 2, 1, 0, 0])]
+            charge (int), mult (int): the charge and multiplicity of the element-hydride
+            mol (Molecule, optional): used instead of ElementH, overrides charge/mult
+            jonly (bool): if True, only fit the Coulomb integrals, not the exchange
+            method (str): computational method to use
+            algorithm (str): scipy.optimize algorithm to use
+            opt_params (dict): parameters to pass to the optimizer
+            params (dict): parameters to pass to the backend
+                     
+        Returns:
+            a list of optimized JKFitBasis objects corresponding to the order of basis_pairs 
     """
     results = []
     guess = starting_guess

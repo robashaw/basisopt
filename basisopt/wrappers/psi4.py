@@ -1,9 +1,13 @@
 # Wrappers for psi4 functionality
-from basisopt.wrappers.wrapper import Wrapper, available
-from basisopt.bse_wrapper import internal_basis_converter
-from basisopt.exceptions import *
 import psi4
 import logging
+
+from typing import Any
+
+from basisopt.wrappers.wrapper import Wrapper, available
+from basisopt.bse_wrapper import internal_basis_converter
+from basisopt.exceptions import EmptyCalculation, PropertyNotAvailable
+from basisopt.molecule import Molecule
 
 class Psi4Wrapper(Wrapper):
     """Wrapper for Psi4"""
@@ -34,7 +38,7 @@ class Psi4Wrapper(Wrapper):
             "functional"
         ]
         
-    def convert_molecule(self, m):
+    def convert_molecule(self, m: Molecule) -> psi4.core.Molecule:
         """Convert an internal Molecule object
            to a Psi4 Molecule object
         """
@@ -43,7 +47,7 @@ class Psi4Wrapper(Wrapper):
             molstring += m.get_line(i) + "\n"
         return psi4.geometry(molstring)
     
-    def _property_prefix(self, method):
+    def _property_prefix(self, method: str) -> str:
         """Helper function to lookup properties from
            psi4.properties
         """
@@ -55,7 +59,7 @@ class Psi4Wrapper(Wrapper):
         else:
             return method.upper()
             
-    def _command_string(self, method, **params):
+    def _command_string(self, method: str, **params) -> str:
         """Helper function to turn an internal method
            name into a psi4 run string
         """
@@ -68,8 +72,17 @@ class Psi4Wrapper(Wrapper):
             command = method
         return command
     
-    def initialise(self, m, name="", tmp="", **params):
-        """Initialises Psi4 before each calculation"""
+    def initialise(self, 
+                   m: Molecule,
+                   name: str="",
+                   tmp: str="",
+                   **params):
+        """Initialises Psi4 before each calculation
+           - sets output file
+           - converts molecule
+           - sets options from globals and params
+           - converts basis set (TODO: handle jkfit)
+        """
         # create output file
         outfile = tmp + f"{m.name}-{m.method}-" + name + ".out"
         psi4.core.set_output_file(outfile, False)
@@ -97,9 +110,15 @@ class Psi4Wrapper(Wrapper):
         psi4.basis_helper(g94_basis) 
     
     def clean(self):
+        """Cleans up calculation"""
         psi4.core.clean()
 
-    def _get_properties(self, mol, name="prop", properties=[], tmp="", **params):
+    def _get_properties(self, 
+                        mol: Molecule,
+                        name: str="prop",
+                        properties: list[str]=[],
+                        tmp: str="",
+                        **params) -> dict[str, Any]:
         """Helper function to retrieve a property value from Psi4
            after a calculation.
         """

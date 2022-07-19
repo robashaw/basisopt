@@ -1,7 +1,8 @@
 # molecule
 import logging
-from functools import cache
 import numpy as np
+from functools import cache
+from typing import Any
 from monty.json import MSONable
 from .exceptions import InvalidDiatomic
 from .data import atomic_number
@@ -30,7 +31,10 @@ class Molecule(MSONable):
             NOTE: these results are NOT archived, unlike for a Result object
             _references (dict): dictionary of reference values for results
     """
-    def __init__(self, name="Untitled", charge=0, mult=1):
+    def __init__(self,
+                 name: str="Untitled",
+                 charge: int=0,
+                 mult: int=1):
         self.name = name
         self.charge = charge
         self.multiplicity = mult
@@ -44,7 +48,7 @@ class Molecule(MSONable):
         self._references = {}
         
     @cache
-    def nelectrons(self):
+    def nelectrons(self) -> int:
         unique = self.unique_atoms()
         nel = 0
         for a in unique:
@@ -52,7 +56,9 @@ class Molecule(MSONable):
                         atomic_number(a)
         return nel
         
-    def add_atom(self, element='H', coord=[0.0, 0.0, 0.0]): 
+    def add_atom(self, 
+                 element: str='H',
+                 coord: list[float]=[0.0, 0.0, 0.0]): 
         """Adds an atom to the molecule
         
            Arguments:
@@ -62,7 +68,7 @@ class Molecule(MSONable):
         self._coords.append(np.array(coord))
         self._atom_names.append(element)
     
-    def add_result(self, name, value):
+    def add_result(self, name: str, value: Any):
         """Store a result (no archiving)
         
            Arguments:
@@ -71,7 +77,7 @@ class Molecule(MSONable):
         """
         self._results[name] = value
         
-    def get_result(self, name):
+    def get_result(self, name: str) -> Any:
         """Returns:
                 Value of result with given name if it exists,
                 otherwise 0
@@ -81,24 +87,24 @@ class Molecule(MSONable):
         except KeyError:
             return 0.0
             
-    def add_reference(self, name, value):
+    def add_reference(self, name: str, value: Any):
         """Same as add_result but for reference values"""
         self._references[name] = value
         
-    def get_reference(self, name):
+    def get_reference(self, name: str) -> Any:
         """Same as get_result but for reference values"""
         try:
             return self._references[name]
         except KeyError:
             return 0.0        
     
-    def get_delta(self, name):
+    def get_delta(self, name: str) -> Any:
         """Returns:
                 Difference between a result and its reference value
         """
         return (self.get_result(name) - self.get_reference(name))
     
-    def from_xyz(self, filename): 
+    def from_xyz(self, filename: str): 
         """Creates a Molecule from an xyz file
            
            Arguments:
@@ -127,7 +133,7 @@ class Molecule(MSONable):
         except:
             bo_logger.error("Incorrect formatting in %s", filename)
         
-    def to_xyz(self):
+    def to_xyz(self) -> str:
         """Converts Molecule to xyz file format
         
            Returns:
@@ -138,7 +144,7 @@ class Molecule(MSONable):
             output += self.get_line(i) + "\n"
         return output
     
-    def get_line(self, i):
+    def get_line(self, i: int) -> str:
         """Gets a line of the xyz file representation of the Molecule
         
            Arguments:
@@ -152,15 +158,15 @@ class Molecule(MSONable):
         n, c = self._atom_names[ix], self._coords[ix]
         return f"{n}\t{c[0]}\t{c[1]}\t{c[2]}"
         
-    def natoms(self):
+    def natoms(self) -> int:
         """Returns number of atoms in Molecule"""
         return len(self._atom_names)
         
-    def unique_atoms(self):
+    def unique_atoms(self) -> list[str]:
         """Returns a list of all unique atom types in Molecule"""
         return list(set(self._atom_names))
         
-    def distance(self, atom1, atom2):
+    def distance(self, atom1: int, atom2: int) -> float:
         """Computes the Euclidean distance between two atoms.
            No bounds checking.
         
@@ -174,7 +180,7 @@ class Molecule(MSONable):
         c2 = self._coords[atom2]
         return np.linalg.norm(c1 - c2)
     
-    def as_dict(self):
+    def as_dict(self) -> dict[str, Any]:
         """Converts Molecule to MSONable dictionary
            
            Returns:
@@ -200,7 +206,7 @@ class Molecule(MSONable):
         return d
         
     @classmethod
-    def from_dict(cls, d):
+    def from_dict(cls, d: dict[str, Any]) -> object:
         """Creates a Molecule from a dictionary
         
            Arguments:
@@ -224,7 +230,9 @@ class Molecule(MSONable):
         instance._references = d.get("references", {})
         return instance    
     
-def build_diatomic(mol_str, charge=0, mult=1):
+def build_diatomic(mol_str: str,
+                   charge: int=0,
+                   mult: int=1) -> Molecule:
     """Builds a diatomic molecule from a string
     
        Arguments:

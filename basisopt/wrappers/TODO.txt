@@ -1,2 +1,1 @@
-+ Expand ORCA wrapper to read properties
 + Turbomole wrapper - needed for MP2FitBasis to work

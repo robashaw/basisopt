@@ -1,7 +1,9 @@
 # base test types
+from typing import Any, Optional
+
 from basisopt.molecule import Molecule
 from basisopt.bse_wrapper import fetch_basis
-from basisopt.containers import Result
+from basisopt.containers import Result, InternalBasis
 from basisopt import api
 from basisopt.exceptions import EmptyCalculation, FailedCalculation
 
@@ -16,36 +18,57 @@ class Test(Result):
        Must implement in children:
             calculate(self, method, basis, params={})
     """
-    def __init__(self, name, reference=None, mol=None, xyz_file=None, charge=0, mult=1):
+    def __init__(self, 
+                 name: str,
+                 reference: Optional[Any]=None,
+                 mol: Optional[Molecule]=None,
+                 xyz_file: Optional[str]=None,
+                 charge: int=0,
+                 mult: int=1):
         super(Test, self).__init__(self, name)
         self.reference = reference
         self.molecule = None
         
-        if mol is not None:
+        if mol:
             self.molecule = mol
         elif xyz_file is not None:
             self.set_molecule_from_xyz(xyz_file, charge=charge, mult=mult)
         
-    def set_molecule_from_xyz(self, xyz, charge=0, mult=1):
-        """Creates Molecule from xyz file"""
+    def set_molecule_from_xyz(self,
+                              xyz: str, 
+                              charge: int=0,
+                              mult: int=1):
+        """Creates Molecule from xyz file
+                              
+           Arguments:
+                xyz (str): the xyz file 
+                charge (int), mult (int): the charge and multiplicity of the molecule 
+        """
         self.molecule = Molecule(self.name, charge=charge, mult=mult)
         self.molecule.from_xyz(xyz)
         
-    def calculate_reference(self, method, basis=None, basis_name='cc-pvqz', params={}):
+    def calculate_reference(self,
+                            method: str,
+                            basis: Optional[InternalBasis]=None,
+                            basis_name: str='cc-pvqz',
+                            params: dict[str, Any]={}):
         """Calculates reference value for the test, should not need to be overridden
         
            Attributes:
                 method (str): method to run, e.g. 'rhf', 'mp2'
                 basis: internal basis dictionary 
-                OR if basis is None:
-                    basis_name (str): calculate using basis with this name from BSE
+                basis_name (str): calculate using basis with this name from BSE,
+                            if basis is None
                 params (dict): parameters to pass to the backend Wrapper
         """
         if basis is None:
             basis = fetch_basis(basis_name, self.molecule.unique_atoms())
         self.reference = self.calculate(method, basis, params=params)
         
-    def calculate(self, method, basis, params={}):
+    def calculate(self,
+                  method: str,
+                  basis: InternalBasis,
+                  params: dict[str, Any]={}):
         """Interface to run the test. Should archive and return the results
            of the test.
            
@@ -84,24 +107,33 @@ class PropertyTest(Test):
        Additional attributes:
             eval_type (str): property to evaluate, e.g. 'energy', 'dipole'
     """
-    def __init__(self, name, prop='energy', mol=None, xyz_file=None, charge=0, mult=1):
+    def __init__(self, 
+                 name: str,
+                 prop: str='energy',
+                 mol: Optional[Molecule]=None,
+                 xyz_file: Optional[str]=None,
+                 charge: int=0,
+                 mult: int=1):
         Test.__init__(self, name, mol=mol, xyz_file=xyz_file, charge=charge, mult=mult)
         self._eval_type = ''
         self.eval_type  = prop
     
     @property
-    def eval_type(self):
+    def eval_type(self) -> str:
         return self._eval_type
     
     @eval_type.setter
-    def eval_type(self, name):
+    def eval_type(self, name: str):
         wrapper = api.get_backend()
         if name in wrapper.all_available():
             self._eval_type = name
         else:
             raise PropertyNotAvailable(name)
     
-    def calculate(self, method, basis, params={}):
+    def calculate(self,
+                  method: str,
+                  basis: InternalBasis,
+                  params: dict[str, Any]={}) -> Any:
         """Calculates the test value
         
            Arguments:

@@ -2,13 +2,16 @@ import logging
 import numpy as np
 import copy
 
+from typing import Any
+
 from basisopt.molecule import build_diatomic
 from basisopt.testing.rank import *
 from basisopt.basis.guesses import null_guess 
 from basisopt.basis.basis import uncontract_shell
 from basisopt.basis.atomic import AtomicBasis
 from basisopt.util import bo_logger
-from basisopt.containers import basis_to_dict, dict_to_basis
+from basisopt.containers import basis_to_dict, dict_to_basis,\
+                                Shell, InternalBasis
 from .strategies import Strategy
 from .preconditioners import make_positive
 
@@ -46,9 +49,15 @@ class ReduceStrategy(Strategy):
             nexps (list(int)): number of exponents in each ang. momentum shell
             reduction_step (bool): if True, an exponent will be removed when next is called
     """
-    def __init__(self, starting_basis, eval_type='energy', method='scf',
-                 target=1e-5, shell_mins=[], max_l=-1, reopt_all=True, 
-                 params={}):
+    def __init__(self, 
+                 starting_basis: InternalBasis,
+                 eval_type: str='energy',
+                 method: str='scf',
+                 target: float=1e-5,
+                 shell_mins: list[int]=[],
+                 max_l: int=-1,
+                 reopt_all: bool=True, 
+                 params: dict[str, Any]={}):
         Strategy.__init__(self, eval_type=eval_type, pre=make_positive)
         self.name = 'Reduce'
         self.full_basis = starting_basis 
@@ -65,11 +74,14 @@ class ReduceStrategy(Strategy):
         self.nexps = []
         self.reduction_step = True
         
-    def _guess(self, atomic, params={}):
+    def _guess(self, 
+               atomic: AtomicBasis, 
+               params: dict[str, Any]={}) -> list[Shell]:
         """Internal 'guess' returning the original unreduced basis"""
         return self.full_basis[atomic._symbol]
             
-    def as_dict(self):
+    def as_dict(self) -> dict[str, Any]:
+        """Returns MSONable dictionary of object"""
         d = super(ReduceStrategy, self).as_dict()
         d["@module"] = type(self).__module__
         d["@class"] = type(self).__name__
@@ -86,7 +98,8 @@ class ReduceStrategy(Strategy):
         return d
         
     @classmethod
-    def from_dict(cls, d):
+    def from_dict(cls, d: dict[str, Any]) -> object:
+        """Creates ReduceStrategy from MSONable dictionary"""
         strategy = Strategy.from_dict(d)
         full_basis = dict_to_basis(d.get("full_basis", {}))
         saved_basis = dict_to_basis(d.get("saved_basis", {}))
@@ -109,13 +122,21 @@ class ReduceStrategy(Strategy):
         instance.shells = d.get("shells", [])
         return instance
         
-    def set_basis_shells(self, basis, element):
+    def set_basis_shells(self, 
+                         basis: InternalBasis, 
+                         element: str):
         if element in self.full_basis:
             basis[element] = self.full_basis[element]
         else:
             basis[element] = {}
     
-    def initialise(self, basis, element):
+    def initialise(self,
+                   basis: InternalBasis,
+                   element: str):
+        """Initialises the strategy by determining the number of
+           exponents in each shell, and making sure we start in
+           a reduction step. 
+        """
         self._step = -1
         self.first_run = True
         self.set_basis_shells(basis, element)
@@ -127,20 +148,29 @@ class ReduceStrategy(Strategy):
         self.delta_objective = 0.
         self.reduction_step = True
         
-    def next(self, basis, element, objective):
+    def next(self, 
+             basis: InternalBasis,
+             element: str,
+             objective: float) -> bool:
         carry_on = True
+        
+        # check if ready to remove next exponent
         if (self._step == self.max_l) or (not self.reopt_all):
             self._step = -1
             self.reduction_step = True
         
         if self.reduction_step:
             if self.first_run:
+                # Otherwise delta_objective will be larger than threshold
                 self.last_objective = objective
                 self.first_run = False
-                
+            
+            # store the previous basis and calculate delta
             self.saved_basis = copy.deepcopy(self.full_basis)
             self.delta_objective = np.abs(self.last_objective - objective)
             self.last_objective = objective
+            
+            # determine which exponents are removable
             possible_changes = [(n - m) > 0 
                                 for n, m in zip(self.nexps, self.shell_mins)]
             
@@ -149,6 +179,8 @@ class ReduceStrategy(Strategy):
             if carry_on:
                 at = AtomicBasis(name=element)
                 if self.basis_type in ['jfit', 'jkfit']:
+                    # need to set up the calculation differently
+                    # including setting the orbital basis
                     at._molecule = build_diatomic(f"{element.title()}H,1.5")
                     if at._molecule.nelectrons() % 2 == 1:
                         at._molecule.charge = 1
@@ -160,6 +192,8 @@ class ReduceStrategy(Strategy):
                 else:
                     at._molecule.basis = basis
                 at._molecule.method = self.method
+                
+                # rank all removable exponents
                 shells_to_rank = [s for s in range(self.max_l+1)
                                   if (basis[element][s].exps.size != 0)
                                   and possible_changes[s]]
@@ -167,10 +201,12 @@ class ReduceStrategy(Strategy):
                                 eval_type=self.eval_type, 
                                 basis_type=self.basis_type,
                                 params=self.params)
+
+                # find the exponent with minimum error
                 min_errs = np.array([e[r[0]] for e, r in zip(errors, ranks)])
-                min_ix = np.argmin(min_errs)
-                l = shells_to_rank[min_ix]
-                ix = ranks[min_ix][0]
+                min_ix = np.argmin(min_errs) # index in ranks
+                l = shells_to_rank[min_ix]   # index in shells
+                ix = ranks[min_ix][0]        # index in shell exps 
                 shell = basis[element][l]
                 exps = shell.exps.copy()
                 shell.exps = np.zeros(len(exps)-1)
@@ -183,6 +219,7 @@ class ReduceStrategy(Strategy):
                 self.nexps[l] -= 1
                 bo_logger.info(info_str)
                 if not self.reopt_all:
+                    # only reoptimize altered shell
                     self._step = l
                 self.reduction_step = False
         

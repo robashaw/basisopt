@@ -1,11 +1,12 @@
 # wrappers for BasisSetExchange functionality
 
+import numpy as np
 import basis_set_exchange as bse
 import basisopt.data as data
-from basisopt.containers import Shell 
-import numpy as np
+from basisopt.containers import Shell, InternalBasis, BSEBasis
+from typing import Any
 
-def make_bse_shell(shell):
+def make_bse_shell(shell: Shell) -> dict[str, Any]:
     """Converts an internal-format basis shell into a BSE-format shell
     
        Arguments:
@@ -23,7 +24,7 @@ def make_bse_shell(shell):
     }
     return new_shell
 
-def make_internal_shell(shell):
+def make_internal_shell(shell: dict[str, Any]) -> Shell:
     """Converts a BSE-format basis shell into an internal-format shell
     
        Arguments:
@@ -39,7 +40,7 @@ def make_internal_shell(shell):
     new_shell.coefs = [np.array([float(c) for c in arr]) for arr in shell['coefficients']]
     return new_shell
 
-def internal_to_bse(basis):
+def internal_to_bse(basis: InternalBasis) -> BSEBasis:
     """Converts an internal basis dictionary into a BSE basis object
     
        Arguments:
@@ -63,13 +64,13 @@ def internal_to_bse(basis):
     bse_basis['elements'] = elements
     return bse_basis
     
-def bse_to_internal(basis):
+def bse_to_internal(basis: BSEBasis) -> InternalBasis:
     """Converts a BSE basis object into an internal basis dictionary
     
        Arguments:
             basis: a BSE basis, must have the following attributes
-            ['elements'] each of which must then have an ['electron_shells']
-            attribute
+                ['elements'] each of which must then have an
+                ['electron_shells'] attribute
     
        Returns:
             an internal basis dictionary
@@ -98,7 +99,8 @@ def bse_to_internal(basis):
             new_basis[el].append(shells[l])
     return new_basis
 
-def internal_basis_converter(basis, fmt='gaussian94'):
+def internal_basis_converter(basis: InternalBasis,
+                             fmt: str='gaussian94') -> str:
     """Writes out an internal basis in the desired BSE format
     
        Arguments:
@@ -111,7 +113,7 @@ def internal_basis_converter(basis, fmt='gaussian94'):
     bse_basis = internal_to_bse(basis)
     return bse.writers.write_formatted_basis_str(bse_basis, fmt)
     
-def fetch_basis(name, elements):
+def fetch_basis(name: str, elements: list[str]) -> InternalBasis:
     """Fetches a basis set for a set of elements from the BSE
     
        Arguments:

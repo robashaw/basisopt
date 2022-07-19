@@ -1,15 +1,19 @@
 # Template for program wrappers
 import functools
-import logging
+
+from typing import Any, Callable
 from basisopt.exceptions import MethodNotAvailable, InvalidMethodString
 from basisopt.util import bo_logger
+from basisopt.molecule import Molecule
 
-def available(func):
+Method = Callable[[object, Molecule, str, ...], Any]
+
+def available(func: Method) -> Method:
     """Decorator to mark a method as available"""
     func._available = True
     return func
 
-def unavailable(func):
+def unavailable(func: Method) -> Method:
     """Decorator to mark a method as unavailable"""
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -44,7 +48,7 @@ class Wrapper:
         Attributes that should only be set here:    
             _methods (dict): dictionary of all possible calculation types, pointing to member funcs
     """
-    def __init__(self, name='Empty'):
+    def __init__(self, name: str='Empty'):
         self._name = name
         
         self._methods = {
@@ -62,18 +66,18 @@ class Wrapper:
         self._values = {}
         self._globals = {}
     
-    def add_global(self, name, value):
+    def add_global(self, name: str, value: Any):
         """Add a global option"""
         self._globals[name] = value
     
-    def get_value(self, name):
+    def get_value(self, name: str) -> Any:
         """Retrieve a data point if it exists"""
         if name in self._values:
             return self._values[name]
         else:
             return None
     
-    def verify_method_string(self, string):
+    def verify_method_string(self, string: str) -> bool:
         """Checks whether a method is available with this wrapper
         
            Arguments:
@@ -102,7 +106,11 @@ class Wrapper:
         """Cleans up any temporary files"""
         pass
 
-    def run(self, evaluate, molecule, params, tmp=""):
+    def run(self,
+            evaluate: str,
+            molecule: Molecule,
+            params: dict[str, Any], 
+            tmp: str="") -> int:
         """Runs a calculation with this backend
            MUST BE IMPLEMENTED IN ALL WRAPPERS
              
@@ -129,7 +137,7 @@ class Wrapper:
             bo_logger.error(f"Unable to run %s with %s backend", method_str, self._name)
             return -1
     
-    def method_is_available(self, method='energy'):
+    def method_is_available(self, method: str='energy') -> bool:
         """Returns True if a calculation type is available, false otherwise""" 
         try:
             func = self._methods[method]
@@ -137,11 +145,11 @@ class Wrapper:
         except KeyError:
             return False
     
-    def all_available(self):
+    def all_available(self) -> list[str]:
         """Returns a list of all available calculation types"""
         return [k for k, v in self._methods.items() if v._available]
         
-    def available_properties(self, name):
+    def available_properties(self, name: str) -> list[str]:
         """Returns a list of all available calculation types for a
            given method. 
         
@@ -153,7 +161,7 @@ class Wrapper:
         else:
             return []
     
-    def available_methods(self, prop):
+    def available_methods(self, prop: str) -> list[str]:
         """Returns a list of all available methods to calculate a particular property
            
            Attributes:

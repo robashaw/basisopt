@@ -1,11 +1,14 @@
 import numpy as np
 from monty.json import MSONable
+
+from typing import Any
+
 from basisopt import api, data
-from basisopt.containers import basis_to_dict
+from basisopt.containers import basis_to_dict, InternalBasis
 from basisopt.util import bo_logger, dict_decode
 from basisopt.exceptions import PropertyNotAvailable
 from basisopt.basis.guesses import bse_guess
-from .preconditioners import make_positive
+from .preconditioners import Preconditioner, make_positive
 
 class Strategy(MSONable):
     """ Object to describe and handle basis set optimization strategies. 
@@ -46,7 +49,9 @@ class Strategy(MSONable):
         Private attributes:
             _step (int): tracks what step of optimization we're on
     """
-    def __init__(self, eval_type='energy', pre=make_positive):
+    def __init__(self,
+                 eval_type: str='energy',
+                 pre: Preconditioner=make_positive):
         self.name = 'Default'
         self._eval_type = ''
         self.eval_type = eval_type
@@ -67,10 +72,18 @@ class Strategy(MSONable):
         self.loss = np.linalg.norm
     
     @property
-    def eval_type(self):
+    def eval_type(self) -> str:
         return self._eval_type
+        
+    @eval_type.setter
+    def eval_type(self, name: str):
+        wrapper = api.get_backend()
+        if name in wrapper.all_available():
+            self._eval_type = name
+        else:
+            raise PropertyNotAvailable(name)
     
-    def initialise(self, basis, element):
+    def initialise(self, basis: InternalBasis, element: str):
         """ Initialises the strategy (does nothing in default)
             
             Arguments:
@@ -82,15 +95,9 @@ class Strategy(MSONable):
         self.delta_objective = 0
         self.first_run = True
     
-    @eval_type.setter
-    def eval_type(self, name):
-        wrapper = api.get_backend()
-        if name in wrapper.all_available():
-            self._eval_type = name
-        else:
-            raise PropertyNotAvailable(name)
-    
-    def get_active(self, basis, element):
+    def get_active(self,
+                   basis: InternalBasis,
+                   element: str) -> np.ndarray:
         """ Arguments:
                  basis: internal basis dictionary 
                  element: symbol of the atom being optimized
@@ -102,7 +109,10 @@ class Strategy(MSONable):
         x = elbasis[self._step].exps
         return self.pre(x, **self.pre.params)
         
-    def set_active(self, values, basis, element):
+    def set_active(self, 
+                   values: np.ndarray,
+                   basis: InternalBasis,
+                   element: str):
         """ Sets the currently active exponents to the given values.
             
             Arguments:
@@ -114,7 +124,10 @@ class Strategy(MSONable):
         y = np.array(values)
         elbasis[self._step].exps = self.pre.inverse(y, **self.pre.params)
         
-    def next(self, basis, element, objective):
+    def next(self, 
+             basis: InternalBasis,
+             element: str,
+             objective: float) -> bool:
         """ Moves the strategy forward a step (see algorithm)
         
             Arguments:
@@ -132,7 +145,8 @@ class Strategy(MSONable):
         maxl = len(basis[element])
         return maxl != self._step 
         
-    def as_dict(self):
+    def as_dict(self) -> dict[str, Any]:
+        """Returns MSONable dictionary of Strategy"""
         d = {
             "@module": type(self).__module__,
             "@class": type(self).__name__,
@@ -152,7 +166,8 @@ class Strategy(MSONable):
         return d
        
     @classmethod 
-    def from_dict(cls, d):
+    def from_dict(cls, d: dict[str, Any]) -> object:
+        """Creates a Strategy from MSONable dictionary"""
         d = dict_decode(d)
         eval_type = d.get("eval_type", 'energy')
         instance = cls(eval_type=eval_type)

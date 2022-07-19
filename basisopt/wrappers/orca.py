@@ -3,13 +3,21 @@ import os
 import subprocess
 import numpy as np
 import mendeleev as md
+
+from typing import Any
+
 from basisopt.wrappers.wrapper import Wrapper, available
 from basisopt.bse_wrapper import internal_basis_converter
-from basisopt.exceptions import *
+from basisopt.molecule import Molecule
+from basisopt.containers import InternalBasis
+from basisopt.exceptions import FailedCalculation
 
 class OrcaWrapper(Wrapper):
     """Wrapper for Orca 5"""
-    def __init__(self, orca_path):
+    def __init__(self, orca_path: str):
+        """Args:
+                orca_path (str): path to the orca executable
+        """
         super(OrcaWrapper, self).__init__(name='Orca')
         self._path = orca_path
         self._method_strings = {
@@ -29,7 +37,7 @@ class OrcaWrapper(Wrapper):
             'rasscf'        : ['energy', 'trans_dipole', 'trans_quadrupole']
         }
         
-    def convert_molecule(self, m):
+    def convert_molecule(self, m: Molecule) -> str:
         """Convert an internal Molecule object
            to an Orca geometry section
         """
@@ -39,14 +47,17 @@ class OrcaWrapper(Wrapper):
         molstring += "*\n"
         return molstring 
         
-    def _density_prefix(self, method):
+    def _density_prefix(self, method: str) -> str:
+        """Grabs the prefix for density options
+           for a given method. 
+        """
         if "mp2" in method:
             return "mp2"
         if ("cc" in method) or ("ci" in method):
             return "mdci"
         return None
     
-    def _command_string(self, method, **params):
+    def _command_string(self, method: str, **params) -> str:
         """Helper function to turn an internal method
            name into an ORCA command line
         """
@@ -77,10 +88,22 @@ class OrcaWrapper(Wrapper):
         
         return command + "\n"
     
-    def _convert_basis(self, basis, gto_string="NewGTO"):
+    def _convert_basis(self, 
+                       basis: InternalBasis,
+                       gto_string: str="NewGTO") -> str:
+        """ Converts an InternalBasis to the basis string for ORCA 5
+            
+            Arguments:
+                basis (InternalBasis): basis set to convert
+                gto_string (str): NewGTO for orbital, NewAuxGTO for just coulomb,
+                    NewAuxJKGTO for coulomb+exchange
+            
+            Returns:
+                orca basis block string
+        """
         gamess_basis = internal_basis_converter(basis, fmt="gamess_us").split("\n")
         first_atom = True
-        basis = ""
+        basis_str = ""
         for line in gamess_basis[2:-1]:
             words = line.split()
             if len(words) == 1:
@@ -89,14 +112,29 @@ class OrcaWrapper(Wrapper):
                 else:
                     basis += "end\n"
                 atom = md.element(line.strip().title()).symbol
-                basis += f"{gto_string} {atom}\n"
+                basis_str += f"{gto_string} {atom}\n"
             else:
-                basis += line + "\n"
-        basis += "end\n"
-        return basis
+                basis_str += line + "\n"
+        basis_str += "end\n"
+        return basis_str
     
-    def initialise(self, m, name="", tmp=".", **params):
-        """Initialises Orca and creates input file for calculation"""
+    def initialise(self, 
+                   m: Molecule,
+                   name: str="",
+                   tmp: str=".",
+                   **params) -> str:
+        """Initialises Orca and creates input file for calculation. 
+           WARNING: moves to the scratch directory, but saves PWD in
+                   self._pwd
+        
+           Arguments:
+                   m (Molecule): molecule to run calculation on
+                   name (str): name for calculation
+                   tmp (str): path to scratch directory
+           
+           Returns:
+                   the prefix for the calculation input/output files           
+        """
         # create input file
         self._pwd = os.getenv("PWD")
         os.chdir(tmp)
@@ -122,24 +160,51 @@ class OrcaWrapper(Wrapper):
             
         return prefix
     
-    def _run_orca(self, prefix, program="orca"):
+    def _run_orca(self, 
+                  prefix: str,
+                  program: str="orca"):
+        """Run an ORCA executable
+        
+           Arguments:
+                  prefix (str): prefix for input/output files
+                  program (str): the orca executable to use 
+        """
         run_cmd = f"{self._path}/{program} {prefix}.inp > {prefix}.out"
         subprocess.run(run_cmd, shell=True)
         
-    def _read_property_file(self, prefix, search_strings):
+    def _read_property_file(self, 
+                            prefix: str,
+                            search_strings: list[str]) -> dict[str, Any]:
+        """ Reads in desired results from the orca [name]_property.txt file.
+                            
+            Arguments:
+                prefix (str): the prefix for the input/ouput files
+                search_strings (list[str]): a list of search strings of the form
+                        "{block}:{property}", e.g. "Calculation_Info:Total Energy"
+                        would return the Total Energy value from the Calculation_Info
+                        block of the property file
+            
+            Returns: 
+                a dictionary of {search_string}:{value}
+        """
+        # read in the property file
         with open(f"{prefix}_property.txt", 'r') as f:
             lines = f.readlines()
         
+        # break the search strings up by module
         modules = {}
         special_keys = []
         for s in search_strings:
             words = s.split(':')
             if words[0] not in modules:
                 if "Electric_Properties" in words[0]:
+                    # Dipoles/Quadrupoles are vectors/matrices
                     special_keys.append(words[0])
                 modules[words[0]] = []
             modules[words[0]].append(words[1])
         
+        # Go through the property file tracking down the 
+        # modules and properties in modules dict
         current_module = ""
         results = {k: None for k in search_strings}
         for ix, line in enumerate(lines):
@@ -148,12 +213,17 @@ class OrcaWrapper(Wrapper):
             elif ("#" in line) or ("---" in line):
                 current_module = "" 
             elif current_module in modules:
+                # annoyingly, some properties have colons after the property name
+                # while others just have a space, because ORCA is horribly 
+                # inconsistent about how it prints things out
                 if ':' in line:
                     words = line.split(':')
                     name = words[0].strip()
                     key = f"{current_module}:{name}"
                     if name in modules[current_module]:
                         if "Electric_Properties" in current_module:
+                            # place the line index so that subsequent
+                            # lines can be parsed
                             results[key] = ix
                         else:
                             results[key] = words[1].strip()
@@ -168,15 +238,19 @@ class OrcaWrapper(Wrapper):
                                 results[key] = result
                             break
 
+        # to grab electric properties, we need to reloop over 
+        # certain lines 
         for key in special_keys:
             module = modules[key]
             for name in module:
                 line_ix = results[f"{key}:{name}"]
                 if "Dipole" in name:
+                    # 3D vector
                     res = np.zeros(3)
                     for i, line in enumerate(lines[line_ix+2:line_ix+5]):
                         res[i] = float(line.split()[1])
                 elif "quadrupole" in name:
+                    # 3x3 matrix
                     res = np.zeros([3, 3])
                     for i, line in enumerate(lines[line_ix+2:line_ix+5]):
                         row = [float(w) for w in line.split()[1:]]
@@ -190,13 +264,39 @@ class OrcaWrapper(Wrapper):
                 
         return results
     
-    def _internal_clean(self, prefix):
+    def _internal_clean(self, prefix: str):
+        """Cleans up ORCA run files, and returns to previous PWD
+        
+           Arguments:
+                prefix (str): the prefix for the orca run files
+        """
         run_cmd = f"rm {prefix}*"
         subprocess.run(run_cmd, shell=True)
         os.chdir(self._pwd)
         
-    def _property_calc(self, mol, search_string,
-                       density_needed, tmp, **params):
+    def _property_calc(self, 
+                       mol: Molecule,
+                       search_string: str,
+                       density_needed: bool,
+                       tmp: str,
+                       **params) -> Any:
+        """ Run an ORCA calculation and look up a property
+                       
+            Arguments:
+                mol (Molecule): molecule to run calculation on
+                search_string (str): see _read_property_file
+                density_needed (bool): if True, density explicitly 
+                       calculated - note this is not necessary for
+                       HF/DFT calcs
+                tmp (str): path to the scratch directory
+            
+            Returns:
+                property value corresponding to search_string, if
+                it exists
+            
+            Raises:
+                FailedCalculation
+        """
         if density_needed:
             if "density" not in params:
                 if "mp2" in mol.method:

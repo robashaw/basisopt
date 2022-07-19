@@ -3,24 +3,31 @@ import numpy as np
 import copy 
 import logging
 
+from typing import Any, Optional
+
 from basisopt import api
 from basisopt.exceptions import FailedCalculation, EmptyBasis
+from basisopt.containers import InternalBasis
 from basisopt.basis import uncontract_shell
+from basisopt.basis.atomic import AtomicBasis
 from basisopt.util import bo_logger
 
-def rank_primitives(atomic, shells=None, eval_type='energy',
-                    basis_type='orbital', params={}):
+def rank_primitives(atomic: AtomicBasis,
+                    shells: Optional[list[int]]=None,
+                    eval_type: str='energy',
+                    basis_type: str='orbital',
+                    params={}) -> tuple[list[np.ndarray], list[np.ndarray]]:
     """Systematically eliminates exponents from shells in an AtomicBasis
        to determine how much they contribute to the target property
     
        Arguments:
             atomic: AtomicBasis object
             shells (list): list of indices for shells in the AtomicBasis
-            to be ranked. If None, will rank all shells
+                to be ranked. If None, will rank all shells
             eval_type (str): property to evaluate (e.g. energy)
             basis_type (str): "orbital/jfit/jkfit"
             params (dict): parameters  to pass to the backend, 
-            see relevant Wrapper for options
+                    see relevant Wrapper for options
     
        Returns:
             (errors, ranks), where errors is a list of numpy arrays with the
@@ -40,7 +47,7 @@ def rank_primitives(atomic, shells=None, eval_type='energy',
     else:
         basis = mol.basis[atomic._symbol]
     
-    if shells is None:
+    if not shells:
         shells = list(range(len(basis))) # do all
     
     # Calculate reference value
@@ -82,7 +89,11 @@ def rank_primitives(atomic, shells=None, eval_type='energy',
         
     return errors, ranks
     
-def reduce_primitives(atomic, thresh=1e-4, shells=None, eval_type='energy', params={}):
+def reduce_primitives(atomic: AtomicBasis,
+                      thresh: float=1e-4,
+                      shells: Optional[list[int]]=None,
+                      eval_type: str='energy',
+                      params: dict[str, Any]={}) -> tuple[InternalBasis, Any]:
     """Rank the primitive functions in an atomic basis, and remove those that contribute
        less than a threshold. TODO: add checking that does not go below minimal config
     
@@ -104,7 +115,7 @@ def reduce_primitives(atomic, thresh=1e-4, shells=None, eval_type='energy', para
     """
     mol = copy.copy(atomic._molecule)
     basis = mol.basis[atomic.symbol]
-    if shells is None:
+    if not shells:
         shells = list(range(len(basis))) # do all
     # first rank the primitives
     errors, ranks = rank_primitives(atomic, shells=shells, eval_type=eval_type, params=params)

@@ -1,7 +1,11 @@
 import numpy as np
+
+from typing import Any
+
 from mendeleev import element as md_element
 
 from basisopt import api, data
+from basisopt.containers import InternalBasis
 from basisopt.exceptions import PropertyNotAvailable
 from basisopt.basis.basis import even_temper_expansion
 from basisopt.basis.guesses import null_guess
@@ -46,9 +50,13 @@ class EvenTemperedStrategy(Strategy):
             target (float): threshold for optimization delta
             max_n (int): maximum number of primitives in shell expansion
             max_l (int): maximum angular momentum shell to do;
-            if -1, does minimal configuration     
+                if -1, does minimal configuration     
     """
-    def __init__(self, eval_type='energy', target=1e-5, max_n=18, max_l=-1):
+    def __init__(self,
+                 eval_type: str='energy',
+                 target: float=1e-5,
+                 max_n: int=18,
+                 max_l: int=-1):
         super(EvenTemperedStrategy, self).__init__(eval_type=eval_type, pre=unit)
         self.name = 'EvenTemper'
         self.shells = []
@@ -59,7 +67,8 @@ class EvenTemperedStrategy(Strategy):
         self.max_n = max_n
         self.max_l = max_l
         
-    def as_dict(self):
+    def as_dict(self) -> dict[str, Any]:
+        """Returns MSONable dictionary of object"""
         d = super(EvenTemperedStrategy, self).as_dict()
         d["@module"] = type(self).__module__
         d["@class"] = type(self).__name__
@@ -71,7 +80,8 @@ class EvenTemperedStrategy(Strategy):
         return d
         
     @classmethod
-    def from_dict(cls, d):
+    def from_dict(cls, d: dict[str, Any]) -> object:
+        """Creates EvenTemperedStrategy from MSONable dictionary"""
         strategy = Strategy.from_dict(d)
         instance = cls(
                        eval_type=d.get("eval_type", 'energy'),
@@ -89,11 +99,28 @@ class EvenTemperedStrategy(Strategy):
         instance.shell_done = d.get("shell_done", [])
         return instance
     
-    def set_basis_shells(self, basis, element):
-        """Expands parameters into a basis set"""
+    def set_basis_shells(self,
+                         basis: InternalBasis,
+                         element: str):
+        """Expands parameters into a basis set
+        
+           Arguments:
+                basis (InternalBasis): the basis set to expand
+                element (str): the atom type
+        """
         basis[element] = even_temper_expansion(self.shells)
         
-    def initialise(self, basis, element):
+    def initialise(self,
+                   basis: InternalBasis,
+                   element: str):
+        """ Initialises the strategy by determing the initial
+            parameters for each angular momentum shell for the
+            given element.
+            
+            Arguments:
+                   basis (InternalBasis): the basis set being optimized
+                   element (str): the atom type of interest
+        """
         if self.max_l < 0:
             el = md_element(element.title())
         l_list = [l for (n, l) in el.ec.conf.keys()]
@@ -107,18 +134,31 @@ class EvenTemperedStrategy(Strategy):
         self.delta_objective = 0.
         self.first_run = True
     
-    def get_active(self, basis, element):
+    def get_active(self, 
+                   basis: InternalBasis,
+                   element: str) -> np.ndarray:
+        """Returns the even temper params for the current shell"""
         (c, x, _) = self.shells[self._step]
         return np.array([c, x])
     
-    def set_active(self, values, basis, element):
+    def set_active(self, 
+                   values: np.ndarray,
+                   basis: InternalBasis,
+                   element: str):
+        """Given the even temper params for a shell, expands the basis
+           Checks that the smallest exponent is >= 1e-5
+           and that the ratio is >= 1.01, to prevent impossible exponents
+        """
         (c, x, n) = self.shells[self._step]
         c = max(values[0], 1e-5)
         x = max(values[1], 1.01)
         self.shells[self._step] = (c, x, n)
         self.set_basis_shells(basis, element)
     
-    def next(self, basis, element, objective):
+    def next(self,
+             basis: InternalBasis,
+             element: str,
+             objective: float) -> bool:
         self.delta_objective = np.abs(self.last_objective - objective)
         self.last_objective = objective
         

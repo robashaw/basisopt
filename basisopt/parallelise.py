@@ -1,3 +1,5 @@
+from typing import Any, Callable
+
 from . import api
 from .util import bo_logger
 
@@ -6,7 +8,8 @@ if api._PARALLEL:
 else:
     bo_logger.warning("Dask not installed, parallelisation not available")
     
-def chunk(x, n_chunks):    
+def chunk(x: list[Any], 
+          n_chunks: int) -> list[list[Any]]:    
     """Chunks an array into roughly equal-sized subarrays
          
        Args:
@@ -29,7 +32,10 @@ def chunk(x, n_chunks):
         ctr += chunk_list[i]
     return new_x
 
-def distribute(n_proc, func, x, **kwargs):
+def distribute(n_proc: int,
+               func: Callable[[list[Any], dict], Any],
+               x: list[Any],
+               **kwargs) -> list[Any]:
     """Distributes a function over a desired no. of procs
        using the distributed library.
     

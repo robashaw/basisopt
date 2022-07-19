@@ -2,12 +2,14 @@
 import logging
 import numpy as np
 import json
+
+from typing import Any
 from monty.json import MSONable, MontyEncoder, MontyDecoder
 
 """The internal logging object"""
 bo_logger = logging.getLogger('basisopt')
 
-def read_json(filename):
+def read_json(filename: str) -> MSONable:
     """Reads an MSONable object from file
      
        Arguments:
@@ -21,7 +23,7 @@ def read_json(filename):
     bo_logger.info(f"Read {type(obj).__name__} from {filename}")
     return obj
 
-def write_json(filename, obj):
+def write_json(filename: str, obj: MSONable):
     """Writes an MSONable object to file
     
        Arguments:
@@ -36,13 +38,15 @@ def write_json(filename, obj):
     else:
         bo_logger.error(f"{obj_type} cannot be converted to JSON format")
 
-def dict_decode(d):
+def dict_decode(d: dict[str, Any]) -> dict[str, Any]:
     decoder = MontyDecoder()
     return {k: decoder.process_decoded(v)
              for k, v in d.items()}
 
 
-def fit_poly(x, y, n=6):
+def fit_poly(x: np.ndarray, 
+             y: np.ndarray,
+             n: int=6) -> tuple[np.poly1d, float, float, list[float]]:
     """Fits a polynomial of order n to the set of (x [Bohr], y [Hartree]) coordinates given,
        and calculates data necessary for a Dunham analysis.
     

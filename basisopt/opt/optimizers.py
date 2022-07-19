@@ -1,15 +1,25 @@
 import logging
 import numpy as np
 from scipy.optimize import minimize
+
+from typing import Any, Callable, Optional
  
 from basisopt import api
+from basisopt.molecule import Molecule
+from basisopt.containers import InternalBasis, OptResult, OptCollection
 from basisopt.exceptions import FailedCalculation
 from basisopt.util import bo_logger
 from .strategies import Strategy
+from .regularisers import Regulariser
 
 # needs expansion to properly log optimization results, and handle different losses
 
-def _atomic_opt(basis, element, algorithm, strategy, opt_params, objective):
+def _atomic_opt(basis: InternalBasis,
+                element: str,
+                algorithm: str, 
+                strategy: Strategy,
+                opt_params: dict[str, Any],
+                objective: Callable[[np.ndarray], float]) -> OptResult:
     """Helper function to run a strategy for a single atom
     
        Arguments:
@@ -18,7 +28,7 @@ def _atomic_opt(basis, element, algorithm, strategy, opt_params, objective):
             algorithm (str): optimization algorithm, see scipy.optimize for options
             opt_params (dict): parameters to pass to scipy.optimize.minimize
             objective (func): function to calculate objective, must have signature
-            func(x) where x is a 1D numpy array of floats
+                func(x) where x is a 1D numpy array of floats
     
         Returns:
             a dictionary of scipy.optimize result objects for each step in the opt
@@ -47,8 +57,12 @@ def _atomic_opt(basis, element, algorithm, strategy, opt_params, objective):
         bo_logger.info(info_str)
     return results
 
-def optimize(molecule, element=None, algorithm='l-bfgs-b', strategy=Strategy(),
-             reg=(lambda x: 0), opt_params={}):
+def optimize(molecule: Molecule,
+             element: Optional[str]=None,
+             algorithm: str='l-bfgs-b',
+             strategy: Strategy=Strategy(),
+             reg: Regulariser=(lambda x: 0),
+             opt_params: dict[str, Any]={}) -> OptResult:
     """General purpose optimizer for a single atomic basis
     
         Arguments:
@@ -92,8 +106,15 @@ def optimize(molecule, element=None, algorithm='l-bfgs-b', strategy=Strategy(),
     # Initialise and run optimization
     strategy.initialise(basis, element)
     return _atomic_opt(basis, element, algorithm, strategy, opt_params, objective)    
-        
-def collective_optimize(molecules, basis, opt_data=[], npass=3, parallel=False):
+
+
+OptData = tuple[str, str, Strategy, Regulariser, dict[str, Any]]
+
+def collective_optimize(molecules: list[Molecule],
+                        basis: InternalBasis,
+                        opt_data: list[OptData]=[],
+                        npass: int=3, 
+                        parallel: bool=False) -> OptCollection:
     """General purpose optimizer for a collection of atomic bases
     
        Arguments:

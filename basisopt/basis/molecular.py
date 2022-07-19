@@ -3,15 +3,22 @@ import functools
 import logging
 import copy
 import pickle
-from .basis import Basis
-from .atomic import AtomicBasis
+import numpy as np
+
+from typing import Any, Callable, Optional, Union
+
 from basisopt import api
-from basisopt.containers import Result, basis_to_dict, dict_to_basis
+from basisopt.molecule import Molecule
+from basisopt.containers import Result, InternalBasis, OptCollection,\
+                                basis_to_dict, dict_to_basis
 from basisopt.util import bo_logger
 from basisopt.bse_wrapper import fetch_basis
 from basisopt.exceptions import EmptyBasis, DataNotFound
 from basisopt.opt.strategies import Strategy
 from basisopt.opt.optimizers import collective_optimize
+
+from .basis import Basis
+from .atomic import AtomicBasis
 
 class MolecularBasis(Basis):
     """Object for preparation and optimization of a basis set for 
@@ -27,8 +34,9 @@ class MolecularBasis(Basis):
                 for each atom in _atoms
             _done_setup (bool): if True, setup has been called
     """
-    def __init__(self, name='Empty', molecules=[]):
-        """"""
+    def __init__(self, 
+                 name: str='Empty',
+                 molecules: list[Molecule]=[]):
         super(MolecularBasis, self).__init__()
         self.name = name
         self.basis = {}
@@ -39,14 +47,15 @@ class MolecularBasis(Basis):
         for m in molecules:
             self.add_molecule(m)
         
-    def save(self, filename):
+    def save(self, filename: str):
         """Pickles the MolecularBasis object into a binary file"""
         with open(filename, 'wb') as f:
             pickle.dump(self, f)
             f.close()
         bo_logger.info("Dumped object of type %s to %s", type(self), filename)
         
-    def as_dict(self):
+    def as_dict(self) -> dict[str, Any]:
+        """Returns as MSONable dictionary"""
         d = super(MolecularBasis, self).as_dict()
         d["@module"] = type(self).__module__
         d["@class"] = type(self).__name__
@@ -60,7 +69,8 @@ class MolecularBasis(Basis):
         return d
     
     @classmethod
-    def from_dict(cls, d):
+    def from_dict(cls, d: dict[str, Any]) -> object:
+        """Creates a MolecularBasis from an MSONable dictionary"""
         basis = Basis.from_dict(d)
         instance = cls(name=basis.name)
         instance.results = basis.results
@@ -73,7 +83,7 @@ class MolecularBasis(Basis):
         instance._molecules = d.get("molecules", {})
         return instance
         
-    def add_molecule(self, molecule):
+    def add_molecule(self, molecule: Molecule):
         """Adds a Molecule object to the optimization pool"""
         if molecule.name in self._molecules:
             bo_logger.warning(f"Molecule with name {molecule.name} being overwritten")
@@ -81,7 +91,7 @@ class MolecularBasis(Basis):
         for atom in molecule.unique_atoms():
             self._atoms.add(atom.lower())
     
-    def get_molecule(self, name):
+    def get_molecule(self, name: str) -> Molecule:
         """Returns a Molecule with the given name, if it exists, otherwise None"""
         if name in self._molecules:
             return self._molecules[name]
@@ -89,11 +99,11 @@ class MolecularBasis(Basis):
             bo_logger.warning(f"No molecule with name {name}")
             return None
             
-    def get_basis(self):
+    def get_basis(self) -> InternalBasis:
         """Returns the basis set used for all molecules"""
         return self.basis
         
-    def get_atomic_basis(self, atom):
+    def get_atomic_basis(self, atom: str) -> AtomicBasis:
         """Returns the AtomicBasis object for a given atom, if it exists,
            otherwise None
         """
@@ -102,15 +112,19 @@ class MolecularBasis(Basis):
         else:
             return None
     
-    def unique_atoms(self):
+    def unique_atoms(self) -> list[str]:
         """Returns list of unique atoms across all molecules"""
         return list(self._atoms)
         
-    def molecules(self):
+    def molecules(self) -> list[Molecule]:
         """Returns a list of all the Molecule objects"""
         return [m for m in self._molecules.values()]
         
-    def run_test(self, name, params={}, reference_basis=None, do_print=True):
+    def run_test(self,
+                 name: str, 
+                 params: dict[str, Any]={},
+                 reference_basis: Optional[Union[str, InternalBasis]]=None,
+                 do_print: bool=True) -> dict[str, Any]:
         """Runs a single test with a given name across all molecules
         
            Arguments:
@@ -156,8 +170,16 @@ class MolecularBasis(Basis):
                     bo_logger.info("%s: %s", m.name, str(t.result))  
             return results  
                 
-    def run_all_tests(self, params={}, reference_basis=None):
-        """Runs all of the tests across all molecules, and prints the results to logger"""
+    def run_all_tests(self,
+                      params: dict[str, Any]={}, 
+                      reference_basis: Optional[Union[str, InternalBasis]]=None) -> None:
+        """Runs all of the tests across all molecules, and prints the results to logger
+           
+           Arguments:
+                params (dict): paramerters to pass to the backend
+                reference_basis (str or dict): either string name for basis to fetch
+                    from the BSE, or an internal basis dictionary, or None
+        """
         results = {}
         for t in self._tests:
             results[t.name] = self.run_test(t.name, params=params,
@@ -175,7 +197,12 @@ class MolecularBasis(Basis):
             bo_logger.info(res_string)
             
     
-    def setup(self, method='ccsd(t)', quality='dz', strategy=Strategy(), reference='cc-pvqz', params={}):
+    def setup(self,
+              method: str='ccsd(t)', 
+              quality: str='dz', 
+              strategy: Strategy=Strategy(),
+              reference: str='cc-pvqz',
+              params: dict[str, Any]={}):
         """Sets up the basis ready for optimization by creating AtomicBasis objects for each unique
            atom in the set, and calling setup for those - see the signature of AtomicBasis.setup for 
            explanation.
@@ -216,7 +243,12 @@ class MolecularBasis(Basis):
         self._done_setup = True
         bo_logger.info("Molecular basis setup complete")
         
-    def optimize(self, algorithm='Nelder-Mead', params={}, reg=lambda x: 0, npass=1, parallel=False):
+    def optimize(self, 
+                 algorithm: str='Nelder-Mead',
+                 params: dict[str, Any]={},
+                 reg: Callable[[np.ndarray], float]=lambda x: 0,
+                 npass: int=1,
+                 parallel: bool=False) -> OptCollection:
         """Calls collective optimize to optimize all the atomic basis sets in this basis
         
            Arguments:

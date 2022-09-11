@@ -104,21 +104,22 @@ class Molecule(MSONable):
         """
         return (self.get_result(name) - self.get_reference(name))
     
-    def from_xyz(self, filename: str): 
+    @classmethod
+    def from_xyz(cls,
+                 filename: str,
+                 name: str="Untitled",
+                 charge: int=0,
+                 mult: int=1) -> object: 
         """Creates a Molecule from an xyz file
            
            Arguments:
                 filename (str): path to xyz file
         """
+        instance = cls(name=name, charge=charge, mult=mult)
         try:
             # Read in xyz file
             with open(filename, 'r') as f:
                 lines = f.readlines()
-                
-            # Reset molecule
-            self._atom_names = []
-            self._coords = []
-            
             # parse
             # first line should be natoms
             nat = int(lines[0])
@@ -127,11 +128,12 @@ class Molecule(MSONable):
                 words = line.split()
                 element = words[0]
                 coords = np.array([float(w) for w in words[1:4]])
-                self.add_atom(element=element, coord=coords)
+                instance.add_atom(element=element, coord=coords)
         except IOError as e:
             bo_logger.error("I/O error(%d): %s", e.errno, e.strerror)
         except:
             bo_logger.error("Incorrect formatting in %s", filename)
+        return instance
         
     def to_xyz(self) -> str:
         """Converts Molecule to xyz file format

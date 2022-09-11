@@ -6,9 +6,7 @@ from basisopt.testing import PropertyTest
 #bo.set_backend('orca', path="/Applications/orca")
 bo.set_backend('psi4')
 bo.set_tmp_dir('tmp/')
-m = bo.Molecule(name="water")
-m.from_xyz("water.xyz") 
-
+m = bo.Molecule.from_xyz("water.xyz", name="water")
 mb = MolecularBasis(name="single")
 mb.add_molecule(m)
 params = {

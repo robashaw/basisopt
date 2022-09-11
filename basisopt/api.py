@@ -21,6 +21,18 @@ _BACKENDS = {}
 _CURRENT_BACKEND = DummyWrapper()
 _TMP_DIR = "."
 
+def set_parallel(value: bool=True):
+    """Turns parallelism on/off"""
+    global _PARALLEL
+    if value:
+        try:
+            import dask
+            _PARALLEL = True
+        except:
+            _PARALLEL = False
+            bo_logger.warning("Could not import dask, parallelism turned off")
+    else:
+        _PARLLEL = False
 
 def register_backend(func: Callable[[str, str], None]) -> Callable[[str, str], None]:
     """Registers a function to set the backend for basisopt"""

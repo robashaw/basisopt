@@ -115,7 +115,7 @@ class OrcaWrapper(Wrapper):
                 if first_atom:
                     first_atom = False
                 else:
-                    basis += "end\n"
+                    basis_str += "end\n"
                 atom = md.element(line.strip().title()).symbol
                 basis_str += f"{gto_string} {atom}\n"
             else:

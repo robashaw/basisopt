@@ -7,7 +7,6 @@ from mendeleev import element as MDElement
 from mendeleev.econf import ElectronicConfiguration
 from basisopt import data
 
-
 """Dictionary of possible basis configuration 'qualities'
    A quality corresponds to a manner of calculating how many basis
    functions of each angular momentum there should be for an atom.
@@ -77,6 +76,39 @@ def config_to_string(conf: Configuration) -> str:
         new_string = f"{v}{data.INV_AM_DICT[ix]}"
         value_string += new_string
     return value_string
+
+def string_to_config(string: str) -> Configuration:
+    """converts a configuration string, e.g. '4s3p2d1f',
+       to a Configuration dictionary 
+    """
+    config = {}
+    current_size = 0
+    for c in string:
+        try:
+            n = int(c)
+            current_size *= 10
+            current_size += n
+        except:
+            config[c] = current_size
+            current_size = 0
+    return config
+
+def n_cartesian(config: Configuration) -> int:
+    "Returns number of Cartesian Gaussians in configuration"
+    total = 0
+    for l, n in config.items():
+        size = data.AM_DICT[l]
+        size = (size*(size+1))/2
+        total += n*size
+    return total
+
+def n_spherical(config: Configuration) -> int:
+    "Returns number of spherical Gaussians in configuration"
+    total = 0
+    for l, n in config.items():
+        size = 2*data.AM_DICT[l]+1
+        total += n*size
+    return total
     
 def compare(c1: Configuration,
             c2: Configuration) -> int:
@@ -95,7 +127,6 @@ def compare(c1: Configuration,
                 result = -1
             else:
                 result += delta
-                
     return result
 
 def nz(el: MDElement, n: int) -> Configuration:

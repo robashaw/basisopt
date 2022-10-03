@@ -21,7 +21,6 @@ strategy = ReduceStrategy(start_basis,
                           eval_type='energy', method='scf',
                           target=5e-1, shell_mins=[10, 5])
 ne.setup(method='scf', strategy=strategy, params=params, reference=(basis_name, None))
-#ne._molecule.basis = start_basis
 
 #If you want to print the guess basis
 print(bo.bse_wrapper.internal_basis_converter(start_basis, fmt='molpro'))
@@ -35,8 +34,3 @@ print(ranks)
 #Actually reduce the basis
 res=ne.optimize()
 bo.write_json("neon-reduce.json", ne)
-
-from basisopt.viz.basis import plot_exponents, plot_objective
-
-
-

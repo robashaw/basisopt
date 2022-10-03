@@ -4,7 +4,7 @@ from basisopt.bse_wrapper import fetch_basis
 from basisopt.opt.reduce import ReduceStrategy
 
 bo.set_backend('psi4')
-bo.set_tmp_dir('/Users/ch1jgh/scr/')
+bo.set_tmp_dir('/home/me/scr/')
 
 ne = AtomicBasis('Ne')
 basis_name = 'Partridge Uncontracted 3'

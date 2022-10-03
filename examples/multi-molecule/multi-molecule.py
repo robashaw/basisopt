@@ -4,7 +4,7 @@ from basisopt.opt.strategies import Strategy
 from basisopt.util import bo_logger
 
 bo.set_backend('psi4')
-bo.set_tmp_dir('/Users/ch1jgh/scr/')
+bo.set_tmp_dir('/home/me/scr/')
 
 mb = MolecularBasis(name="double")
 list_of_mols = ['water', 'methane', 'methanol', 'formaldehyde', 'oxygen']

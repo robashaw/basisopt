@@ -8,11 +8,11 @@ bo.set_tmp_dir('/home/me/scr/')
 
 mb = MolecularBasis(name="double")
 list_of_mols = ['water', 'methane', 'methanol', 'formaldehyde', 'oxygen']
-mol_objs = []
-for molecule in range(len(list_of_mols)):
-	mol_objs.append(bo.molecule.Molecule.from_xyz(list_of_mols[molecule]+'.xyz', 
-           name=list_of_mols[molecule]))
-	mb.add_molecule(mol_objs[molecule])
+mol_objs = [
+    bo.molecule.Molecule.from_xyz(mol+'.xyz', name=mol)
+    for mol in list_of_mols
+]
+mb = MolecularBasis(name="double", molecules=mol_objs)
     
 params = {
     'functional': "wb97x-d",

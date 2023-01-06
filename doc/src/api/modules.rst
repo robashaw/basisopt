@@ -1,5 +1,5 @@
-basisopt
-========
+BasisOpt API
+============
 
 .. toctree::
    :maxdepth: 4

@@ -6,7 +6,7 @@
 Tutorials
 =========
 
-
+- :doc:`_tutorials/eventemper`
 
 .. toctree::
    :hidden:

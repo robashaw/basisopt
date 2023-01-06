@@ -3,7 +3,7 @@
 [![Build Status](https://app.travis-ci.com/robashaw/basisopt.svg?branch=main)](https://app.travis-ci.com/robashaw/basisopt)
 [![codecov](https://codecov.io/gh/robashaw/basisopt/branch/main/graph/badge.svg?token=V8zNdEgBKj)](https://codecov.io/gh/robashaw/basisopt)
 [![Documentation Status](https://readthedocs.org/projects/basisopt/badge/?version=latest)](https://basisopt.readthedocs.io/en/latest/?badge=latest)
-https://api.codiga.io/project/32104/status/svg
+[![Code Quality](https://api.codiga.io/project/32104/status/svg)]()
 
 BasisOpt is a python library for the optimization of Gaussian basis sets as used in most quantum chemistry packages. It is currently under development, but should be reasonably stable. 
 

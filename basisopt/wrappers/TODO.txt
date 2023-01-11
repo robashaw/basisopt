@@ -1,2 +1,1 @@
-+ MOLPRO wrapper (* branch molpro)
 + Turbomole wrapper - needed for MP2FitBasis to work

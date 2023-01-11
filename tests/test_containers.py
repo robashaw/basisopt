@@ -17,6 +17,15 @@ def test_shell_compute():
         for (c, v) in shell_data._compute_values:
             value = s.compute(*c)
             assert almost_equal(value, v[ix], thresh=1e-10)
+            
+def test_basis_dict():
+    hbas = shell_data.get_vdz_internal()
+    d = basis_to_dict(hbas)
+    assert 'h' in d
+    b = dict_to_basis(d)
+    assert 'h' in b
+    for s, s_ in zip(hbas['h'], b['h']):
+        assert s.exps.size == s_.exps.size
 
 def test_default_result():
     r = Result()
@@ -36,15 +45,26 @@ def test_add_get_data():
     
     with pytest.raises(DataNotFound):
         r.get_data("Is_Apple")
-    
-def test_add_get_child():
+        
+def build_frame():
     r1 = Result()
+    r1.add_data("Is_Banana", True)
+    r1.add_data("Is_Banana", False)
     r2 = Result(name='Child1')
+    r2.add_data("Is_Banana", False)
+    r2.add_data("Size", 10.1)
     r3 = Result(name='Child2')
+    r3.add_data("Surname", "Flump")
     r4 = Result(name='Grandchild')
+    r4.add_data("Size", 4.3)
+    r4.add_data("Is_Banana", True)
     r1.add_child(r2)
     r1.add_child(r3)
     r2.add_child(r4)
+    return r1, r2, r3, r4
+    
+def test_add_get_child():
+    r1, r2, r3, r4 = build_frame()
     
     assert r1.depth == 1
     assert r2.depth == 2
@@ -64,6 +84,27 @@ def test_add_get_child():
     with pytest.raises(InvalidResult):
         shell = Shell()
         r3.add_child(shell)
+
+def test_search_result():
+    r1, r2, r3, r4 = build_frame()
+    
+    results = r1.search("Is_Banana")
+    assert len(results) == 4
+    assert not results['Child1_Is_Banana1']
+    assert results['Grandchild_Is_Banana1']
+    
+    results = r3.search("Is_Banana")
+    assert len(results) == 0
+    
+    results = r2.search("Size")
+    assert len(results) == 2
+    assert 4.3 in results.values()
+    
+    results = r1.search("Surname")
+    assert "Flump" in results.values()
+    
+    results = r2.search("Surname")
+    assert "Flump" not in results.values()
         
 def test_load_result():
     r = Result().load("tests/data/result_test.bin")

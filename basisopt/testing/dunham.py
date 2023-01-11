@@ -1,15 +1,27 @@
-# base test types
+# duham test
+from typing import Any, Optional
 import numpy as np
-from .test import Test
-from basisopt.molecule import Molecule, build_diatomic
-from basisopt import api, data
-from basisopt.util import fit_poly
-from basisopt.exceptions import InvalidDiatomic
+
 from mendeleev import element as md_element
+
+from basisopt import api, data
+from basisopt.containers import InternalBasis
+from basisopt.molecule import Molecule, build_diatomic
+from basisopt.util import fit_poly
+from basisopt.exceptions import InvalidDiatomic, FailedCalculation
+
+from .test import Test
 
 _VALUE_NAMES = ["Ee", "Re", "BRot", "ARot", "We", "Wx", "Wy", "De", "D0"]
 
-def dunham(energies, distances, mu, poly_order=6, angstrom=True, Emax=0):
+DunhamResults = tuple[np.poly1d, float, np.ndarray]
+
+def dunham(energies: np.ndarray,
+           distances: np.ndarray,
+           mu: float,
+           poly_order: int=6,
+           angstrom: bool=True,
+           Emax: float=0) -> DunhamResults:
     "Performs a Dunham analysis on a diatomic, given energy/distance values around a minimum and the reduced mass mu"
     # convert units
     An = mu * data.FORCE_MASS
@@ -45,7 +57,8 @@ def dunham(energies, distances, mu, poly_order=6, angstrom=True, Emax=0):
         De = (Emax - Ee) * data.TO_EV
         D0 = De - 0.5 * (We - 0.5*Wexe) * data.TO_EV/data.TO_CM
     
-    return p, xref, Ee, re*data.TO_ANGSTROM, Be, Ae, We, Wexe, Weye, De, D0   
+    results = np.array([Ee, re*data.TO_ANGSTROM, Be, Ae, We, Wexe, Weye, De, D0])
+    return p, xref, results
 
 class DunhamTest(Test):
     """Carries out a Dunham analysis on a diatomic, calculating spectroscopic constants
@@ -75,28 +88,87 @@ class DunhamTest(Test):
             e.g. to calculate the value at the point R, use poly(R-shift)
             
     """
-    def __init__(self, name, mol=None, mol_str="", charge=0, mult=1, poly_order=6, step=0.05, Emax=0):
-        Test.__init__(self, name, mol=mol, charge=charge, mult=mult)
+    def __init__(self, 
+                 name: str, 
+                 mol: Optional[Molecule]=None,
+                 mol_str: str="",
+                 charge: int=0,
+                 mult: int=1,
+                 poly_order: int=6,
+                 step: float=0.05,
+                 Emax: float=0):
+        super().__init__(name, mol=mol, charge=charge, mult=mult)
         self.poly_order = max(3, poly_order)
         self.step = step
         self.Emax = Emax
+        self.poly = None
+        self.shift = 0.
         
         if len(mol_str) != 0:
             self.from_string(mol_str, charge=charge, mult=mult)
             
         self.reduced_mass()
+    
+    def as_dict(self):
+        d = super().as_dict()
+        d["@module"] = type(self).__module__
+        d["@class"] = type(self).__name__
+        d["poly_order"] = self.poly_order
+        d["step"] = self.step
+        d["Emax"] = self.Emax
+        return d
+    
+    @classmethod
+    def from_dict(cls, d):
+        test = Test.from_dict(d)
+        instance = cls(test.name,
+                       poly_order=d.get("poly_order", 6),
+                       step=d.get("step", 0.05),
+                       Emax=d.get("Emax", 0)
+                      )
+        instance.molecule = test.molecule
+        instance.reference = test.reference
+        instance._data_keys = test._data_keys
+        instance._data_values = test._data_values
+        instance._children = test._children
+        instance.depth = test.depth
+        return instance
         
-    def from_string(self, mol_str, charge=0, mult=1):
+    def from_string(self,
+                    mol_str: str,
+                    charge: int=0,
+                    mult: int=1):
+        """Makes a diatomic molecule from string to use in test
+        
+           Arguments:
+                mol_str (str): string of diatomic and separation in Angstrom
+                               e.g. "NO,1.3", "H2,0.9", "LiH,1.1" etc
+                charge (int): overall charge of diatomic
+                mult (int): spin multipilicity of diatomic
+        """
         self.molecule = build_diatomic(mol_str, charge=charge, mult=mult)
         
-    def reduced_mass(self):
+    def reduced_mass(self) -> float:
         """Calculate the reduced mass of the diatomic"""
         atom1 = md_element(self.molecule._atom_names[0].title())
         atom2 = md_element(self.molecule._atom_names[1].title())
         return (atom1.mass*atom2.mass)/(atom1.mass + atom2.mass)
         
-    def calculate(self, method, basis, params={}):
-        if self.molecule is None:
+    def calculate(self, 
+                  method: str,
+                  basis: InternalBasis,
+                  params: dict[str, Any]={}) -> np.ndarray:
+        """Calculates the Dunham analysis results
+           
+           Args:
+                  method (str): calculation method to use
+                  basis (InternalBasis): orbital basis set
+                  params (dict): parameters to pass to backend
+           
+           Returns: 
+                  array of results in order specified by _VALUE_NAMES
+        """
+        if not self.molecule:
             raise EmptyCalculation
         self.molecule.basis = basis
         self.molecule.method = method
@@ -118,21 +190,22 @@ class DunhamTest(Test):
             self.molecule._coords[0] = np.array([0.0, 0.0, -0.5*r])
             self.molecule._coords[1] = np.array([0.0, 0.0,  0.5*r])
             success = api.run_calculation(evaluate='energy', mol=self.molecule, params=params)
+            if success != 0:
+                raise FailedCalculation
             energies.append(wrapper.get_value('energy'))
            
         # perform the analysis
         energies = np.array(energies)
-        results = dunham(energies, rvals, self.reduced_mass(), poly_order=self.poly_order, Emax=self.Emax)
+        self.poly, self.shift, results =\
+             dunham(energies, rvals, self.reduced_mass(), poly_order=self.poly_order, Emax=self.Emax)
         
         # store results
-        self.poly = results[0]
-        self.shift = results[1]
         self.add_data("StencilRi", rvals*data.TO_ANGSTROM)
         self.add_data("StencilEi", energies)
-        for n, r in zip(_VALUE_NAMES, results[2:]):
+        for n, r in zip(_VALUE_NAMES, results):
             self.add_data(n, r)
         
-        return np.array(results[2:])
+        return results
         
     
          

@@ -1,8 +1,52 @@
 # utility functions
+from typing import Any
 import logging
+import json
 import numpy as np
+from monty.json import MSONable, MontyEncoder, MontyDecoder
 
-def fit_poly(x, y, n=6):
+bo_logger = logging.getLogger('basisopt') # internal logging object
+
+def read_json(filename: str) -> MSONable:
+    """Reads an MSONable object from file
+     
+       Arguments:
+            filename (str): path to JSON file
+       
+       Returns:
+            object
+    """
+    with open(filename, 'r', encoding='utf-8') as f:
+        obj = json.load(f, cls=MontyDecoder)
+    bo_logger.info("Read %s from %s",
+                   type(obj).__name__, filename)
+    return obj
+
+def write_json(filename: str, obj: MSONable):
+    """Writes an MSONable object to file
+    
+       Arguments:
+            filename (str): path to JSON file
+            obj (MSONable): object to be written
+    """
+    obj_type = type(obj).__name__
+    if isinstance(obj, MSONable):
+        bo_logger.info(f"Writing {obj_type} to {filename}")
+        with open(filename, 'w', encoding='utf-8') as f:
+            json.dump(obj, f, cls=MontyEncoder)
+    else:
+        bo_logger.error("%s cannot be converted to JSON format",
+                        obj_type)
+
+def dict_decode(d: dict[str, Any]) -> dict[str, Any]:
+    decoder = MontyDecoder()
+    return {k: decoder.process_decoded(v)
+             for k, v in d.items()}
+
+
+def fit_poly(x: np.ndarray, 
+             y: np.ndarray,
+             n: int=6) -> tuple[np.poly1d, float, float, list[float]]:
     """Fits a polynomial of order n to the set of (x [Bohr], y [Hartree]) coordinates given,
        and calculates data necessary for a Dunham analysis.
     
@@ -28,7 +72,7 @@ def fit_poly(x, y, n=6):
     xmax = max(xshift)+0.1
     crit_points = [x.real for x in p.deriv().r if np.abs(x.imag) < 1e-8 and xmin < x.real < xmax] 
     if len(crit_points) == 0:
-        logging.warning("Minimum not found in polynomial fit")
+        bo_logger.warning("Minimum not found in polynomial fit")
         # Set outputs to default values
         re = xref
         pt = [0.0]*(n+1)  

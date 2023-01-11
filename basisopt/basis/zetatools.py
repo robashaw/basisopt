@@ -1,6 +1,11 @@
 # zeta_tools
-from basisopt import data
+from typing import Callable
+
 import numpy as np
+
+from mendeleev import element as MDElement
+from mendeleev.econf import ElectronicConfiguration
+from basisopt import data
 
 """Dictionary of possible basis configuration 'qualities'
    A quality corresponds to a manner of calculating how many basis
@@ -19,13 +24,15 @@ import numpy as np
         cc_pvNz:            correlation consistent, N=d,t,q,5
 """
 QUALITIES = {}
+Configuration = dict[str, int]
+Quality = Callable[[MDElement], Configuration]
 
-def register_quality(func):
+def register_quality(func: Quality) -> Quality:
     """Decorator to make a quality function available"""
     QUALITIES[func.__name__] = func
     return func
 
-def get_next_l(l_list):
+def get_next_l(l_list: list[str]) -> str:
     """Given a list of existing angular momenta, gives
        the angular momentum symbol one higher.
     
@@ -39,7 +46,7 @@ def get_next_l(l_list):
     next_l = np.max(values) + 1
     return data.INV_AM_DICT[next_l]
 
-def enum_shells(conf):
+def enum_shells(conf: ElectronicConfiguration) -> Configuration:
     """Enumerates the number of functions of each angular momentum
     
        Arguments:
@@ -56,7 +63,7 @@ def enum_shells(conf):
         config[l] += 1
     return config
     
-def config_to_string(conf):
+def config_to_string(conf: Configuration) -> str:
     """Converts a configuration dictionary into a string, e.g.
        '4s3p2d1f'
     """
@@ -69,8 +76,42 @@ def config_to_string(conf):
         new_string = f"{v}{data.INV_AM_DICT[ix]}"
         value_string += new_string
     return value_string
+
+def string_to_config(string: str) -> Configuration:
+    """converts a configuration string, e.g. '4s3p2d1f',
+       to a Configuration dictionary 
+    """
+    config = {}
+    current_size = 0
+    for c in string:
+        try:
+            n = int(c)
+            current_size *= 10
+            current_size += n
+        except:
+            config[c] = current_size
+            current_size = 0
+    return config
+
+def n_cartesian(config: Configuration) -> int:
+    "Returns number of Cartesian Gaussians in configuration"
+    total = 0
+    for l, n in config.items():
+        size = data.AM_DICT[l]
+        size = (size*(size+1))/2
+        total += n*size
+    return total
+
+def n_spherical(config: Configuration) -> int:
+    "Returns number of spherical Gaussians in configuration"
+    total = 0
+    for l, n in config.items():
+        size = 2*data.AM_DICT[l]+1
+        total += n*size
+    return total
     
-def compare(c1, c2):
+def compare(c1: Configuration,
+            c2: Configuration) -> int:
     """Compares two configuration dictionaries
     
        Returns:
@@ -79,17 +120,16 @@ def compare(c1, c2):
             > 0 if c2 is bigger than c1
     """
     result = len(c2.keys()) - len(c1.keys())
-    while result > -1:
+    if result > -1:
         for k, v in c1.items():
-            delta = c2[k] - v
+            delta = c2[k] - v    
             if delta < 0:
                 result = -1
             else:
                 result += delta
-        break
     return result
 
-def nz(el, n):
+def nz(el: MDElement, n: int) -> Configuration:
     """Helper function to generate n-zeta split valence configs
     
        Arguments:
@@ -100,12 +140,18 @@ def nz(el, n):
             a config dictionary
     """
     config = enum_shells(el.ec.conf)
-    valence = enum_shells(el.ec.get_valence().conf)
+    if el.symbol == 'H':
+        valence_conf = {(1, 's'): 1}
+    elif el.symbol == 'He':
+        valence_conf = {(1, 's'): 2}
+    else:
+        valence_conf = el.ec.get_valence().conf
+    valence = enum_shells(valence_conf)
     for k, v in valence.items():
-        config[k] += n*v
+        config[k] += (n-1)*v
     return config
 
-def add_np(config, n):
+def add_np(config: Configuration, n: int) -> Configuration:
     """Helper function to add n polarization functions
     
        Arguments:
@@ -130,48 +176,48 @@ def minimal(el):
 
 @register_quality
 def dz(el):
-    return nz(el, 1)
+    return nz(el, 2)
      
 @register_quality
 def tz(el):
-    return nz(el, 2)
+    return nz(el, 3)
 
 @register_quality    
 def qz(el):
-    return nz(el, 3)
-    
-@register_quality
-def n5z(el):
     return nz(el, 4)
     
 @register_quality
+def n5z(el):
+    return nz(el, 5)
+    
+@register_quality
 def dzp(el):
-    config = nz(el, 1)
+    config = nz(el, 2)
     return add_np(config, 1)
 
 @register_quality
 def dzpp(el):
-    config = nz(el, 1)
+    config = nz(el, 2)
     return add_np(config, 2)
     
 @register_quality
 def tzp(el):
-    config = nz(el, 2)
+    config = nz(el, 3)
     return add_np(config, 1)
 
 @register_quality
 def tzpp(el):
-    config = nz(el, 2)
+    config = nz(el, 3)
     return add_np(config, 2)
     
 @register_quality
 def qzp(el):
-    config = nz(el, 3)
+    config = nz(el, 4)
     return add_np(config, 1)
 
 @register_quality
 def qzpp(el):
-    config = nz(el, 3)
+    config = nz(el, 4)
     return add_np(config, 2)
  
 @register_quality  

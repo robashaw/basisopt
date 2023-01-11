@@ -14,6 +14,13 @@ def test_default_molecule():
     assert len(m.unique_atoms()) == 0
     assert m.natoms() == 0
     
+def test_nelectrons():
+    m = Molecule()
+    nel = m.nelectrons()
+    assert m.nelectrons() == 0
+    m = Molecule.from_xyz("tests/data/caffeine.xyz")
+    assert m.nelectrons() == 102
+    
 def test_add_atom():
     m = Molecule()
     
@@ -44,9 +51,12 @@ def test_get_delta():
     assert almost_equal(m.get_delta("cheese"), -1)
     
 def test_from_xyz():
-    m = Molecule()
-    m.from_xyz("tests/data/caffeine.xyz")
+    m = Molecule.from_xyz("tests/data/caffeine.xyz",
+                          name="Caffeine", charge=1, mult=3)
     assert m.natoms() == 24
+    assert m.name == "Caffeine"
+    assert m.charge == 1
+    assert m.multiplicity == 3
     
     # test unique_atoms
     unique_atoms = m.unique_atoms()

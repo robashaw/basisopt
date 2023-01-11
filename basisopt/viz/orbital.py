@@ -1,11 +1,17 @@
 # plot an orbital
 import numpy as np
 from mayavi import mlab
-import logging
+from basisopt.util import bo_logger
+from basisopt.containers import Shell
 
-def contour3d(gto, ix=0, m=0, n=100, lower=[-2, -2, -2], upper=[2, 2, 2], contours=5):
+def contour3d(gto: Shell,
+              ix: int=0,
+              m: int=0,
+              n: int=100,
+              lower: list[float]=[-2, -2, -2],
+              upper: list[float]=[2, 2, 2],
+              contours: int=5) -> object:
     """Plots a 3D plot of a GTO from a Shell object
-       TODO: fix creation of np.mgrid to use the (n, lower, upper) arguments
     
        Arguments:
             gto: Shell object
@@ -14,9 +20,18 @@ def contour3d(gto, ix=0, m=0, n=100, lower=[-2, -2, -2], upper=[2, 2, 2], contou
             n (int): number of points per axis
             lower (list): list of lower bounds for X,Y,Z axes
             upper (list): list of upper bounds for X,Y,Z axes
-            contours (int): number of contours to plot        
+            contours (int): number of contours to plot     
+       
+       Returns:
+            the mayavi figure object   
     """
-    X, Y, Z = np.mgrid[-3:3:150j, -3:3:150j, -3:3:150j] # <- TODO
+    nj = n*1j
+    X, Y, Z = np.mgrid[ (lower[0]):(upper[0]):nj,
+                        (lower[1]):(upper[1]):nj,
+                        (lower[2]):(upper[2]):nj]
     f = gto.compute(X, Y, Z, i=ix, m=m)
-    logging.debug(f"Contour min: {np.min(f)}, max: {np.max(f)}")
-    mlab.contour3d(X, Y, Z, f, contours=contours, colormap='cool', transparent=True)
+    bo_logger.debug("Contour min: %12.6f, max: %12.6f", np.min(f), np.max(f))
+    return mlab.contour3d(X, Y, Z, f,
+                          contours=contours,
+                          colormap='cool',
+                          transparent=True)

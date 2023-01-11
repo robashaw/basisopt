@@ -1,11 +1,13 @@
+import pytest
+import numpy as np
+
 from basisopt import Molecule
 from basisopt.wrappers import Wrapper
 from basisopt.wrappers.dummy import DummyWrapper
 from basisopt.exceptions import InvalidMethodString
-import pytest
+
 from tests.data.utils import almost_equal
 from tests.data.shells import get_vdz_internal
-import numpy as np
 
 def test_empty_wrappers():
     w = Wrapper()
@@ -43,8 +45,7 @@ def test_verify_method_string():
         dw.verify_method_string("uniform/dipole")
 
 def test_run():
-    m = Molecule()
-    m.from_xyz("tests/data/caffeine.xyz") # 24 atoms
+    m = Molecule.from_xyz("tests/data/caffeine.xyz") # 24 atoms
     
     w = Wrapper()
     assert w.run("energy", m, {}) == -1
@@ -85,8 +86,7 @@ def test_all_available():
     
 def test_initialise():
     dw = DummyWrapper()
-    m = Molecule()
-    m.from_xyz("tests/data/caffeine.xyz")
+    m = Molecule.from_xyz("tests/data/caffeine.xyz")
     
     dw.initialise(m)
     assert dw._value == 24

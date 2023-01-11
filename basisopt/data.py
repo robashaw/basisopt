@@ -1,5 +1,7 @@
 # data
+from functools import cache
 import numpy as np
+from mendeleev import element as md_element
 
 # Conversion factors
 TO_CM = 219474.63067
@@ -7,6 +9,11 @@ TO_EV = 27.2113839
 TO_BOHR = 1.88973
 TO_ANGSTROM = 0.5291761
 FORCE_MASS = 1822.88853
+
+@cache 
+def atomic_number(element: str) -> int:
+    el = md_element(element)
+    return el.atomic_number
 
 """Dictionary converting letter-value angular momenta to l quantum number"""
 AM_DICT = {
@@ -29,7 +36,9 @@ INV_AM_DICT = dict((v, k) for k, v in AM_DICT.items())
 _EVEN_TEMPERED_DATA = {
 }
 
-def get_even_temper_params(atom='H', accuracy=1e-5):
+ETParams = list[tuple[float, float, int]]
+def get_even_temper_params(atom: str='H',
+                           accuracy: float=1e-5) -> ETParams:
     """Searches for the relevant even tempered expansion
        from _EVEN_TEMPERED_DATA
     """

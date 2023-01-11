@@ -1,14 +1,19 @@
 # Template for program wrappers
+from typing import Any, Callable
 import functools
-import logging
-from basisopt.exceptions import MethodNotAvailable, InvalidMethodString
 
-def available(func):
+from basisopt.exceptions import MethodNotAvailable, InvalidMethodString
+from basisopt.util import bo_logger
+from basisopt.molecule import Molecule
+
+Method = Callable[[object, Molecule, str, ...], Any]
+
+def available(func: Method) -> Method:
     """Decorator to mark a method as available"""
     func._available = True
     return func
 
-def unavailable(func):
+def unavailable(func: Method) -> Method:
     """Decorator to mark a method as unavailable"""
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -43,7 +48,7 @@ class Wrapper:
         Attributes that should only be set here:    
             _methods (dict): dictionary of all possible calculation types, pointing to member funcs
     """
-    def __init__(self, name='Empty'):
+    def __init__(self, name: str='Empty'):
         self._name = name
         
         self._methods = {
@@ -53,6 +58,7 @@ class Wrapper:
             'trans_dipole'     : self.trans_dipole,
             'trans_quadrupole' : self.trans_quadrupole,
             'polarizability'   : self.polarizability,
+            'jk_error'         : self.jk_error
         } 
         
         self._method_strings = {}
@@ -60,18 +66,18 @@ class Wrapper:
         self._values = {}
         self._globals = {}
     
-    def add_global(self, name, value):
+    def add_global(self, name: str, value: Any):
         """Add a global option"""
         self._globals[name] = value
     
-    def get_value(self, name):
+    def get_value(self, name: str) -> Any:
         """Retrieve a data point if it exists"""
         if name in self._values:
             return self._values[name]
         else:
             return None
     
-    def verify_method_string(self, string):
+    def verify_method_string(self, string: str) -> bool:
         """Checks whether a method is available with this wrapper
         
            Arguments:
@@ -100,7 +106,11 @@ class Wrapper:
         """Cleans up any temporary files"""
         pass
 
-    def run(self, evaluate, molecule, params, tmp=""):
+    def run(self,
+            evaluate: str,
+            molecule: Molecule,
+            params: dict[str, Any], 
+            tmp: str="") -> int:
         """Runs a calculation with this backend
            MUST BE IMPLEMENTED IN ALL WRAPPERS
              
@@ -120,14 +130,14 @@ class Wrapper:
                 return 0
             else:
                 raise MethodNotAvailable(method_str)
-        except KeyError:
-            logging.error("There is no method %s", evaluate)
+        except KeyError as e:
+            bo_logger.error(e)
             return -2
         except MethodNotAvailable:
-            logging.error(f"Unable to run %s with %s backend", method_str, self._name)
+            bo_logger.error("Unable to run %s with %s backend", method_str, self._name)
             return -1
     
-    def method_is_available(self, method='energy'):
+    def method_is_available(self, method: str='energy') -> bool:
         """Returns True if a calculation type is available, false otherwise""" 
         try:
             func = self._methods[method]
@@ -135,11 +145,11 @@ class Wrapper:
         except KeyError:
             return False
     
-    def all_available(self):
+    def all_available(self) -> list[str]:
         """Returns a list of all available calculation types"""
         return [k for k, v in self._methods.items() if v._available]
         
-    def available_properties(self, name):
+    def available_properties(self, name: str) -> list[str]:
         """Returns a list of all available calculation types for a
            given method. 
         
@@ -151,7 +161,7 @@ class Wrapper:
         else:
             return []
     
-    def available_methods(self, prop):
+    def available_methods(self, prop: str) -> list[str]:
         """Returns a list of all available methods to calculate a particular property
            
            Attributes:
@@ -160,33 +170,38 @@ class Wrapper:
         return [k for k, v in self._method_strings.items() if prop in v]
         
     @unavailable
-    def energy(self, mol, tmp=""):
+    def energy(self, mol, tmp="", **params):
         """Energy, Hartree"""
         raise NotImplementedException
         
     @unavailable
-    def dipole(self, mol, tmp=""):
+    def dipole(self, mol, tmp="", **params):
         """Dipole moment, numpy array, a.u."""
         raise NotImplementedException
         
     @unavailable
-    def quadrupole(self, mol, tmp=""):
+    def quadrupole(self, mol, tmp="", **params):
         """Quadrupole moment, numpy array, a.u."""
         raise NotImplementedException
         
     @unavailable
-    def trans_dipole(self, mol, tmp=""):
+    def trans_dipole(self, mol, tmp="", **params):
         """Transition dipole moment, numpy array, a.u."""
         raise NotImplementedException
     
     @unavailable
-    def trans_quadrupole(self, mol, tmp=""):
+    def trans_quadrupole(self, mol, tmp="", **params):
         """Transition quadrupole moment, numpy array, a.u."""
         raise NotImplementedException
     
     @unavailable
-    def polarizability(self, mol, tmp=""):
+    def polarizability(self, mol, tmp="", **params):
         """Dipole polarizability, a.u."""
+        raise NotImplementedException
+        
+    @unavailable
+    def jk_error(self, mol, tmp="", **params):
+        "JK density fitting error, Hartree"
         raise NotImplementedException
     
     

@@ -2,26 +2,63 @@
 import pickle
 import logging
 import numpy as np
+from monty.json import MSONable
 from scipy.special import sph_harm
+from scipy.optimize import OptimizeResult
+from typing import Any
 
 from . import data
 from .exceptions import DataNotFound, InvalidResult
+from .util import bo_logger, dict_decode
 
-class Shell:
+class Shell(MSONable):
     """Lightweight container for basis set Shells.
     
        Attributes:
             l (char): the angular momentum name of the shell
             exps (numpy array, float): array of exponents
             coefs (list): list of numpy arrays of equal length to exps,
-            corresponding to coefficients for each exponent 
+                corresponding to coefficients for each exponent 
     """
     def __init__(self):
         self.l = 's'
         self.exps = np.array([])
         self.coefs = []
         
-    def compute(self, x, y, z, i=0, m=0):
+    def as_dict(self) -> dict[str, Any]:
+        """ Converts Shell to MSONable dictionary
+           
+            Returns:
+                dictionary representation of Shell
+        """
+        d = {
+            "@module": type(self).__module__,
+            "@class": type(self).__name__,
+            "l": self.l,
+            "exps": self.exps,
+            "coefs": self.coefs
+        }
+        return d
+        
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> object:
+        """Creates Shell object from dictionary representation
+        
+           Arguments:
+                d (dict): dictionary of Shell attributes
+          
+           Returns:
+                Shell object
+        """
+        d = dict_decode(d)
+        instance = cls()
+        instance.l = d.get('l', 's')
+        instance.exps = d.get('exps', np.array([]))
+        instance.coefs = d.get('coefs', [])
+        return instance
+        
+    def compute(self, x: float, y: float, z: float,
+                i: int=0, m: int=0) -> float:
         """ Computes the value of the (spherical) GTO at a given point
         
             Arguments:
@@ -55,31 +92,70 @@ class Shell:
         angular_part = np.real(sph_harm(m, lval, theta, phi))
         return radial_part*angular_part
 
-class Result:
+
+InternalBasis = dict[str, list[Shell]]
+BSEBasis = dict[str, Any]
+
+def basis_to_dict(basis: InternalBasis) -> dict[str, Any]:
+    """Converts an internal basis set of the form
+       {atom: [shells]} to an MSONable dictionary
+    
+       Arguments:
+            basis (dict): internal basis set
+    
+       Returns:
+            json-writable dictionary 
+    """
+    return {k: [s.as_dict() for s in v]
+            for k,v in basis.items()}
+
+def dict_to_basis(d: dict[str, Any]) -> InternalBasis:
+    """Converts an MSON dictionary to an internal basis
+    
+       Arguments:
+            d (dict): dictionary of basis set attributes
+    
+       Returns:
+            internal basis set
+    """
+    if len(d) > 0:
+        key = list(d.keys())[0]
+        shell = d[key]
+        if len(shell) > 0:
+            obj = type(shell[0]).__name__
+            if obj != 'Shell':
+                return {k: [Shell.from_dict(s) for s in v]
+                        for k,v in d.items()}
+    return d
+
+OptResult = dict[str, OptimizeResult]
+OptCollection = dict[str, OptResult]
+
+class Result(MSONable):
     """ Container for storing and archiving all results,
         e.g. of tests, calculations, and optimizations.
     
         Attributes:
             name (str): identifier for result
             depth (int): a Result object contains children,
-            so a depth of 1 indicates no parents, 2 indicates 
-            one parent, etc.
+                so a depth of 1 indicates no parents, 2 indicates 
+                one parent, etc.
         
         Private attributes:
             _data_keys (dict): dictionary with the format
-            (value_name, number of records)
+                (value_name, number of records)
             _data_values (dict): dictionary of values with format
-            (value_name_with_id, value)
+                (value_name_with_id, value)
             _children (list): references to child Result objects
     """
-    def __init__(self, name='Empty'):
+    def __init__(self, name: str='Empty'):
         self.name = name
         self._data_keys = {}
         self._data_values = {}
         self._children = []
         self.depth = 1
         
-    def __str__(self):
+    def __str__(self) -> str:
         """Converts the Result into a human readable string
         
            Returns:
@@ -111,7 +187,7 @@ class Result:
         """
         raise NotImplementedException
     
-    def _summary(self, title):
+    def _summary(self, title: str) -> str:
         """ Generates a summary string for the Result and all its children
         
             Arguments:
@@ -127,7 +203,7 @@ class Result:
             string += c._summary(child_title)
         return string
     
-    def summary(self):
+    def summary(self) -> str:
         """Creates summaries of the Result and all its children
         
            Returns:
@@ -137,17 +213,17 @@ class Result:
         return self._summary(title_str)
     
     @property
-    def depth(self):
+    def depth(self) -> int:
         return self._depth
         
     @depth.setter
-    def depth(self, value):
+    def depth(self, value: int):
         self._depth = value
         # Need to update all children too
         for c in self._children:
             c.depth = value + 1
     
-    def add_data(self, name, value):
+    def add_data(self, name: str, value: Any):
         """Adds a data point to the result, with archiving
         
            Arguments:
@@ -164,7 +240,7 @@ class Result:
             self._data_keys[name] = 1
             self._data_values[name+"1"] = value
     
-    def get_data(self, name, step_back=0):
+    def get_data(self, name: str, step_back: int=0) -> Any:
         """Retrieve an archived data point 
         
            Arguments:
@@ -186,7 +262,7 @@ class Result:
             index = max(1, index)
             return self._data_values[name+str(index)]
     
-    def add_child(self, child):
+    def add_child(self, child: object):
         """Adds a child Result to this Result"""
         if hasattr(child, '_depth'):
             child.depth = self.depth+1
@@ -194,14 +270,14 @@ class Result:
         else:
             raise InvalidResult 
             
-    def get_child(self, name):
+    def get_child(self, name: str) -> object:
         """Returns child Result with given name, if it exists"""
         for c in self._children:
             if c.name == name:
                 return c
         raise DataNotFound
         
-    def search(self, name): 
+    def search(self, name: str) -> dict[str, Any]: 
         """Searches for all data in this and all its children
            with a given name, returning a dictionary indexed by
            the name and which child it was found in
@@ -217,17 +293,53 @@ class Result:
                 results[k] = v
         return results
         
-    def save(self, filename):
+    def save(self, filename: str):
         """Pickles the Result object into a file"""
         with open(filename, 'wb') as f:
             pickle.dump(self, f)
             f.close()
-        logging.info("Dumped object of type %s to %s", type(data), filename)
+        bo_logger.info("Dumped object of type %s to %s", type(data), filename)
         
-    def load(self, filename):    
+    def load(self, filename: str) -> object:    
         """Loads and returns a Result object from a file pickle"""
         with open(filename, 'rb') as f:
             pkl_data = pickle.load(f)
             f.close()
-        logging.info("Loaded object of type %s from %s", type(pkl_data), filename)
+        bo_logger.info("Loaded object of type %s from %s", type(pkl_data), filename)
         return pkl_data
+        
+    def as_dict(self) -> dict[str, Any]:
+        """Converts Result (and all children) to an MSONable dictionary"""
+        d = {
+            "@module": type(self).__module__,
+            "@class": type(self).__name__,
+            "name": self.name,
+            "data_keys": self._data_keys,
+            "data_values": self._data_values,
+            "depth": self.depth,
+            "children": []
+        }
+        
+        for c in self._children:
+            cd = c.as_dict()
+            del cd["@module"]
+            del cd["@class"]
+            d['children'].append(cd)
+        return d
+    
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> object:
+        """Creates Result from dictionary representation,
+           including recursive creation of children.
+        """
+        d = dict_decode(d)
+        name = d.get("name", "Empty")
+        instance = cls(name=name)
+        instance._data_keys = d.get("data_keys", {})
+        instance._data_values = d.get("data_values", {})
+        instance.depth = d.get("depth", 1)
+        children = d.get("children", [])
+        for c in children:
+            child = Result.from_dict(c)
+            instance.add_child(child)
+        return instance

@@ -10,6 +10,7 @@ Tutorials
 - :doc:`_tutorials/molecule`
 - :doc:`_tutorials/ranking`
 - :doc:`_tutorials/multimol`
+- :doc:`_tutorials/reduce`
 
 .. toctree::
    :hidden:

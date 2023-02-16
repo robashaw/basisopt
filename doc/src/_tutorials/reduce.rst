@@ -7,8 +7,6 @@ Systematic removal of basis functions
 
 This example demonstrates how BasisOpt can be used to take a large, near-saturated basis set and reduce it in size until it reaches specific criteria. More specifically, the (18s13p) basis set of Partridge is obtained from the Basis Set Exchange, and functions are removed along with exponent re-optimization until a basis composition of (10s5p) is reached. The full example script can be found in ``examples/reduce/ne_reduce.py``.
 
-This tutorial also demonstrates some of the visualisation capabilities of BasisOpt, which relies on `Matplotlib <https://matplotlib.org>`_.
-
 Loading a basis from the Basis Set Exchange
 -------------------------------------------
 
@@ -34,30 +32,6 @@ In this example we have chosen to use the supplied ReduceStrategy. This automate
 	                          target=5e-1, shell_mins=[10, 5])
 	ne.setup(method='scf', strategy=strategy, params=params, reference=(basis_name, None))
 	res=ne.optimize()
-
-Visualization 
--------------
-
-One of the visualization methods available in BasisOpt compares the exponents (by angular momenta) of different basis sets. In this example we generate the comparison between the starting Partridge Uncontracted 3 set and the (10s5p) basis that results from the reduction/optimization. 
-
-.. code-block:: python
-
-	import matplotlib.pyplot as plt
-	from basisopt.viz.basis import plot_exponents
-	fig, ax = plot_exponents(start_basis, atoms=[ne.get_basis()['ne']])
-
-As the plots are Matplotlib objects, they can be adjusted using the standard syntax. Here we change the fonts, size of the image and output as a PNG.
-
-.. code-block:: python
-
-	mpl.rcParams.update({'font.size': 9})
-	mpl.rcParams['font.family'] = 'Helvetica'
-	plt.gcf().set_size_inches(6.69, 3.5)
-	ax[0].set_title('Partridge Uncontracted 3')
-	ax[1].set_title('(10s5p) optimized')
-	plt.savefig('basis-plot.png')
-
-Insert the image here?
 
 Saving to json format
 ---------------------

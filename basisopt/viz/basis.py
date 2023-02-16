@@ -3,7 +3,7 @@ from typing import Callable
 import numpy as np
 import matplotlib.pyplot as plt
 
-from basisopt.basis import Basis
+from basisopt.basis.basis import Basis
 from basisopt.containers import OptResult, InternalBasis
 
 def extract_steps(opt_results: OptResult,

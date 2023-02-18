@@ -9,6 +9,9 @@ Tutorials
 - :doc:`_tutorials/eventemper`
 - :doc:`_tutorials/molecule`
 - :doc:`_tutorials/ranking`
+- :doc:`_tutorials/multimol`
+- :doc:`_tutorials/reduce`
+- :doc:`_tutorials/visualize`
 
 .. toctree::
    :hidden:

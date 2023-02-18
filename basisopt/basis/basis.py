@@ -146,6 +146,10 @@ class Basis(MSONable):
         """All basis objects should implement an optimize method with this signature"""
         raise NotImplementedException
         
+    def copy(self) -> object:
+        """Returns a deepcopy of self"""
+        return copy.deepcopy(self)
+        
     def as_dict(self) -> dict[str, Any]:
         d = {
             "@module": type(self).__module__,

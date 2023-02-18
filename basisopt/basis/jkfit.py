@@ -105,7 +105,7 @@ class JKFitBasis(Basis):
             if isinstance(guess, str):
                 starting_basis = fetch_basis(guess, self._molecule.unique_atoms())
             else:
-                starting_basis = guess
+                starting_basis = guess.copy()
         else:
             bo_logger.error("No basis guess given")
             return

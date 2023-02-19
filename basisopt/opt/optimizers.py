@@ -11,8 +11,6 @@ from basisopt.util import bo_logger
 from .strategies import Strategy
 from .regularisers import Regulariser
 
-# needs expansion to properly log optimization results, and handle different losses
-
 def _atomic_opt(basis: InternalBasis,
                 element: str,
                 algorithm: str, 

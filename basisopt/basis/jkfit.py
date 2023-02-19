@@ -30,7 +30,7 @@ class JKFitBasis(Basis):
         if mol:
             self._molecule = mol
         else:
-            mol_str = f"{name.title()}H,1.5"
+            mol_str = f"{name.title()}H,1.3"
             self._molecule = build_diatomic(mol_str, charge=charge, mult=mult)
         
         self.basis_type = "jkfit"
@@ -105,7 +105,7 @@ class JKFitBasis(Basis):
             if isinstance(guess, str):
                 starting_basis = fetch_basis(guess, self._molecule.unique_atoms())
             else:
-                starting_basis = guess
+                starting_basis = guess.copy()
         else:
             bo_logger.error("No basis guess given")
             return
@@ -190,7 +190,7 @@ def jkfit_collection(element: str,
         new_jk = JKFitBasis(name=element, charge=charge, mult=mult, mol=mol, jonly=jonly)
         new_jk.setup(basis, guess=guess, config=config, method=method, params=params)
         _ = new_jk.optimize(algorithm=algorithm, params=opt_params)
-        results.append(new_jk)
+        results.append(new_jk.copy())
         if jonly:
             guess = new_jk._molecule.jbasis
         else:

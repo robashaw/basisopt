@@ -9,7 +9,11 @@ BasisOpt is a python library for the optimization of Gaussian basis sets as used
 
 ## Installation
 
-Currently the easiest way to install a development version is to clone this repo locally, change to the folder, and use `poetry`:
+The library is pip installable:
+
+	pip install basisopt
+
+To install a development version instead, clone this repo locally, change to the folder, and use `poetry`:
 
 	poetry install -v 
 	poetry run pytest
@@ -21,7 +25,6 @@ Contributions are welcomed, either in the form of raising issues or pull request
 
 ## Coming soon(ish)
 
-- PyPI package
 - Standard optimization strategies (PCSeg and correlation-consistent)
 
 ## Documentation

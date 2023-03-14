@@ -6,7 +6,9 @@
 Installation
 ============
 
-We are currently working on building a PyPI package for BasisOpt. In the meantime, it can be installed quite simply from source.
+The easiest way to install is via pip::
+
+	pip install basisopt
 
 Install from Source
 -------------------

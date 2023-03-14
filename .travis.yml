@@ -1,22 +1,18 @@
 language: python
 matrix:
-	include:
-		- python: 3.9
-		  dist: xenial
-		- python: 3.10
-		  dist: xenial
+   include:
+      - python: 3.9
+        dist: xenial
+      - python: 3.10
+        dist: xenial
 
 before_install:
-	- pip install --upgrade pip
-	- pip install poetry
+   - pip install --upgrade pip
+   - pip install poetry
 
 install:
-	- poetry install -v
+   - poetry install -v
 
 script:
-    - poetry run flake8p basisopt tests
-    - poetry run pytest --cov
-
-		
-		
-			  
+   - poetry run flake8p basisopt tests
+   - poetry run pytest --cov 

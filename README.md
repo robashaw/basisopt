@@ -7,6 +7,14 @@
 
 BasisOpt is a python library for the optimization of Gaussian basis sets as used in most quantum chemistry packages. It is currently under development, but should be reasonably stable. 
 
+## Installation
+
+Currently the easiest way to install a development version is to clone this repo locally, change to the folder, and use `poetry`:
+
+	poetry install -v 
+	poetry run pytest
+
+
 ## Contributing
 
 Contributions are welcomed, either in the form of raising issues or pull requests on this repo. Please take a look at the Code of Conduct before interacting, which includes instructions for reporting any violations.
@@ -14,12 +22,11 @@ Contributions are welcomed, either in the form of raising issues or pull request
 ## Coming soon(ish)
 
 - PyPI package
-- Expanded tutorials/examples
 - Standard optimization strategies (PCSeg and correlation-consistent)
 
 ## Documentation
 
-For dependencies, installation instructions, and a guide to getting started, please refer to the main documentation [here](https://basisopt.readthedocs.io/en/latest/index.html).
+For dependencies, detailed installation instructions, and a guide to getting started, please refer to the main documentation [here](https://basisopt.readthedocs.io/en/latest/index.html).
 
 ## Examples
 
@@ -29,4 +36,4 @@ There are working examples in the examples folder, and these are (or will be) do
 
 If you use this library in your program and find it helpful, that's great! Any feedback would be much appreciated. If you publish results using this library, please consider citing the following paper detailing the implementation:
 
-TODO
+[ChemRxiv preprint](https://chemrxiv.org/engage/chemrxiv/article-details/640f48e3b5d5dbe9e832e997)

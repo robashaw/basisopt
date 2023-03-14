@@ -6,21 +6,17 @@
 Installation
 ============
 
-We are currently working on building ``conda`` and PyPI packages for BasisOpt. In the meantime, it can be installed quite simply from source.
+We are currently working on building a PyPI package for BasisOpt. In the meantime, it can be installed quite simply from source.
 
 Install from Source
 -------------------
 
-Clone the repository from `github
+First, make sure you install the python package `poetry`. Then, clone the repository from `github
 <https://github.com/robashaw/basisopt>`_::
 
     git clone https://github.com/robashaw/basisopt.git
     cd basisopt
-    python setup.py install
-
-If you would instead like to install `in place`, you can replace the last line with::
-
-	pip install -e .
+    poetry install -v
 
 Dependencies
 ------------

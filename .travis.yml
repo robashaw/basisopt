@@ -5,9 +5,6 @@ matrix:
 		  dist: xenial
 		- python: 3.10
 		  dist: xenial
-stages:
-	- lint
-	- test
 
 before_install:
 	- pip install --upgrade pip
@@ -16,14 +13,9 @@ before_install:
 install:
 	- poetry install -v
 
-jobs:
-	include:
-		- stage: lint
-		  script: 
-			  - poetry run flake8 basisopt tests
-		- stage: test
-		  script:
-			  - poetry run pytest --cov
+script:
+    - poetry run flake8p basisopt tests
+    - poetry run pytest --cov
 
 		
 		

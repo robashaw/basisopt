@@ -1,6 +1,6 @@
 # BasisOpt
 
-[![Build Status](https://app.travis-ci.com/robashaw/basisopt.svg?branch=main)](https://app.travis-ci.com/robashaw/basisopt)
+[![Build Status](https://github.com/github/docs/actions/workflows/test.yml/badge.svg)]()
 [![codecov](https://codecov.io/gh/robashaw/basisopt/branch/main/graph/badge.svg?token=V8zNdEgBKj)](https://codecov.io/gh/robashaw/basisopt)
 [![Documentation Status](https://readthedocs.org/projects/basisopt/badge/?version=latest)](https://basisopt.readthedocs.io/en/latest/?badge=latest)
 [![Code Quality](https://api.codiga.io/project/32104/status/svg)]()

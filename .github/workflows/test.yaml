@@ -1,5 +1,5 @@
-name: Push
-on: [push]
+name: Testing
+on: [pull_request]
 
 jobs:
   test:

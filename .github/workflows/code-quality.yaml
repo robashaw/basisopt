@@ -1,5 +1,5 @@
-name: Push
-on: [push]
+name: Quality
+on: [pull_request]
 
 jobs:
   code-quality:

@@ -1,0 +1,105 @@
+[1mbasisopt/__init__.py[m[36m:[m1[36m:[m1[36m:[m [1m[31mF403[m 'from .api import *' used; unable to detect undefined names
+[1mbasisopt/__init__.py[m[36m:[m2[36m:[m1[36m:[m [1m[31mF401[m '.bse_wrapper.fetch_basis' imported but unused
+[1mbasisopt/__init__.py[m[36m:[m3[36m:[m1[36m:[m [1m[31mF401[m '.molecule.Molecule' imported but unused
+[1mbasisopt/__init__.py[m[36m:[m4[36m:[m1[36m:[m [1m[31mF401[m '.util.read_json' imported but unused
+[1mbasisopt/__init__.py[m[36m:[m4[36m:[m1[36m:[m [1m[31mF401[m '.util.write_json' imported but unused
+[1mbasisopt/__init__.py[m[36m:[m6[36m:[m1[36m:[m [1m[31mF405[m 'set_logger' may be undefined, or defined from star imports: .api
+[1mbasisopt/api.py[m[36m:[m20[36m:[m1[36m:[m [1m[31mE722[m do not use bare 'except'
+[1mbasisopt/api.py[m[36m:[m33[36m:[m13[36m:[m [1m[31mF401[m 'dask' imported but unused
+[1mbasisopt/api.py[m[36m:[m36[36m:[m9[36m:[m [1m[31mE722[m do not use bare 'except'
+[1mbasisopt/basis/__init__.py[m[36m:[m1[36m:[m1[36m:[m [1m[31mF401[m '.atomic.AtomicBasis' imported but unused
+[1mbasisopt/basis/__init__.py[m[36m:[m2[36m:[m1[36m:[m [1m[31mF401[m '.basis.uncontract' imported but unused
+[1mbasisopt/basis/__init__.py[m[36m:[m2[36m:[m1[36m:[m [1m[31mF401[m '.basis.uncontract_shell' imported but unused
+[1mbasisopt/basis/__init__.py[m[36m:[m3[36m:[m1[36m:[m [1m[31mF401[m '.molecular.MolecularBasis' imported but unused
+[1mbasisopt/basis/atomic.py[m[36m:[m127[36m:[m9[36m:[m [1m[31mE722[m do not use bare 'except'
+[1mbasisopt/basis/basis.py[m[36m:[m63[36m:[m19[36m:[m [1m[31mE741[m ambiguous variable name 'l'
+[1mbasisopt/basis/basis.py[m[36m:[m142[36m:[m43[36m:[m [1m[31mF821[m undefined name 'name'
+[1mbasisopt/basis/guesses.py[m[36m:[m15[36m:[m76[36m:[m [1m[31mW291[m trailing whitespace
+[1mbasisopt/basis/guesses.py[m[36m:[m35[36m:[m15[36m:[m [1m[31mE741[m ambiguous variable name 'l'
+[1mbasisopt/basis/zetatools.py[m[36m:[m47[36m:[m44[36m:[m [1m[31mE741[m ambiguous variable name 'l'
+[1mbasisopt/basis/zetatools.py[m[36m:[m64[36m:[m30[36m:[m [1m[31mE741[m ambiguous variable name 'l'
+[1mbasisopt/basis/zetatools.py[m[36m:[m96[36m:[m9[36m:[m [1m[31mE722[m do not use bare 'except'
+[1mbasisopt/basis/zetatools.py[m[36m:[m105[36m:[m9[36m:[m [1m[31mE741[m ambiguous variable name 'l'
+[1mbasisopt/basis/zetatools.py[m[36m:[m115[36m:[m9[36m:[m [1m[31mE741[m ambiguous variable name 'l'
+[1mbasisopt/bse_wrapper.py[m[36m:[m42[36m:[m15[36m:[m [1m[31mE741[m ambiguous variable name 'l'
+[1mbasisopt/bse_wrapper.py[m[36m:[m102[36m:[m13[36m:[m [1m[31mE741[m ambiguous variable name 'l'
+[1mbasisopt/containers.py[m[36m:[m26[36m:[m14[36m:[m [1m[31mE741[m ambiguous variable name 'l'
+[1mbasisopt/containers.py[m[36m:[m57[36m:[m18[36m:[m [1m[31mE741[m ambiguous variable name 'l'
+[1mbasisopt/molecule.py[m[36m:[m127[36m:[m9[36m:[m [1m[31mE722[m do not use bare 'except'
+[1mbasisopt/opt/__init__.py[m[36m:[m1[36m:[m1[36m:[m [1m[31mF401[m '.optimizers.collective_optimize' imported but unused
+[1mbasisopt/opt/__init__.py[m[36m:[m1[36m:[m1[36m:[m [1m[31mF401[m '.optimizers.optimize' imported but unused
+[1mbasisopt/opt/__init__.py[m[36m:[m2[36m:[m1[36m:[m [1m[31mF401[m '.strategies.Strategy' imported but unused
+[1mbasisopt/opt/reduce.py[m[36m:[m10[36m:[m1[36m:[m [1m[31mF403[m 'from basisopt.testing.rank import *' used; unable to detect undefined names
+[1mbasisopt/opt/reduce.py[m[36m:[m193[36m:[m33[36m:[m [1m[31mF405[m 'rank_primitives' may be undefined, or defined from star imports: basisopt.testing.rank
+[1mbasisopt/opt/reduce.py[m[36m:[m204[36m:[m17[36m:[m [1m[31mE741[m ambiguous variable name 'l'
+[1mbasisopt/optrecord.py[m[36m:[m55[36m:[m62[36m:[m [1m[31mE741[m ambiguous variable name 'l'
+[1mbasisopt/testing/__init__.py[m[36m:[m1[36m:[m1[36m:[m [1m[31mF401[m '.dunham.DunhamTest' imported but unused
+[1mbasisopt/testing/__init__.py[m[36m:[m2[36m:[m1[36m:[m [1m[31mF401[m '.test.PropertyTest' imported but unused
+[1mbasisopt/testing/__init__.py[m[36m:[m2[36m:[m1[36m:[m [1m[31mF401[m '.test.Test' imported but unused
+[1mbasisopt/testing/test.py[m[36m:[m135[36m:[m19[36m:[m [1m[31mF821[m undefined name 'PropertyNotAvailable'
+[1mbasisopt/wrappers/__init__.py[m[36m:[m1[36m:[m1[36m:[m [1m[31mF401[m '.wrapper.Wrapper' imported but unused
+[1mtests/__init__.py[m[36m:[m1[36m:[m1[36m:[m [1m[31mF401[m 'pytest' imported but unused
+[1mtests/data/shells.py[m[36m:[m28[36m:[m13[36m:[m [1m[31mE741[m ambiguous variable name 'l'
+[1mtests/data/shells.py[m[36m:[m33[36m:[m13[36m:[m [1m[31mE741[m ambiguous variable name 'l'
+[1mtests/test_api.py[m[36m:[m4[36m:[m1[36m:[m [1m[31mF401[m 'pytest' imported but unused
+[1mtests/test_basis.py[m[36m:[m2[36m:[m1[36m:[m [1m[31mF401[m 'pytest' imported but unused
+[1mtests/test_basis.py[m[36m:[m4[36m:[m1[36m:[m [1m[31mF403[m 'from basisopt.basis.basis import *' used; unable to detect undefined names
+[1mtests/test_basis.py[m[36m:[m10[36m:[m13[36m:[m [1m[31mF405[m 'Shell' may be undefined, or defined from star imports: basisopt.basis.basis
+[1mtests/test_basis.py[m[36m:[m13[36m:[m5[36m:[m [1m[31mF405[m 'uncontract_shell' may be undefined, or defined from star imports: basisopt.basis.basis
+[1mtests/test_basis.py[m[36m:[m22[36m:[m15[36m:[m [1m[31mF405[m 'uncontract' may be undefined, or defined from star imports: basisopt.basis.basis
+[1mtests/test_basis.py[m[36m:[m25[36m:[m15[36m:[m [1m[31mF405[m 'uncontract' may be undefined, or defined from star imports: basisopt.basis.basis
+[1mtests/test_basis.py[m[36m:[m32[36m:[m16[36m:[m [1m[31mF405[m 'even_temper_expansion' may be undefined, or defined from star imports: basisopt.basis.basis
+[1mtests/test_basis.py[m[36m:[m46[36m:[m16[36m:[m [1m[31mF405[m 'fix_ratio' may be undefined, or defined from star imports: basisopt.basis.basis
+[1mtests/test_basis.py[m[36m:[m49[36m:[m16[36m:[m [1m[31mF405[m 'fix_ratio' may be undefined, or defined from star imports: basisopt.basis.basis
+[1mtests/test_basis_guess.py[m[36m:[m2[36m:[m1[36m:[m [1m[31mF401[m 'pytest' imported but unused
+[1mtests/test_basis_guess.py[m[36m:[m5[36m:[m1[36m:[m [1m[31mF403[m 'from basisopt.basis.guesses import *' used; unable to detect undefined names
+[1mtests/test_basis_guess.py[m[36m:[m12[36m:[m14[36m:[m [1m[31mF405[m 'null_guess' may be undefined, or defined from star imports: basisopt.basis.guesses
+[1mtests/test_basis_guess.py[m[36m:[m29[36m:[m15[36m:[m [1m[31mF405[m 'log_normal_guess' may be undefined, or defined from star imports: basisopt.basis.guesses
+[1mtests/test_basis_guess.py[m[36m:[m36[36m:[m15[36m:[m [1m[31mF405[m 'log_normal_guess' may be undefined, or defined from star imports: basisopt.basis.guesses
+[1mtests/test_basis_guess.py[m[36m:[m45[36m:[m15[36m:[m [1m[31mF405[m 'bse_guess' may be undefined, or defined from star imports: basisopt.basis.guesses
+[1mtests/test_basis_guess.py[m[36m:[m54[36m:[m15[36m:[m [1m[31mF405[m 'even_tempered_guess' may be undefined, or defined from star imports: basisopt.basis.guesses
+[1mtests/test_bse_wrapper.py[m[36m:[m2[36m:[m1[36m:[m [1m[31mF401[m 'pytest' imported but unused
+[1mtests/test_containers.py[m[36m:[m1[36m:[m1[36m:[m [1m[31mF401[m 'numpy as np' imported but unused
+[1mtests/test_containers.py[m[36m:[m4[36m:[m1[36m:[m [1m[31mF403[m 'from basisopt.containers import *' used; unable to detect undefined names
+[1mtests/test_containers.py[m[36m:[m11[36m:[m17[36m:[m [1m[31mF405[m 'Shell' may be undefined, or defined from star imports: basisopt.containers
+[1mtests/test_containers.py[m[36m:[m27[36m:[m9[36m:[m [1m[31mF405[m 'basis_to_dict' may be undefined, or defined from star imports: basisopt.containers
+[1mtests/test_containers.py[m[36m:[m29[36m:[m9[36m:[m [1m[31mF405[m 'dict_to_basis' may be undefined, or defined from star imports: basisopt.containers
+[1mtests/test_containers.py[m[36m:[m36[36m:[m9[36m:[m [1m[31mF405[m 'Result' may be undefined, or defined from star imports: basisopt.containers
+[1mtests/test_containers.py[m[36m:[m43[36m:[m9[36m:[m [1m[31mF405[m 'Result' may be undefined, or defined from star imports: basisopt.containers
+[1mtests/test_containers.py[m[36m:[m57[36m:[m10[36m:[m [1m[31mF405[m 'Result' may be undefined, or defined from star imports: basisopt.containers
+[1mtests/test_containers.py[m[36m:[m60[36m:[m10[36m:[m [1m[31mF405[m 'Result' may be undefined, or defined from star imports: basisopt.containers
+[1mtests/test_containers.py[m[36m:[m63[36m:[m10[36m:[m [1m[31mF405[m 'Result' may be undefined, or defined from star imports: basisopt.containers
+[1mtests/test_containers.py[m[36m:[m65[36m:[m10[36m:[m [1m[31mF405[m 'Result' may be undefined, or defined from star imports: basisopt.containers
+[1mtests/test_containers.py[m[36m:[m93[36m:[m17[36m:[m [1m[31mF405[m 'Shell' may be undefined, or defined from star imports: basisopt.containers
+[1mtests/test_containers.py[m[36m:[m120[36m:[m9[36m:[m [1m[31mF405[m 'Result' may be undefined, or defined from star imports: basisopt.containers
+[1mtests/test_molecule.py[m[36m:[m1[36m:[m1[36m:[m [1m[31mF401[m 'numpy as np' imported but unused
+[1mtests/test_molecule.py[m[36m:[m5[36m:[m1[36m:[m [1m[31mF403[m 'from basisopt.molecule import *' used; unable to detect undefined names
+[1mtests/test_molecule.py[m[36m:[m10[36m:[m9[36m:[m [1m[31mF405[m 'Molecule' may be undefined, or defined from star imports: basisopt.molecule
+[1mtests/test_molecule.py[m[36m:[m21[36m:[m9[36m:[m [1m[31mF405[m 'Molecule' may be undefined, or defined from star imports: basisopt.molecule
+[1mtests/test_molecule.py[m[36m:[m22[36m:[m5[36m:[m [1m[31mF841[m local variable 'nel' is assigned to but never used
+[1mtests/test_molecule.py[m[36m:[m24[36m:[m9[36m:[m [1m[31mF405[m 'Molecule' may be undefined, or defined from star imports: basisopt.molecule
+[1mtests/test_molecule.py[m[36m:[m29[36m:[m9[36m:[m [1m[31mF405[m 'Molecule' may be undefined, or defined from star imports: basisopt.molecule
+[1mtests/test_molecule.py[m[36m:[m42[36m:[m9[36m:[m [1m[31mF405[m 'Molecule' may be undefined, or defined from star imports: basisopt.molecule
+[1mtests/test_molecule.py[m[36m:[m51[36m:[m9[36m:[m [1m[31mF405[m 'Molecule' may be undefined, or defined from star imports: basisopt.molecule
+[1mtests/test_molecule.py[m[36m:[m61[36m:[m9[36m:[m [1m[31mF405[m 'Molecule' may be undefined, or defined from star imports: basisopt.molecule
+[1mtests/test_molecule.py[m[36m:[m92[36m:[m10[36m:[m [1m[31mF405[m 'build_diatomic' may be undefined, or defined from star imports: basisopt.molecule
+[1mtests/test_molecule.py[m[36m:[m99[36m:[m10[36m:[m [1m[31mF405[m 'build_diatomic' may be undefined, or defined from star imports: basisopt.molecule
+[1mtests/test_molecule.py[m[36m:[m104[36m:[m11[36m:[m [1m[31mF405[m 'build_diatomic' may be undefined, or defined from star imports: basisopt.molecule
+[1mtests/test_molecule.py[m[36m:[m108[36m:[m11[36m:[m [1m[31mF405[m 'build_diatomic' may be undefined, or defined from star imports: basisopt.molecule
+[1mtests/test_molecule.py[m[36m:[m113[36m:[m12[36m:[m [1m[31mF405[m 'build_diatomic' may be undefined, or defined from star imports: basisopt.molecule
+[1mtests/test_molecule.py[m[36m:[m118[36m:[m9[36m:[m [1m[31mF841[m local variable 'm' is assigned to but never used
+[1mtests/test_molecule.py[m[36m:[m118[36m:[m13[36m:[m [1m[31mF405[m 'build_diatomic' may be undefined, or defined from star imports: basisopt.molecule
+[1mtests/test_molecule.py[m[36m:[m121[36m:[m9[36m:[m [1m[31mF841[m local variable 'm1' is assigned to but never used
+[1mtests/test_molecule.py[m[36m:[m121[36m:[m14[36m:[m [1m[31mF405[m 'build_diatomic' may be undefined, or defined from star imports: basisopt.molecule
+[1mtests/test_molecule.py[m[36m:[m122[36m:[m9[36m:[m [1m[31mF841[m local variable 'm2' is assigned to but never used
+[1mtests/test_molecule.py[m[36m:[m122[36m:[m14[36m:[m [1m[31mF405[m 'build_diatomic' may be undefined, or defined from star imports: basisopt.molecule
+[1mtests/test_molecule.py[m[36m:[m123[36m:[m9[36m:[m [1m[31mF841[m local variable 'm3' is assigned to but never used
+[1mtests/test_molecule.py[m[36m:[m123[36m:[m14[36m:[m [1m[31mF405[m 'build_diatomic' may be undefined, or defined from star imports: basisopt.molecule
+[1mtests/test_molecule.py[m[36m:[m124[36m:[m9[36m:[m [1m[31mF841[m local variable 'm4' is assigned to but never used
+[1mtests/test_molecule.py[m[36m:[m124[36m:[m14[36m:[m [1m[31mF405[m 'build_diatomic' may be undefined, or defined from star imports: basisopt.molecule
+[1mtests/test_parallelise.py[m[36m:[m1[36m:[m1[36m:[m [1m[31mF401[m 'pytest' imported but unused
+[1mtests/test_util.py[m[36m:[m2[36m:[m1[36m:[m [1m[31mF401[m 'pytest' imported but unused
+[1mtests/test_wrapper.py[m[36m:[m1[36m:[m1[36m:[m [1m[31mF401[m 'numpy as np' imported but unused
+[1mtests/test_zeta_tools.py[m[36m:[m1[36m:[m1[36m:[m [1m[31mF401[m 'numpy as np' imported but unused
+[1mtests/test_zeta_tools.py[m[36m:[m2[36m:[m1[36m:[m [1m[31mF401[m 'pytest' imported but unused
+[1mtests/test_zeta_tools.py[m[36m:[m6[36m:[m1[36m:[m [1m[31mF401[m 'basisopt.basis.atomic.AtomicBasis' imported but unused

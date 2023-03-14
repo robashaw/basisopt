@@ -1,12 +1,10 @@
 import copy
-import logging
 from typing import Any
 
 import numpy as np
 
 from basisopt.basis.atomic import AtomicBasis
 from basisopt.basis.basis import uncontract_shell
-from basisopt.basis.guesses import null_guess
 from basisopt.containers import InternalBasis, Shell, basis_to_dict, dict_to_basis
 from basisopt.molecule import build_diatomic
 from basisopt.testing.rank import *

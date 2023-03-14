@@ -1,5 +1,4 @@
 # Wrappers for psi4 functionality
-import logging
 from typing import Any
 
 import psi4

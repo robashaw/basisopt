@@ -1,6 +1,5 @@
 # funcitonality to rank basis shells
 import copy
-import logging
 from typing import Any, Optional
 
 import numpy as np
@@ -9,7 +8,7 @@ from basisopt import api
 from basisopt.basis import uncontract_shell
 from basisopt.basis.atomic import AtomicBasis
 from basisopt.containers import InternalBasis
-from basisopt.exceptions import EmptyBasis, FailedCalculation
+from basisopt.exceptions import FailedCalculation
 from basisopt.util import bo_logger
 
 
@@ -134,7 +133,7 @@ def reduce_primitives(
         value = e[r[0]]
         while (start < n - 1) and (value < thresh):
             start += 1
-            loging.debug(f"{e}, {r}, {start}")
+            bo_logger.debug(f"{e}, {r}, {start}")
             value = e[r[start]]
 
         if start == (n - 1):
@@ -146,6 +145,8 @@ def reduce_primitives(
             uncontract_shell(shell)
 
     success = api.run_calculation(evaluate=eval_type, mol=mol, params=params)
+    if success != 0:
+        raise FailedCalculation
     result = api.get_backend().get_value(eval_type)
     delta = result - atomic._molecule.get_reference('rank_' + eval_type)
 

@@ -1,6 +1,4 @@
 # Wrappers for testing functionality
-import logging
-
 import numpy as np
 
 from basisopt.molecule import Molecule

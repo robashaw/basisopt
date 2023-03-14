@@ -3,11 +3,9 @@ from typing import Any
 import numpy as np
 from mendeleev import element as md_element
 
-from basisopt import api, data
 from basisopt.basis.basis import even_temper_expansion
 from basisopt.basis.guesses import null_guess
 from basisopt.containers import InternalBasis
-from basisopt.exceptions import PropertyNotAvailable
 
 from .preconditioners import unit
 from .strategies import Strategy

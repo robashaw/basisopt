@@ -1,11 +1,9 @@
 import functools
-import logging
 import pickle
 from typing import Any, Callable, Optional
 
 import numpy as np
 from mendeleev import element as MDElement
-from mendeleev.econf import ElectronicConfiguration
 
 from basisopt import api, data
 from basisopt.bse_wrapper import fetch_basis
@@ -15,7 +13,7 @@ from basisopt.molecule import Molecule
 from basisopt.opt.eventemper import EvenTemperedStrategy
 from basisopt.opt.optimizers import optimize
 from basisopt.opt.strategies import Strategy
-from basisopt.util import bo_logger, dict_decode
+from basisopt.util import bo_logger
 
 from . import zetatools as zt
 from .basis import Basis, even_temper_expansion
@@ -326,4 +324,4 @@ class AtomicBasis(Basis):
 
     def contract(self):
         """Handles contraction of primitives"""
-        raise NotImplementedException
+        raise NotImplementedError

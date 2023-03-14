@@ -1,13 +1,11 @@
 from typing import Any, Optional, Union
 
-import numpy as np
-
 from basisopt.bse_wrapper import fetch_basis
 from basisopt.containers import InternalBasis, OptResult
 from basisopt.molecule import Molecule, build_diatomic
 from basisopt.opt import Strategy, optimize
 from basisopt.opt.reduce import ReduceStrategy
-from basisopt.util import bo_logger, dict_decode
+from basisopt.util import bo_logger
 
 from .basis import Basis
 

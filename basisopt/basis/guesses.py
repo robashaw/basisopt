@@ -2,7 +2,6 @@
 # NEEDS GREATLY EXPANDING
 import numpy as np
 
-from basisopt import data
 from basisopt.bse_wrapper import fetch_basis
 from basisopt.containers import Shell
 

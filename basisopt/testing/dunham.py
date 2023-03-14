@@ -6,7 +6,7 @@ from mendeleev import element as md_element
 
 from basisopt import api, data
 from basisopt.containers import InternalBasis
-from basisopt.exceptions import FailedCalculation, InvalidDiatomic
+from basisopt.exceptions import EmptyCalculation, FailedCalculation
 from basisopt.molecule import Molecule, build_diatomic
 from basisopt.util import fit_poly
 

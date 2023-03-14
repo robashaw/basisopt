@@ -77,7 +77,7 @@ class Test(Result):
              basis: internal basis dictionary
              params (dict): parameters to pass to the backend Wrapper
         """
-        raise NotImplementedException
+        raise NotImplementedError
 
     def as_dict(self):
         d = super().as_dict()

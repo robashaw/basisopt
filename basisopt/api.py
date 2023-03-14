@@ -4,7 +4,7 @@ from typing import Any, Callable
 
 import colorlog
 
-from basisopt.exceptions import FailedCalculation, MethodNotAvailable
+from basisopt.exceptions import FailedCalculation
 from basisopt.molecule import Molecule
 from basisopt.wrappers.dummy import DummyWrapper
 from basisopt.wrappers.wrapper import Wrapper
@@ -37,7 +37,7 @@ def set_parallel(value: bool = True):
             _PARALLEL = False
             bo_logger.warning("Could not import dask, parallelism turned off")
     else:
-        _PARLLEL = False
+        _PARALLEL = False
 
 
 def register_backend(func: Callable[[str, str], None]) -> Callable[[str, str], None]:

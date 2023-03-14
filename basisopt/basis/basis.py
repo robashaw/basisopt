@@ -1,5 +1,4 @@
 import copy
-import logging
 import pickle
 from typing import Any, Optional, Union
 
@@ -9,7 +8,6 @@ from monty.json import MSONable
 from basisopt import data
 from basisopt.containers import InternalBasis, Result, Shell
 from basisopt.data import ETParams
-from basisopt.molecule import Molecule
 from basisopt.testing import Test
 from basisopt.util import bo_logger, dict_decode
 
@@ -145,7 +143,7 @@ class Basis(MSONable):
 
     def optimize(self, algorithm: str = 'Nelder-Mead', params: dict[str, Any] = {}) -> dict:
         """All basis objects should implement an optimize method with this signature"""
-        raise NotImplementedException
+        raise NotImplementedError
 
     def copy(self) -> object:
         """Returns a deepcopy of self"""

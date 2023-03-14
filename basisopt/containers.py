@@ -1,5 +1,4 @@
 # containers
-import logging
 import pickle
 from typing import Any
 
@@ -190,7 +189,7 @@ class Result(MSONable):
         """Tabulates summary statistics for the data in this Result
         Note: does not recur over children
         """
-        raise NotImplementedException
+        raise NotImplementedError
 
     def _summary(self, title: str) -> str:
         """Generates a summary string for the Result and all its children

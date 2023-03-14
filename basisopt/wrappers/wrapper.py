@@ -174,34 +174,34 @@ class Wrapper:
     @unavailable
     def energy(self, mol, tmp="", **params):
         """Energy, Hartree"""
-        raise NotImplementedException
+        raise NotImplementedError
 
     @unavailable
     def dipole(self, mol, tmp="", **params):
         """Dipole moment, numpy array, a.u."""
-        raise NotImplementedException
+        raise NotImplementedError
 
     @unavailable
     def quadrupole(self, mol, tmp="", **params):
         """Quadrupole moment, numpy array, a.u."""
-        raise NotImplementedException
+        raise NotImplementedError
 
     @unavailable
     def trans_dipole(self, mol, tmp="", **params):
         """Transition dipole moment, numpy array, a.u."""
-        raise NotImplementedException
+        raise NotImplementedError
 
     @unavailable
     def trans_quadrupole(self, mol, tmp="", **params):
         """Transition quadrupole moment, numpy array, a.u."""
-        raise NotImplementedException
+        raise NotImplementedError
 
     @unavailable
     def polarizability(self, mol, tmp="", **params):
         """Dipole polarizability, a.u."""
-        raise NotImplementedException
+        raise NotImplementedError
 
     @unavailable
     def jk_error(self, mol, tmp="", **params):
         "JK density fitting error, Hartree"
-        raise NotImplementedException
+        raise NotImplementedError

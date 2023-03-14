@@ -3,7 +3,7 @@ from typing import Any
 import numpy as np
 from monty.json import MSONable
 
-from basisopt import api, data
+from basisopt import api
 from basisopt.basis.guesses import bse_guess
 from basisopt.containers import InternalBasis, basis_to_dict
 from basisopt.exceptions import PropertyNotAvailable

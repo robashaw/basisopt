@@ -8,16 +8,10 @@ bo.set_tmp_dir('/home/me/scr/')
 
 mb = MolecularBasis(name="double")
 list_of_mols = ['water', 'methane', 'methanol', 'formaldehyde', 'oxygen']
-mol_objs = [
-    bo.molecule.Molecule.from_xyz(mol+'.xyz', name=mol)
-    for mol in list_of_mols
-]
+mol_objs = [bo.molecule.Molecule.from_xyz(mol + '.xyz', name=mol) for mol in list_of_mols]
 mb = MolecularBasis(name="double", molecules=mol_objs)
-    
-params = {
-    'functional': "wb97x-d",
-    'scf_type': "pk"
-}
+
+params = {'functional': "wb97x-d", 'scf_type': "pk"}
 
 strategy = Strategy()
 strategy.params = params
@@ -34,7 +28,7 @@ conv_crit = 1.0e-6
 counter = 0
 
 while e_diff > conv_crit:
-    bo_logger.info("Starting consistency iteration %d", counter+1)
+    bo_logger.info("Starting consistency iteration %d", counter + 1)
     mb.optimize()
     e_opt.append(strategy.last_objective)
     e_diff = strategy.delta_objective

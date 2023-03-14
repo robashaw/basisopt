@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+
 import basisopt as bo
 from basisopt.basis.atomic import AtomicBasis
 from basisopt.viz.basis import plot_exponents

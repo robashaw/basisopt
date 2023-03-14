@@ -1,29 +1,26 @@
-branches:
-  only:
-    - main
-dist: xenial
 language: python
-python:
-  - "3.9"
+matrix:
+	include:
+		- python: 3.9
+		  dist: xenial
+		- python: 3.10
+		  dist: xenial
+stages:
+	- lint
+	- test
+
+before_install:
+	- pip install --upgrade pip
+	- pip install poetry
+
 install:
-  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-  - bash miniconda.sh -b -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
-  - hash -r
-  - conda config --set always_yes yes --set changeps1 no
-  - conda update -q conda
-  - conda config --append channels conda-forge --append channels omnia 
-  - conda info -a
-  - conda create -q -n test-env python=$TRAVIS_PYTHON_VERSION --file requirements.txt
-  - source activate test-env
-  - conda install --file tests/requirements.txt
-  - python setup.py install
+	- poetry install -v
+
 jobs:
-  include:
-    - stage: test
-      name: Run unit tests
-      script:
-        - py.test --cov-report term --cov basisopt tests/
-      after_success:
-        - codecov
-    
+	include:
+		- stage: lint
+		  script: 
+			  - poetry run flake8 basisopt tests
+		
+		
+			  

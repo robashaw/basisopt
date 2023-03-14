@@ -1,2 +1,2 @@
-from .test import Test, PropertyTest
 from .dunham import DunhamTest
+from .test import PropertyTest, Test

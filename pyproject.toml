@@ -1,0 +1,59 @@
+[tool.poetry]
+name = "basisopt"
+version = "1.0.0a"
+license = 'MIT'
+description = 'Automatic basis set optimization for quantum chemistry'
+authors = ["Robert Shaw <robertshaw383@gmail.com>",
+	 	   "Grant Hill <grant.hill@sheffield.ac.uk"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.12"
+numpy = "^1.24.2"
+colorlog = "^6.7.0"
+scipy = "^1.10.1"
+pandas = "^1.5.3"
+monty = "^2022.9.9"
+basis-set-exchange = "^0.9"
+mendeleev = "0.9"
+matplotlib = {version = "^3.7.1", optional = true}
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.2.2"
+black = "^23.1.0"
+flake8 = "^6.0.0"
+pytest-cov = "^4.0.0"
+codecov = "^2.1.12"
+sphinx = "^6.1.3"
+isort = "^5.12.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+profile = "black"
+
+[tool.black]
+skip-string-normalization = true
+line-length = 100
+
+[tool.flake8]
+ignore = [
+    # Line length
+    "E501",
+    # These conflict with black
+    "E203",
+    "W503",
+    "W504",
+    # These conflict with isort
+    "E402",
+    # Ignore bugbear warning about warning stacklevel
+    "B028",
+    # Okay to put exceptions in the Raises section that aren't raised in the method body
+    "DAR402",
+]
+# Use google-style docstrings as defined here: https://google.github.io/styleguide/pyguide.html
+docstring_style = "google"
+# 'long' strictness means full docstrings are only enforced if Arguments or Returns is defined
+strictness = "long"

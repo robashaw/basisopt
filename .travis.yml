@@ -21,6 +21,10 @@ jobs:
 		- stage: lint
 		  script: 
 			  - poetry run flake8 basisopt tests
+		- stage: test
+		  script:
+			  - poetry run pytest --cov
+
 		
 		
 			  

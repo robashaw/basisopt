@@ -6,20 +6,27 @@
 Installation
 ============
 
-We are currently working on building ``conda`` and PyPI packages for BasisOpt. In the meantime, it can be installed quite simply from source.
+The easiest way to install is via pip::
+
+	pip install basisopt
 
 Install from Source
 -------------------
 
-Clone the repository from `github
+First, make sure you install the python package `poetry`. Then, clone the repository from `github
 <https://github.com/robashaw/basisopt>`_::
 
     git clone https://github.com/robashaw/basisopt.git
     cd basisopt
-    python setup.py install
+    poetry install -v
 
-If you would instead like to install `in place`, you can replace the last line with::
+Then, an interactive shell or script can be run with::
 
+	poetry run [python3 or script.py]
+	
+Alternatively, if you wish to use your locally-changed package elsewhere, then try the following with `conda`, for example, in the top-level directory::
+
+	conda create -n basisopt python=3.10
 	pip install -e .
 
 Dependencies
@@ -44,13 +51,14 @@ You will also need a quantum chemistry backend. Currently supported codes are:
 
 There will eventually be a tutorial on how to implement wrappers for different packages. If you do, please consider submitting a pull request so that others may benefit. 
   
-Testing
--------
+Testing and development
+-----------------------
 
 We use ``pytest`` for our CI::
 
-    cd basisopt
-    pytest
+    poetry run pytest
+	
+We also use ``black``, ``isort``, and ``flake8``, for code-formatting and linting. Any PR will automatically be checked using these packages before being considered for merging. 
 
 Documentation
 -------------

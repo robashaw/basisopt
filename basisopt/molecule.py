@@ -1,41 +1,39 @@
 # molecule
 from typing import Any
-import logging
 
 import numpy as np
-
 from monty.json import MSONable
-from .exceptions import InvalidDiatomic
-from .data import atomic_number
-from .util import bo_logger, dict_decode
+
 from .containers import basis_to_dict, dict_to_basis
+from .data import atomic_number
+from .exceptions import InvalidDiatomic
+from .util import bo_logger, dict_decode
+
 
 class Molecule(MSONable):
     """A very loose definition of a molecule, in that it represents
-       an object with which calculations can be done. 
-    
-       Attributes:
-            name (str): identifier
-            charge (int): overall net charge
-            multiplicity (int): spin multiplicity, i.e. 2S+1
-            method (str): name of calculation method, e.g. 'hf' or 'ccsd(t)'
-            basis (dict): internal basis dictionary, which has (k, v) pairs
-            jbasis (dict): internal basis dictionary for Coulomb fitting set
-            jkbasis (dict): internal basis dictionary for Coulomb+Exchange fitting set
-            of the form (element_symbol : array of Shell objects)
-            
-       Private attributes:
-            _atom_names (list): atom symbols in order, e.g. ['H', 'H', 'O']
-            _coords (list): x,y,z coords in Angstrom, as numpy arrays, same
-            order as _atom_names
-            _results (dict): dictionary of results calculated for this molecule.
-            NOTE: these results are NOT archived, unlike for a Result object
-            _references (dict): dictionary of reference values for results
+    an object with which calculations can be done.
+
+    Attributes:
+         name (str): identifier
+         charge (int): overall net charge
+         multiplicity (int): spin multiplicity, i.e. 2S+1
+         method (str): name of calculation method, e.g. 'hf' or 'ccsd(t)'
+         basis (dict): internal basis dictionary, which has (k, v) pairs
+         jbasis (dict): internal basis dictionary for Coulomb fitting set
+         jkbasis (dict): internal basis dictionary for Coulomb+Exchange fitting set
+         of the form (element_symbol : array of Shell objects)
+
+    Private attributes:
+         _atom_names (list): atom symbols in order, e.g. ['H', 'H', 'O']
+         _coords (list): x,y,z coords in Angstrom, as numpy arrays, same
+         order as _atom_names
+         _results (dict): dictionary of results calculated for this molecule.
+         NOTE: these results are NOT archived, unlike for a Result object
+         _references (dict): dictionary of reference values for results
     """
-    def __init__(self,
-                 name: str="Untitled",
-                 charge: int=0,
-                 mult: int=1):
+
+    def __init__(self, name: str = "Untitled", charge: int = 0, mult: int = 1):
         self.name = name
         self.charge = charge
         self.multiplicity = mult
@@ -47,73 +45,68 @@ class Molecule(MSONable):
         self._coords = []
         self._results = {}
         self._references = {}
-        
+
     def nelectrons(self) -> int:
         unique = self.unique_atoms()
         nel = 0
         for a in unique:
-            nel += self._atom_names.count(a) *\
-                        atomic_number(a)
+            nel += self._atom_names.count(a) * atomic_number(a)
         return nel
-        
-    def add_atom(self, 
-                 element: str='H',
-                 coord: list[float]=[0.0, 0.0, 0.0]): 
+
+    def add_atom(self, element: str = 'H', coord: list[float] = [0.0, 0.0, 0.0]):
         """Adds an atom to the molecule
-        
-           Arguments:
-                element (str): element name
-                coord (list): [x,y,z] coords in Ansgtrom
+
+        Arguments:
+             element (str): element name
+             coord (list): [x,y,z] coords in Ansgtrom
         """
         self._coords.append(np.array(coord))
         self._atom_names.append(element)
-    
+
     def add_result(self, name: str, value: Any):
         """Store a result (no archiving)
-        
-           Arguments:
-                name (str): identifier for result
-                value (any): value of result
+
+        Arguments:
+             name (str): identifier for result
+             value (any): value of result
         """
         self._results[name] = value
-        
+
     def get_result(self, name: str) -> Any:
         """Returns:
-                Value of result with given name if it exists,
-                otherwise 0
+        Value of result with given name if it exists,
+        otherwise 0
         """
         try:
             return self._results[name]
         except KeyError:
             return 0.0
-            
+
     def add_reference(self, name: str, value: Any):
         """Same as add_result but for reference values"""
         self._references[name] = value
-        
+
     def get_reference(self, name: str) -> Any:
         """Same as get_result but for reference values"""
         try:
             return self._references[name]
         except KeyError:
-            return 0.0        
-    
+            return 0.0
+
     def get_delta(self, name: str) -> Any:
         """Returns:
-                Difference between a result and its reference value
+        Difference between a result and its reference value
         """
-        return (self.get_result(name) - self.get_reference(name))
-    
+        return self.get_result(name) - self.get_reference(name)
+
     @classmethod
-    def from_xyz(cls,
-                 filename: str,
-                 name: str="Untitled",
-                 charge: int=0,
-                 mult: int=1) -> object: 
+    def from_xyz(
+        cls, filename: str, name: str = "Untitled", charge: int = 0, mult: int = 1
+    ) -> object:
         """Creates a Molecule from an xyz file
-           
-           Arguments:
-                filename (str): path to xyz file
+
+        Arguments:
+             filename (str): path to xyz file
         """
         instance = cls(name=name, charge=charge, mult=mult)
         try:
@@ -124,98 +117,98 @@ class Molecule(MSONable):
             # first line should be natoms
             nat = int(lines[0])
             # second line is title
-            for line in lines[2:2+nat]:
+            for line in lines[2 : 2 + nat]:
                 words = line.split()
                 element = words[0]
                 coords = np.array([float(w) for w in words[1:4]])
                 instance.add_atom(element=element, coord=coords)
         except IOError as e:
             bo_logger.error("I/O error(%d): %s", e.errno, e.strerror)
-        except:
+        except Exception:
             bo_logger.error("Incorrect formatting in %s", filename)
         return instance
-        
+
     def to_xyz(self) -> str:
         """Converts Molecule to xyz file format
-        
-           Returns:
-                a string of the Molecule in xyz file format
+
+        Returns:
+             a string of the Molecule in xyz file format
         """
         output = f"{self.natoms()}\n{self.name}, generated by BasisOpt\n"
         for i in range(self.natoms()):
             output += self.get_line(i) + "\n"
         return output
-    
+
     def get_line(self, i: int) -> str:
         """Gets a line of the xyz file representation of the Molecule
-        
-           Arguments:
-                i (int): the index of the atom line wanted
-        
-           Returns:
-                a string of form {element} {coords}
+
+        Arguments:
+             i (int): the index of the atom line wanted
+
+        Returns:
+             a string of form {element} {coords}
         """
         ix = max(i, 0)
-        ix = min(ix, len(self._atom_names)-1)
+        ix = min(ix, len(self._atom_names) - 1)
         n, c = self._atom_names[ix], self._coords[ix]
         return f"{n}\t{c[0]}\t{c[1]}\t{c[2]}"
-        
+
     def natoms(self) -> int:
         """Returns number of atoms in Molecule"""
         return len(self._atom_names)
-        
+
     def unique_atoms(self) -> list[str]:
         """Returns a list of all unique atom types in Molecule"""
         return list(set(self._atom_names))
-        
+
     def distance(self, atom1: int, atom2: int) -> float:
         """Computes the Euclidean distance between two atoms.
-           No bounds checking.
-        
-           Arguments:
-                atom1, atom2 (int): indices of atoms
-        
-           Returns:
-                the Euclidean separation in Angstrom
+        No bounds checking.
+
+        Arguments:
+             atom1, atom2 (int): indices of atoms
+
+        Returns:
+             the Euclidean separation in Angstrom
         """
         c1 = self._coords[atom1]
         c2 = self._coords[atom2]
         return np.linalg.norm(c1 - c2)
-    
+
     def as_dict(self) -> dict[str, Any]:
         """Converts Molecule to MSONable dictionary
-           
-           Returns:
-                dictionary representing the molecule
+
+        Returns:
+             dictionary representing the molecule
         """
         d = {
-                 "@module": type(self).__module__,
-                  "@class": type(self).__name__,
-                    "name": self.name,
-                  "charge": self.charge,
+            "@module": type(self).__module__,
+            "@class": type(self).__name__,
+            "name": self.name,
+            "charge": self.charge,
             "multiplicity": self.multiplicity,
-                  "method": self.method,
-                   "basis": basis_to_dict(self.basis),
-              "atom_names": self._atom_names,
-                  "coords": self._coords,
-                 "results": self._results,
-              "references": self._references
+            "method": self.method,
+            "basis": basis_to_dict(self.basis),
+            "atom_names": self._atom_names,
+            "coords": self._coords,
+            "results": self._results,
+            "references": self._references,
         }
         if self.jbasis:
             d["jbasis"] = basis_to_dict(self.jbasis)
         if self.jkbasis:
             d["jkbasis"] = basis_to_dict(self.jkbasis)
         return d
-        
+
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> object:
         """Creates a Molecule from a dictionary
-        
-           Arguments:
-                d (dict): dictionary with Molecule attributes
-        
-           Returns:
-                Molecule
+
+        Arguments:
+             d (dict): dictionary with Molecule attributes
+
+        Returns:
+             Molecule
         """
         d = dict_decode(d)
         name = d.get("name", "Untitled")
@@ -223,35 +216,34 @@ class Molecule(MSONable):
         mult = d.get("multiplicity", 1)
         instance = cls(name=name, charge=charge, mult=mult)
         instance.method = d.get("method", "")
-        instance.basis  = dict_to_basis(d.get("basis", {}))
+        instance.basis = dict_to_basis(d.get("basis", {}))
         instance.jbasis = d.get("jbasis", None)
-        instance.jkbasis = d.get("jkbasis", None) 
+        instance.jkbasis = d.get("jkbasis", None)
         instance._atom_names = d.get("atom_names", [])
         instance.coords = d.get("coords", [])
         instance._results = d.get("results", {})
         instance._references = d.get("references", {})
-        return instance    
-    
-def build_diatomic(mol_str: str,
-                   charge: int=0,
-                   mult: int=1) -> Molecule:
+        return instance
+
+
+def build_diatomic(mol_str: str, charge: int = 0, mult: int = 1) -> Molecule:
     """Builds a diatomic molecule from a string
-    
-       Arguments:
-            mol_str (str): string of diatomic and separation in Angstrom
-            e.g. "NO,1.3", "H2,0.9", "LiH,1.1" etc
-            charge (int): net molecular charge
-            mult (int): spin multiplicity
-    
-       Returns:
-            Molecule object of diatomic
-    
-       Raises:
-            IndexError when rval not given in mol_str
-            InvalidDiatomic when mol_str can't be parsed
-            error checking not exhaustive
+
+    Arguments:
+         mol_str (str): string of diatomic and separation in Angstrom
+         e.g. "NO,1.3", "H2,0.9", "LiH,1.1" etc
+         charge (int): net molecular charge
+         mult (int): spin multiplicity
+
+    Returns:
+         Molecule object of diatomic
+
+    Raises:
+         IndexError when rval not given in mol_str
+         InvalidDiatomic when mol_str can't be parsed
+         error checking not exhaustive
     """
-    molecule = Molecule(name=mol_str+"_Diatomic", charge=charge, mult=mult)
+    molecule = Molecule(name=mol_str + "_Diatomic", charge=charge, mult=mult)
     # parse the mol string, form "Atom1Atom2,Separation(ang)"
     parts = mol_str.split(',')
     chars = list(parts[0])
@@ -266,7 +258,7 @@ def build_diatomic(mol_str: str,
                 atom1 = atom2 = chars[0]
             elif chars[1].isupper():
                 atom1 = chars[0]
-                atom2 = chars[1]              
+                atom2 = chars[1]
         elif nchars == 3:
             if chars[2] == '2':
                 # eg Ne2
@@ -279,15 +271,14 @@ def build_diatomic(mol_str: str,
                 # eg LiH
                 atom1 = "".join(chars[:2])
                 atom2 = chars[2]
-        elif nchars==4 and chars[2].isupper():
+        elif nchars == 4 and chars[2].isupper():
             # eg LiCl
             atom1 = "".join(chars[:2])
             atom2 = "".join(chars[2:4])
-    
+
     if (atom1 is None) or (atom2 is None):
         raise InvalidDiatomic
-        
-    molecule.add_atom(element=atom1, coord=[0.0, 0.0, -0.5*rval])
-    molecule.add_atom(element=atom2, coord=[0.0, 0.0,  0.5*rval])
+
+    molecule.add_atom(element=atom1, coord=[0.0, 0.0, -0.5 * rval])
+    molecule.add_atom(element=atom2, coord=[0.0, 0.0, 0.5 * rval])
     return molecule
-        

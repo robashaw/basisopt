@@ -7,10 +7,6 @@ Even-tempered basis optimization
 
 This tutorial walks through using BasisOpt to optimize an even-tempered basis set for neon, at the SCF level (so not including correlating functions). An example script can also be found in ``examples/et_strategy.py``
 
-Theory
-------
-
-TODO
 
 Reference calculation
 ---------------------
@@ -34,7 +30,7 @@ For an example of how to perform a calculation yourself, see the quick start gui
 Optimization strategy
 ---------------------
 
-An even-tempered basis for neon, at the HF-level, will comprise of two shells: `s` and `p`. For each of these we need to optimise a prefactor, and a ratio. If we wish to generate a set that gets to within some error, :math:`\epsilon`, of the CBS limit, we additionally will want to optimise the number of exponents to include in the even-tempered expansion. Internally, all of this can be handled with the ``EvenTemperStrategy``, which can be called directly from an ``AtomicBasis`` object with no additional steps. 
+An even-tempered basis for neon, at the HF-level, will comprise two shells: `s` and `p`. For each of these we need to optimise a prefactor, and a ratio. If we wish to generate a set that gets to within some error, :math:`\epsilon`, of the CBS limit, we additionally will want to optimise the number of exponents to include in the even-tempered expansion. Internally, all of this can be handled with the ``EvenTemperStrategy``, which can be called directly from an ``AtomicBasis`` object with no additional steps. 
 
 .. code-block:: python
 
@@ -61,7 +57,7 @@ Internally, this is doing the following simple steps:
 	- increment number of functions in each shell
 	- reoptimise prefactor and ratio for each shell
 
-The optimization by default will be carried out using the Nelder-Mead simplex algorithm and with the default backend settings. To change settings, we can pass a parameters. See the backend/optimizer documentation for details of valid parameters.  
+The optimization by default will be carried out using the Nelder-Mead simplex algorithm and with the default backend settings. To change settings, we can pass a dictionary of parameters. See the backend/optimizer documentation for details of valid parameters.  
 
 .. code-block:: python
 

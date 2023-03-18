@@ -40,7 +40,7 @@ class JKFitBasis(Basis):
             self.basis_type = "jfit"
         self._done_setup = False
         self.strategy = None
-        
+
     def as_dict(self) -> dict[str, Any]:
         """Returns MSONable dictionary of JKFitBasis"""
         d = super().as_dict()

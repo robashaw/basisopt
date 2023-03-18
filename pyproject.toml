@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "basisopt"
-version = "1.0.0a"
+version = "1.0.0"
 license = 'MIT'
 description = 'Automatic basis set optimization for quantum chemistry'
 authors = ["Robert Shaw <robertshaw383@gmail.com>",

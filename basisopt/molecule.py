@@ -124,7 +124,7 @@ class Molecule(MSONable):
                 instance.add_atom(element=element, coord=coords)
         except IOError as e:
             bo_logger.error("I/O error(%d): %s", e.errno, e.strerror)
-        except:
+        except Exception:
             bo_logger.error("Incorrect formatting in %s", filename)
         return instance
 

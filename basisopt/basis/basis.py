@@ -139,7 +139,7 @@ class Basis(MSONable):
         """Runs all the tests in basis, printing results"""
         for t in self._tests:
             t.result = t.calculate(self._molecule.method, self._molecule.basis, params=params)
-            bo_logger.info("Test %s: %s", name, t.result)
+            bo_logger.info("Test %s: %s", t.name, t.result)
 
     def optimize(self, algorithm: str = 'Nelder-Mead', params: dict[str, Any] = {}) -> dict:
         """All basis objects should implement an optimize method with this signature"""

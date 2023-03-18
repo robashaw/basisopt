@@ -93,7 +93,7 @@ def string_to_config(string: str) -> Configuration:
             n = int(c)
             current_size *= 10
             current_size += n
-        except:
+        except TypeError:
             config[c] = current_size
             current_size = 0
     return config

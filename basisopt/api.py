@@ -17,7 +17,7 @@ try:
     from basisopt.parallelise import distribute
 
     _PARALLEL = True
-except:
+except ImportError:
     _PARALLEL = False
 
 _BACKENDS = {}
@@ -33,7 +33,7 @@ def set_parallel(value: bool = True):
             import dask
 
             _PARALLEL = True
-        except:
+        except ImportError:
             _PARALLEL = False
             bo_logger.warning("Could not import dask, parallelism turned off")
     else:

@@ -1,9 +1,6 @@
-import numpy as np
-import pytest
 from mendeleev import element
 
 import basisopt.basis.zetatools as zt
-from basisopt.basis.atomic import AtomicBasis
 
 econf_1 = {(1, 's'): 2, (2, 's'): 2, (2, 'p'): 4}
 

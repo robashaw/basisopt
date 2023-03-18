@@ -1,15 +1,14 @@
 import numpy as np
-import pytest
 
+import basisopt.basis.guesses as guesses
 from basisopt.basis.atomic import AtomicBasis
-from basisopt.basis.guesses import *
 from tests.data.shells import get_vdz_internal, shells_are_equal
 from tests.data.utils import almost_equal
 
 
 def test_null_guess():
     o = AtomicBasis('O')
-    result = null_guess(o)
+    result = guesses.null_guess(o)
     assert len(result) == 0
 
 
@@ -26,14 +25,14 @@ def test_log_normal_guess():
     o = AtomicBasis().load('tests/data/oxygen-unopt.obj')
 
     # standard normal
-    results = log_normal_guess(o)
+    results = guesses.log_normal_guess(o)
     assert len(results) == 2
     assert len(results[0].exps) == 2
     assert len(results[1].exps) == 3
     assert np.abs(logx_mean(results)) <= 3.3  # 99.9 percentile
 
     # shifted normal
-    results = log_normal_guess(o, params={'mean': 5.0, 'sigma': 0.1})
+    results = guesses.log_normal_guess(o, params={'mean': 5.0, 'sigma': 0.1})
     assert len(results) == 2
     assert len(results[0].exps) == 2
     assert len(results[1].exps) == 3
@@ -42,7 +41,7 @@ def test_log_normal_guess():
 
 def test_bse_guess():
     h = AtomicBasis('H')
-    results = bse_guess(h)
+    results = guesses.bse_guess(h)
     vdz = get_vdz_internal()
     reference = vdz['h']
     for s1, s2 in zip(results, reference):
@@ -51,7 +50,7 @@ def test_bse_guess():
 
 def test_even_temper_guess():
     ne = AtomicBasis().load('tests/data/neon-et.obj')
-    results = even_tempered_guess(ne)
+    results = guesses.even_tempered_guess(ne)
     assert len(results) == 2
     assert len(results[0].exps) == 18
     assert len(results[1].exps) == 13

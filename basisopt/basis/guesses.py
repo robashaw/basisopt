@@ -7,13 +7,11 @@ from basisopt.containers import Shell
 
 from .basis import even_temper_expansion, fix_ratio, uncontract_shell
 
-""" All guess functions need this signature
-func(atomic, params={}), where atomic is an AtomicBasis object
-and params is a dictionary of parameters. atomic must have attribute
-atomic.config set.
-
-Return an array of Shell objects (i.e. an internal basis for a single atom) 
-"""
+# All guess functions need this signature
+# func(atomic, params={}), where atomic is an AtomicBasis object
+# and params is a dictionary of parameters. atomic must have attribute
+# atomic.config set.
+# Return an array of Shell objects (i.e. an internal basis for a single atom)
 
 
 def null_guess(atomic, params={}):

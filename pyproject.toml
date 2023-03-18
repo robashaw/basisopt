@@ -52,8 +52,14 @@ ignore = [
     "E402",
     # Ignore bugbear warning about warning stacklevel
     "B028",
+	# Ignore the 'ambiguous variable name l' warning
+	# (angular momentum quantum number being l is standard)
+	"E741",
     # Okay to put exceptions in the Raises section that aren't raised in the method body
     "DAR402",
+]
+per-file-ignores = [
+	"basisopt/api.py:F401", # import testing for parallelism 
 ]
 max-line-length = 100
 # Use google-style docstrings as defined here: https://google.github.io/styleguide/pyguide.html

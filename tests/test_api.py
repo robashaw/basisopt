@@ -1,8 +1,6 @@
 import logging
 import os
 
-import pytest
-
 from basisopt import api
 from basisopt.wrappers import Wrapper
 

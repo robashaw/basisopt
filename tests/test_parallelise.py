@@ -1,5 +1,3 @@
-import pytest
-
 from basisopt.parallelise import chunk
 
 

@@ -124,7 +124,7 @@ class AtomicBasis(Basis):
             self._molecule._atom_names = [name]
             self._molecule._coords = [np.array([0.0, 0.0, 0.0])]
             self.results.name = self._molecule.name
-        except:
+        except Exception:
             bo_logger.error("Please enter a valid element")
 
     @property

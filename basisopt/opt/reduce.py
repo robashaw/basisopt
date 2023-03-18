@@ -7,11 +7,10 @@ from basisopt.basis.atomic import AtomicBasis
 from basisopt.basis.basis import uncontract_shell
 from basisopt.containers import InternalBasis, Shell, basis_to_dict, dict_to_basis
 from basisopt.molecule import build_diatomic
-from basisopt.testing.rank import *
+from basisopt.opt.preconditioners import make_positive
+from basisopt.opt.strategies import Strategy
+from basisopt.testing.rank import rank_primitives
 from basisopt.util import bo_logger
-
-from .preconditioners import make_positive
-from .strategies import Strategy
 
 
 class ReduceStrategy(Strategy):

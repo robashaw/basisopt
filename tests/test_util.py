@@ -1,5 +1,4 @@
 import pandas as pd
-import pytest
 
 from basisopt.data import get_even_temper_params
 from basisopt.util import fit_poly, read_json

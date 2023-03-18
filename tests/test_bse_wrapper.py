@@ -1,5 +1,4 @@
 import basis_set_exchange as bse
-import pytest
 
 from basisopt import bse_wrapper as bsew
 from tests.data import shells as shell_data

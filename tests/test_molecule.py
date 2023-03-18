@@ -1,8 +1,7 @@
-import numpy as np
 import pytest
 
 from basisopt.exceptions import InvalidDiatomic
-from basisopt.molecule import *
+from basisopt.molecule import Molecule, build_diatomic
 from tests.data.utils import almost_equal
 
 
@@ -19,7 +18,6 @@ def test_default_molecule():
 
 def test_nelectrons():
     m = Molecule()
-    nel = m.nelectrons()
     assert m.nelectrons() == 0
     m = Molecule.from_xyz("tests/data/caffeine.xyz")
     assert m.nelectrons() == 102
@@ -115,10 +113,10 @@ def test_build_diatomic():
     assert len(licl.unique_atoms()) == 2
 
     with pytest.raises(IndexError):
-        m = build_diatomic("H2")
+        _ = build_diatomic("H2")
 
     with pytest.raises(InvalidDiatomic):
-        m1 = build_diatomic("H2O,1.4")
-        m2 = build_diatomic("Ne,1.4")
-        m3 = build_diatomic("C5,1.4")
-        m4 = build_diatomic("CHCl3,1.4")
+        _ = build_diatomic("H2O,1.4")
+        _ = build_diatomic("Ne,1.4")
+        _ = build_diatomic("C5,1.4")
+        _ = build_diatomic("CHCl3,1.4")

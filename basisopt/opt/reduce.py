@@ -226,7 +226,7 @@ class ReduceStrategy(Strategy):
         else:
             if self.delta_objective > self.target:
                 bo_logger.info(
-                    "Change in objective over target" + " reverting to basis from last step"
+                    "Change in objective over target, reverting to basis from last step"
                 )
                 basis[element] = self.saved_basis[element]
             else:

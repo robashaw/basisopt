@@ -1,11 +1,10 @@
 import basisopt as bo
-
-bo.set_backend('psi4')
-bo.set_tmp_dir('tmp/')
-
 from basisopt.basis.atomic import AtomicBasis
 from basisopt.bse_wrapper import fetch_basis
 from basisopt.util import write_json
+
+bo.set_backend('psi4')
+bo.set_tmp_dir('tmp/')
 
 ne = AtomicBasis('Ne')
 ne.setup(method='scf')

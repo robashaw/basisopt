@@ -80,8 +80,7 @@ class Wrapper:
         """Retrieve a data point if it exists"""
         if name in self._values:
             return self._values[name]
-        else:
-            return None
+        return None
 
     def verify_method_string(self, string: str) -> bool:
         """Checks whether a method is available with this wrapper
@@ -130,8 +129,7 @@ class Wrapper:
             if self.verify_method_string(method_str):
                 self._values[evaluate] = self._methods[evaluate](molecule, tmp=tmp, **params)
                 return 0
-            else:
-                raise MethodNotAvailable(method_str)
+            raise MethodNotAvailable(method_str)
         except KeyError as e:
             bo_logger.error(e)
             return -2
@@ -160,8 +158,7 @@ class Wrapper:
         """
         if name in self._method_strings:
             return self._method_strings[name]
-        else:
-            return []
+        return []
 
     def available_methods(self, prop: str) -> list[str]:
         """Returns a list of all available methods to calculate a particular property

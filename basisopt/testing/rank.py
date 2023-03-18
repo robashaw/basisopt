@@ -133,7 +133,7 @@ def reduce_primitives(
         value = e[r[0]]
         while (start < n - 1) and (value < thresh):
             start += 1
-            bo_logger.debug(f"{e}, {r}, {start}")
+            bo_logger.debug("%.2e, %s, %d", e, str(r), start)
             value = e[r[start]]
 
         if start == (n - 1):

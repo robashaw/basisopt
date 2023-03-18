@@ -39,7 +39,8 @@ class JKFitBasis(Basis):
         if jonly:
             self.basis_type = "jfit"
         self._done_setup = False
-
+        self.strategy = None
+        
     def as_dict(self) -> dict[str, Any]:
         """Returns MSONable dictionary of JKFitBasis"""
         d = super().as_dict()
@@ -48,10 +49,9 @@ class JKFitBasis(Basis):
         d["name"] = self.name
         d["basis_type"] = self.basis_type
 
-        if hasattr(self, 'strategy'):
-            if isinstance(self.strategy, Strategy):
-                d["strategy"] = self.strategy
-                d["done_setup"] = self._done_setup
+        if isinstance(self.strategy, Strategy):
+            d["strategy"] = self.strategy
+            d["done_setup"] = self._done_setup
         return d
 
     @classmethod

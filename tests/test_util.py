@@ -15,7 +15,7 @@ def test_read_json():
 
 def test_fit_poly():
     data = pd.read_csv('tests/data/cl2.csv')
-    p, xref, re, pt = fit_poly(data['R'], data['ECC'], n=6)
+    _, xref, re, pt = fit_poly(data['R'], data['ECC'], n=6)
     assert abs(xref - 2.00749686) < 1e-8
     assert abs(re - 1.98792829) < 1e-8
     assert len(pt) == 7

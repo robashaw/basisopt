@@ -175,6 +175,6 @@ class Strategy(MSONable):
         instance.basis_type = d.get("basis_type", "orbital")
         instance.orbital_basis = d.get("orbital_basis", None)
         bo_logger.warning(
-            "Loading a Strategy from json uses " + "default preconditioner and guess functions"
+            "Loading a Strategy from json uses default preconditioner and guess functions"
         )
         return instance

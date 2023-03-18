@@ -1,17 +1,15 @@
-name: Publish to PyPI
-
+name: Python package
 on:
-  release:
-    types: [ published ]
-
+  push:
+    tags:
+      - "v*.*.*"
 jobs:
-  publish-service-client-package:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - name: Publish PyPi package
-        uses: code-specialist/pypi-poetry-publish@v1
+      - uses: actions/checkout@v2
+      - name: Build and publish to pypi
+        uses: JRubics/poetry-publish@v1.16
         with:
-          ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PUBLISH_REGISTRY_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+          pypi_token: ${{ secrets.PYPI_TOKEN }}
+	  ignore_dev_requirements: "yes"

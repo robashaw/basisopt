@@ -4,7 +4,6 @@ from typing import Any
 import numpy as np
 from monty.json import MSONable
 
-from .bse_wrapper import fetch_ecp
 from .containers import basis_to_dict, dict_to_basis
 from .data import atomic_number
 from .exceptions import InvalidDiatomic
@@ -21,7 +20,7 @@ class Molecule(MSONable):
          multiplicity (int): spin multiplicity, i.e. 2S+1
          method (str): name of calculation method, e.g. 'hf' or 'ccsd(t)'
          basis (dict): internal basis dictionary, which has (k, v) pairs
-         ecps (dict): map of atom types to BSE-format ECPs
+         ecps (dict): map of atom types to ecp basis names
          jbasis (dict): internal basis dictionary for Coulomb fitting set
          jkbasis (dict): internal basis dictionary for Coulomb+Exchange fitting set
          of the form (element_symbol : array of Shell objects)
@@ -177,16 +176,14 @@ class Molecule(MSONable):
         return list(set(self._atom_names))
 
     def set_ecps(self, ecp_dict: dict[str, str]):
-        """Fetches ECPs from the basis set exchange for requested atom types in the molecule
+        """Sets the ECP dictionary.
 
         Args:
-             ecp_dict: a dictionary of atom name to ECP name. The ECP name should be verbatim
-                 what is listed on the BSE website, e.g. "aug-cc-pvtz-pp". Note that not all
-                 atoms have ECPs available.
+             ecp_dict: a dictionary of atom name to ECP name. The ECP name should
+                be either a name from BSE (for Psi4 backend), or the Orca internal
+                library (for Orca backend, list of names can be found in the manual)
         """
-        for k, v in ecp_dict.items():
-            if k in self._atom_names:
-                self.ecps[k] = fetch_ecp(v, [k])
+        self.ecps = {k: v for k, v in ecp_dict.items() if k.title() in self._atom_names}
 
     def set_dummy_atoms(self, indices: list[int], overwrite: bool = True):
         """Sets the list of atoms that should be considered dummies or ghosts

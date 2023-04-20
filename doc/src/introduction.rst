@@ -157,10 +157,9 @@ If you want ECPs to be used on particular atoms, this can be specified by provid
 		'Br': 'aug-cc-pvtz-pp'
 	})
 	
-The ECPs are then looked up from the basis set exchange and added to the molecule. As such, the name (e.g. "aug-cc-pvtz-pp")
-needs to exactly match that on the basis set exchange. 
+If you are using Psi4, these are looked up from the basis set exchange, so should match names given there.
+If you are using Orca, the internal Orca ECPs are used, a list of names for which can be found in Section 6.3.3 of the Orca manual. 
 
-NOTE: only the Psi4 backend currently has support for ECPs, until we can work out how to manually specify them in ORCA. 
 
 Running a calculation
 =====================

@@ -104,7 +104,6 @@ def test_set_ecps():
     m = Molecule.from_xyz("tests/data/caffeine.xyz")
     m.set_ecps({'O': 'SBKJC-ECP', 'I': 'def2-QZVP'})
     assert len(m.ecps) == 1
-    assert '8' in m.ecps['O']['elements']
 
 
 def test_build_diatomic():

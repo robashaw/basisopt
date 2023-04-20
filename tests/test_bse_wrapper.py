@@ -35,6 +35,7 @@ def test_fetch_basis():
     for s1, s2 in zip(h_ref, h_fetch):
         assert shell_data.shells_are_equal(s1, s2)
 
+
 def test_fetch_ecp():
     ecpbas = bsew.fetch_ecp('aug-cc-pvtz-pp', ['I'])
     assert '53' in ecpbas['elements']

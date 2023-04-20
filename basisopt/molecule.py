@@ -1,11 +1,11 @@
 # molecule
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 from monty.json import MSONable
 
 from .bse_wrapper import fetch_ecp
-from .containers import BSEBasis, basis_to_dict, dict_to_basis
+from .containers import basis_to_dict, dict_to_basis
 from .data import atomic_number
 from .exceptions import InvalidDiatomic
 from .util import bo_logger, dict_decode
@@ -178,11 +178,11 @@ class Molecule(MSONable):
 
     def set_ecps(self, ecp_dict: dict[str, str]):
         """Fetches ECPs from the basis set exchange for requested atom types in the molecule
-        
-           Args:
-                ecp_dict: a dictionary of atom name to ECP name. The ECP name should be verbatim
-                    what is listed on the BSE website, e.g. "aug-cc-pvtz-pp". Note that not all 
-                    atoms have ECPs available. 
+
+        Args:
+             ecp_dict: a dictionary of atom name to ECP name. The ECP name should be verbatim
+                 what is listed on the BSE website, e.g. "aug-cc-pvtz-pp". Note that not all
+                 atoms have ECPs available.
         """
         for k, v in ecp_dict.items():
             if k in self._atom_names:
@@ -190,11 +190,11 @@ class Molecule(MSONable):
 
     def set_dummy_atoms(self, indices: list[int], overwrite: bool = True):
         """Sets the list of atoms that should be considered dummies or ghosts
-        
-           Args:
-                indices: list of indices specifying which atoms to dummy-ify
-                overwrite: if True, will overwrite any existing list of dummies,
-                    otherwise will append to the existing list 
+
+        Args:
+             indices: list of indices specifying which atoms to dummy-ify
+             overwrite: if True, will overwrite any existing list of dummies,
+                 otherwise will append to the existing list
         """
         valid_atoms = [ix for ix in indices if ix in range(self.natoms())]
         if overwrite:

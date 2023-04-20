@@ -136,14 +136,14 @@ def fetch_basis(name: str, elements: list[str]) -> InternalBasis:
 
 def fetch_ecp(name: str, elements: list[str]) -> BSEBasis:
     """Fetches an ECP basis from the BSE, deleting any extraneous non-ECP info
-    
-       Arguments:
-            name: name of desired basis
-            elements: list of element symbols or atomic numbers
-    
-       
-       Returns:
-            a BSE basis dictionary
+
+    Arguments:
+         name: name of desired basis
+         elements: list of element symbols or atomic numbers
+
+
+    Returns:
+         a BSE basis dictionary
     """
     basis = bse.get_basis(name, elements)
     for el, elbas in basis['elements'].items():

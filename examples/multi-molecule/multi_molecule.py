@@ -11,8 +11,13 @@ list_of_mols = ['water', 'methane', 'methanol', 'formaldehyde', 'oxygen']
 mol_objs = [bo.molecule.Molecule.from_xyz(mol + '.xyz', name=mol) for mol in list_of_mols]
 mb = MolecularBasis(name="double", molecules=mol_objs)
 
-params = {'functional': "wb97x-d", 'scf_type': "pk", 'dft_spherical_points': "974",
-          'dft_radial_points': "175", 'dft_pruning_scheme': "none"}
+params = {
+    'functional': "wb97x-d",
+    'scf_type': "pk",
+    'dft_spherical_points': "974",
+    'dft_radial_points': "175",
+    'dft_pruning_scheme': "none",
+}
 
 strategy = Strategy()
 strategy.params = params

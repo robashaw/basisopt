@@ -10,6 +10,7 @@ from basisopt.bse_wrapper import internal_basis_converter
 from basisopt.containers import InternalBasis
 from basisopt.exceptions import FailedCalculation
 from basisopt.molecule import Molecule
+from basisopt.util import bo_logger
 from basisopt.wrappers.wrapper import Wrapper, available
 
 
@@ -50,7 +51,11 @@ class OrcaWrapper(Wrapper):
         """
         molstring = f"* xyz {m.charge} {m.multiplicity}\n"
         for i in range(m.natoms()):
-            molstring += m.get_line(i) + "\n"
+            if i in m.dummy_atoms:
+                suffix = ":"
+            else:
+                suffix = ""
+            molstring += m.get_line(i, atom_suffix=suffix) + "\n"
         molstring += "*\n"
         return molstring
 
@@ -147,6 +152,10 @@ class OrcaWrapper(Wrapper):
 
         basis = "%basis\n"
         basis += self._convert_basis(m.basis)
+        if len(m.ecps) > 0:
+            bo_logger.warning(
+                "Molecule has ECPs specified, which ORCA backend doesn't currently support"
+            )
         if m.jkbasis:
             basis += self._convert_basis(m.jkbasis, gto_string="NewAuxJKGTO")
         elif m.jbasis:

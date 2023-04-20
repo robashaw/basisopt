@@ -1,10 +1,11 @@
 # molecule
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 from monty.json import MSONable
 
-from .containers import basis_to_dict, dict_to_basis
+from .bse_wrapper import fetch_ecp
+from .containers import BSEBasis, basis_to_dict, dict_to_basis
 from .data import atomic_number
 from .exceptions import InvalidDiatomic
 from .util import bo_logger, dict_decode
@@ -20,9 +21,11 @@ class Molecule(MSONable):
          multiplicity (int): spin multiplicity, i.e. 2S+1
          method (str): name of calculation method, e.g. 'hf' or 'ccsd(t)'
          basis (dict): internal basis dictionary, which has (k, v) pairs
+         ecps (dict): map of atom types to BSE-format ECPs
          jbasis (dict): internal basis dictionary for Coulomb fitting set
          jkbasis (dict): internal basis dictionary for Coulomb+Exchange fitting set
          of the form (element_symbol : array of Shell objects)
+         dummy_atoms (list): list of indices of atoms that should be treated as dummies
 
     Private attributes:
          _atom_names (list): atom symbols in order, e.g. ['H', 'H', 'O']
@@ -39,29 +42,37 @@ class Molecule(MSONable):
         self.multiplicity = mult
         self.method = ""
         self.basis = {}
+        self.ecps = {}
         self.jbasis = None
         self.jkbasis = None
         self._atom_names = []
+        self.dummy_atoms = []
         self._coords = []
         self._results = {}
         self._references = {}
 
     def nelectrons(self) -> int:
+        """Returns the number of electrons in the molecule, not accounting for any ECPs"""
         unique = self.unique_atoms()
         nel = 0
         for a in unique:
             nel += self._atom_names.count(a) * atomic_number(a)
         return nel
 
-    def add_atom(self, element: str = 'H', coord: list[float] = [0.0, 0.0, 0.0]):
+    def add_atom(
+        self, element: str = 'H', coord: list[float] = [0.0, 0.0, 0.0], dummy: bool = False
+    ):
         """Adds an atom to the molecule
 
         Arguments:
              element (str): element name
              coord (list): [x,y,z] coords in Ansgtrom
+             dummy (bool): if True, the atom is marked as a dummy atom
         """
         self._coords.append(np.array(coord))
         self._atom_names.append(element)
+        if dummy:
+            self.dummy_atoms.append(len(self._atom_names) - 1)
 
     def add_result(self, name: str, value: Any):
         """Store a result (no archiving)
@@ -139,19 +150,23 @@ class Molecule(MSONable):
             output += self.get_line(i) + "\n"
         return output
 
-    def get_line(self, i: int) -> str:
+    def get_line(self, i: int, atom_prefix: str = "", atom_suffix: str = "") -> str:
         """Gets a line of the xyz file representation of the Molecule
 
         Arguments:
              i (int): the index of the atom line wanted
+             atom_prefix(str): optional string to add at start of atom name
+                (for e.g. dummy atoms in psi4)
+             atom_suffix (str): optional string to add at end of atom name
+                (for e.g. dummy atoms in Orca)
 
         Returns:
-             a string of form {element} {coords}
+             a string of form {prefix+element+suffix} {coords}
         """
         ix = max(i, 0)
         ix = min(ix, len(self._atom_names) - 1)
         n, c = self._atom_names[ix], self._coords[ix]
-        return f"{n}\t{c[0]}\t{c[1]}\t{c[2]}"
+        return f"{atom_prefix}{n}{atom_suffix}\t{c[0]}\t{c[1]}\t{c[2]}"
 
     def natoms(self) -> int:
         """Returns number of atoms in Molecule"""
@@ -160,6 +175,33 @@ class Molecule(MSONable):
     def unique_atoms(self) -> list[str]:
         """Returns a list of all unique atom types in Molecule"""
         return list(set(self._atom_names))
+
+    def set_ecps(self, ecp_dict: dict[str, str]):
+        """Fetches ECPs from the basis set exchange for requested atom types in the molecule
+        
+           Args:
+                ecp_dict: a dictionary of atom name to ECP name. The ECP name should be verbatim
+                    what is listed on the BSE website, e.g. "aug-cc-pvtz-pp". Note that not all 
+                    atoms have ECPs available. 
+        """
+        for k, v in ecp_dict.items():
+            if k in self._atom_names:
+                self.ecps[k] = fetch_ecp(v, [k])
+
+    def set_dummy_atoms(self, indices: list[int], overwrite: bool = True):
+        """Sets the list of atoms that should be considered dummies or ghosts
+        
+           Args:
+                indices: list of indices specifying which atoms to dummy-ify
+                overwrite: if True, will overwrite any existing list of dummies,
+                    otherwise will append to the existing list 
+        """
+        valid_atoms = [ix for ix in indices if ix in range(self.natoms())]
+        if overwrite:
+            self.dummy_atoms = valid_atoms
+        else:
+            self.dummy_atoms.extend(valid_atoms)
+        self.dummy_atoms = list(set(self.dummy_atoms))
 
     def distance(self, atom1: int, atom2: int) -> float:
         """Computes the Euclidean distance between two atoms.
@@ -189,7 +231,9 @@ class Molecule(MSONable):
             "multiplicity": self.multiplicity,
             "method": self.method,
             "basis": basis_to_dict(self.basis),
+            "ecps": self.ecps,
             "atom_names": self._atom_names,
+            "dummy_atoms": self.dummy_atoms,
             "coords": self._coords,
             "results": self._results,
             "references": self._references,
@@ -217,9 +261,11 @@ class Molecule(MSONable):
         instance = cls(name=name, charge=charge, mult=mult)
         instance.method = d.get("method", "")
         instance.basis = dict_to_basis(d.get("basis", {}))
+        instance.ecps = d.get("ecps", {})
         instance.jbasis = d.get("jbasis", None)
         instance.jkbasis = d.get("jkbasis", None)
         instance._atom_names = d.get("atom_names", [])
+        instance.dummy_atoms = d.get("dummy_atoms", [])
         instance.coords = d.get("coords", [])
         instance._results = d.get("results", {})
         instance._references = d.get("references", {})

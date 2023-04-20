@@ -84,7 +84,30 @@ def test_from_xyz():
     assert m.get_line(23) == line24
     assert m.get_line(44) == line24
     assert m.get_line(-3) == line1
-
+    
+def test_set_dummy_atoms():
+    m = Molecule()
+    m.set_dummy_atoms([1, 2, 3])
+    assert len(m.dummy_atoms) == 0
+    
+    m = Molecule.from_xyz("tests/data/caffeine.xyz")
+    m.set_dummy_atoms([0, 2, 4, 6])
+    assert len(m.dummy_atoms) == 4
+    m.set_dummy_atoms([4, 6, 8, 10, 12], overwrite=False)
+    assert len(m.dummy_atoms) == 7
+    m.set_dummy_atoms([22, 23, 24, 25], overwrite=True)
+    assert len(m.dummy_atoms) == 2
+    
+def test_set_ecps():
+    m = Molecule.from_xyz("tests/data/caffeine.xyz")
+    m.set_ecps(
+        {
+            'O': 'SBKJC-ECP',
+            'I': 'def2-QZVP'
+        }
+    )
+    assert len(m.ecps) == 1
+    assert '8' in m.ecps['O']['elements']
 
 def test_build_diatomic():
     no = build_diatomic("NO,1.3", charge=1)

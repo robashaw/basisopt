@@ -17,6 +17,13 @@ class MolproWrapper(Wrapper):
             'hf': ['energy'],
             'rhf': ['energy'],
             'uhf': ['energy'],
+            'mp2': ['energy'],
+            'rmp2': ['energy'],
+            'ump2': ['energy'],
+            'ccsd': ['energy'],
+            'ccsd(t)': ['energy'],
+            'uccsd': ['energy'],
+            'uccsd(t)': ['energy'],
         }
 
     def convert_molecule(self, m: Molecule) -> str:
@@ -37,7 +44,19 @@ class MolproWrapper(Wrapper):
         """Helper function to turn an internal method
         name into a Molpro command line
         """
-        command = f"{method}"
+        # Post-HF calculations need to specify the HF part too
+        if method == "mp2":
+            command = "hf\nmp2"
+        elif method == "rmp2":
+            command = "rhf\nrmp2"
+        elif method == "ump2":
+            command = "uhf\nump2"
+        elif method[0:2] == "cc":
+            command = f"hf\n{method}"
+        elif method[0:3] == "ucc":
+            command = f"rhf\n{method}"
+        else:
+            command = f"{method}"
         return command + "\n"
 
     def _convert_basis(self, basis: InternalBasis) -> str:
@@ -56,16 +75,13 @@ class MolproWrapper(Wrapper):
             basis_str += line + "\n"
         return basis_str
 
-    def initialise(self, m: Molecule, name: str = "", tmp: str = "", **params) -> Project:
+    def initialise(self, proj: Project, m: Molecule, tmp: str = "", **params):
         """Initialises pymolpro before each calculation
         - creates a pymolpro Project
         - converts molecule
         - sets options from globals
         - converts basis set
         """
-        # Create a Project
-        proj_name = f"{m.name}-{m.method}-" + name
-        p = Project(proj_name, location=tmp)
 
         # Handle options, molecule, basis
         # TODO - add params
@@ -75,8 +91,7 @@ class MolproWrapper(Wrapper):
 
         # Assemble into an input string and pass to the Project
         molpro_input = mol + basis + cmd
-        p.write_input(molpro_input)
-        return p
+        proj.write_input(molpro_input)
 
     #    def _get_properties(
     #        self, mol: Molecule, name: str = "prop", properties: list[str] = [], tmp: str = "", **params
@@ -93,10 +108,18 @@ class MolproWrapper(Wrapper):
 
     @available
     def energy(self, mol, tmp="", **params):
-        p = self.initialise(mol, name="energy", tmp=tmp, **params)
+        name = "energy"
+        proj_name = f"{mol.name}-{mol.method}-" + name
+        p = Project(proj_name, location=tmp)
+        self.initialise(p, mol, tmp=tmp, **params)
         p.run(wait=True)
         if p.errors():
             raise FailedCalculation
-        energy = p.energy()
+        # TODO attempt to catch race cases where wait=True doesn't seem to be working
+        p.wait()
+        if mol.method == "hf":
+            energy = p.energy()
+        else:
+            energy = p.energy(method=f"{mol.method.upper()}")
         p.clean()
         return energy

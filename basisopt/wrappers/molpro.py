@@ -24,6 +24,8 @@ class MolproWrapper(Wrapper):
             'ccsd(t)': ['energy'],
             'uccsd': ['energy'],
             'uccsd(t)': ['energy'],
+            'rks': ['energy'],
+            'uks': ['energy'],
         }
 
     def convert_molecule(self, m: Molecule) -> str:
@@ -40,23 +42,42 @@ class MolproWrapper(Wrapper):
         molstring += f"set,spin={spin}\n"
         return molstring
 
+    def _convert_params(self, method: str, **params) -> str:
+        """Helper function to pluck out the relevant
+        parameters for a given method.
+        Returns an empty string if the params are not found.
+        """
+        method_search = method + '-params'
+        param_options = params.get(method_search, '')
+        return param_options
+
     def _command_string(self, method: str, **params) -> str:
         """Helper function to turn an internal method
         name into a Molpro command line
         """
+        # Extract the relevant parameters for this method
+        method_options = self._convert_params(method, **params)
         # Post-HF calculations need to specify the HF part too
-        if method == "mp2":
-            command = "hf\nmp2"
-        elif method == "rmp2":
-            command = "rhf\nrmp2"
-        elif method == "ump2":
-            command = "uhf\nump2"
-        elif method[0:2] == "cc":
-            command = f"hf\n{method}"
-        elif method[0:3] == "ucc":
-            command = f"rhf\n{method}"
+        # hence check for any user-supplied params for the HF part.
+        if method in ['mp2', 'ccsd', 'ccsd(t)']:
+            ref_options = self._convert_params('hf', **params)
+            command = f"{{hf{ref_options}}}\n{{{method}{method_options}}}"
+        elif method in ['rmp2', 'uccsd', 'uccsd(t)']:
+            ref_options = self._convert_params('rhf', **params)
+            command = f"{{rhf{ref_options}}}\n{{{method}{method_options}}}"
+        elif method in ['ump2']:
+            ref_options = self._convert_params('uhf', **params)
+            command = f"{{uhf{ref_options}}}\n{{{method}{method_options}}}"
+        # For DFT based methods, the functional must be specified separately
+        # to other params
+        elif method in ['rks', 'uks']:
+            if "functional" in params:
+                xcfun = params["functional"]
+                command = f"{{{method},{xcfun}{method_options}}}"
+            else:
+                raise KeyError("DFT functional not specified")
         else:
-            command = f"{method}"
+            command = f"{{{method}{method_options}}}"
         return command + "\n"
 
     def _convert_basis(self, basis: InternalBasis) -> str:
@@ -84,8 +105,7 @@ class MolproWrapper(Wrapper):
         """
 
         # Handle options, molecule, basis
-        # TODO - add params
-        cmd = self._command_string(m.method)
+        cmd = self._command_string(m.method, **params)
         mol = self.convert_molecule(m)
         basis = self._convert_basis(m.basis)
 
@@ -115,7 +135,7 @@ class MolproWrapper(Wrapper):
         p.run(wait=True)
         if p.errors():
             raise FailedCalculation
-        # TODO attempt to catch race cases where wait=True doesn't seem to be working
+        # Attempt to catch race cases where wait=True doesn't seem to be sufficient
         p.wait()
         if mol.method == "hf":
             energy = p.energy()

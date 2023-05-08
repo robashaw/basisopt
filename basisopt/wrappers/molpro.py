@@ -113,18 +113,20 @@ class MolproWrapper(Wrapper):
         molpro_input = mol + basis + cmd
         proj.write_input(molpro_input)
 
-    #    def _get_properties(
-    #        self, mol: Molecule, name: str = "prop", properties: list[str] = [], tmp: str = "", **params
-    #    ) -> dict[str, Any]:
-    #        """Helper function to run the calculation and
-    #        retrieve a property value other than energy from Molpro.
-    #        """
-    #        self.initialise(mol, name=name, tmp: str = "", **params)
-    #        p.run(wait=True)
-    #        if p.errors():
-    #            raise FailedCalculation
-
-    # Retrieve the results
+    def _get_energy(self, proj: Project, meth: str) -> float:
+        """Helper function to retrieve the energy from
+        Molpro after a calculation"""
+        if meth in ['hf', 'rhf', 'uhf', 'rks', 'uks']:
+            energy = proj.energies()[0]
+        elif meth in ['mp2']:
+            energy = proj.energies()[-1]
+        elif meth in ['rmp2', 'ump2', 'ccsd']:
+            energy = proj.energies(method=f"{meth.upper()}")[-1]
+        elif meth in ['uccsd', 'uccsd(t)']:
+            energy = proj.energy(method=f"RHF-{meth.upper()}")
+        else:
+            energy = proj.energy(method=f"{meth.upper()}")
+        return energy
 
     @available
     def energy(self, mol, tmp="", **params):
@@ -137,9 +139,11 @@ class MolproWrapper(Wrapper):
             raise FailedCalculation
         # Attempt to catch race cases where wait=True doesn't seem to be sufficient
         p.wait()
-        if mol.method == "hf":
-            energy = p.energy()
-        else:
-            energy = p.energy(method=f"{mol.method.upper()}")
+        # TODO use a helper function to extract the energy for a particular method
+        energy = self._get_energy(p, mol.method)
+        #        if mol.method == "hf":
+        #            energy = p.energy()
+        #        else:
+        #            energy = p.energy(method=f"{mol.method.upper()}")
         p.clean()
         return energy

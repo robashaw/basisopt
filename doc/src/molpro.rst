@@ -46,6 +46,16 @@ following way:
 	
 Note that the ``;`` and ``,`` separators used in Molpro input files must be included as part of the params values.
 
+Specifying global parameters and thresholds
+===========================================
+
+Molpro global parameters and thresholds are also specified in the params dictionary, using the global-params key. For example,
+to set a global energy convergence threshold:
+
+.. code-block:: python 
+
+	params = {'global-params': "gthresh,energy=1.d-12"}
+
 Post-HF methods
 ===============
 

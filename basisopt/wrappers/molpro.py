@@ -105,12 +105,17 @@ class MolproWrapper(Wrapper):
         """
 
         # Handle options, molecule, basis
+        g_param_str = ""
+        glo_params = params.get("global-params", '')
+        if glo_params:
+            g_param_str = glo_params + "\n"
         cmd = self._command_string(m.method, **params)
         mol = self.convert_molecule(m)
         basis = self._convert_basis(m.basis)
 
         # Assemble into an input string and pass to the Project
-        molpro_input = mol + basis + cmd
+        molpro_input = g_param_str + mol + basis + cmd
+        print(molpro_input)
         proj.write_input(molpro_input)
 
     def _get_energy(self, proj: Project, meth: str) -> float:

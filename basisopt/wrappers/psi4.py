@@ -2,8 +2,9 @@
 from typing import Any
 
 import psi4
+from basis_set_exchange.writers import write_formatted_basis_str
 
-from basisopt.bse_wrapper import internal_basis_converter
+from basisopt.bse_wrapper import fetch_ecp, internal_basis_converter
 from basisopt.exceptions import EmptyCalculation, PropertyNotAvailable
 from basisopt.molecule import Molecule
 from basisopt.wrappers.wrapper import Wrapper, available
@@ -36,6 +37,7 @@ class Psi4Wrapper(Wrapper):
             'adc(3)': ['energy', 'dipole', 'trans_dipole'],
         }
         self._restricted_options = ["functional"]
+        self.psi4_mol = None
 
     def convert_molecule(self, m: Molecule) -> psi4.core.Molecule:
         """Convert an internal Molecule object
@@ -43,7 +45,11 @@ class Psi4Wrapper(Wrapper):
         """
         molstring = ""
         for i in range(m.natoms()):
-            molstring += m.get_line(i) + "\n"
+            if i in m.dummy_atoms:
+                prefix = "@"
+            else:
+                prefix = ""
+            molstring += m.get_line(i, atom_prefix=prefix) + "\n"
         return psi4.geometry(molstring)
 
     def _property_prefix(self, method: str) -> str:
@@ -82,9 +88,9 @@ class Psi4Wrapper(Wrapper):
         psi4.core.set_output_file(outfile, False)
 
         # create the molecule
-        mol = self.convert_molecule(m)
-        mol.set_molecular_charge(m.charge)
-        mol.set_multiplicity(m.multiplicity)
+        self.psi4_mol = self.convert_molecule(m)
+        self.psi4_mol.set_molecular_charge(m.charge)
+        self.psi4_mol.set_multiplicity(m.multiplicity)
 
         options = {k: v for k, v in self._globals.items() if k not in self._restricted_options}
         for k, v in params.items():
@@ -100,7 +106,13 @@ class Psi4Wrapper(Wrapper):
 
         # set basis
         g94_basis = internal_basis_converter(m.basis, fmt="psi4")
-        psi4.basis_helper(g94_basis)
+        # add any ecp bases
+        ecp_string = "\n"
+        for atom, name in m.ecps.items():
+            ecp = fetch_ecp(name, [atom])
+            lines = write_formatted_basis_str(ecp, fmt="psi4").split('\n')
+            ecp_string += "\n".join(lines[4:])
+        psi4.basis_helper(g94_basis + ecp_string)
 
     def clean(self):
         """Cleans up calculation"""

@@ -100,6 +100,19 @@ There are three routes to creating a molecule.
 	m = build_diatomic("NO,1.3", charge=0, mult=2)
 	
 	
+Dummy atoms
+===========
+
+You can set certain atoms to be dummies (or ghosts) by specifying the indices of the atoms you want to have no electrons:
+
+.. code-block:: python
+
+	# the first three atoms will be marked as dummies
+	m.set_dummy_atoms([0, 1, 2])
+	
+This can be useful for example in the development of midbond functions, where you might wish to calculate interaction energies. 
+
+	
 Add a basis set
 ===============
 
@@ -131,6 +144,21 @@ These can be created manually, fetched directly from the basis set exchange, or 
 	from basisopt.bse_wrapper import bse_to_internal
 	bse_basis = bse.read_formatted_basis_file('vdz.basis', basis_fmt='molpro')
 	m.basis = bse_to_internal(bse_basis)
+	
+	
+Add ECPs
+========
+
+If you want ECPs to be used on particular atoms, this can be specified by providing a dictionary of ECP names:
+
+.. code-block:: python
+	
+	m.set_ecps({
+		'Br': 'aug-cc-pvtz-pp'
+	})
+	
+If you are using Psi4, these are looked up from the basis set exchange, so should match names given there.
+If you are using Orca, the internal Orca ECPs are used, a list of names for which can be found in Section 6.3.3 of the Orca manual. 
 
 
 Running a calculation

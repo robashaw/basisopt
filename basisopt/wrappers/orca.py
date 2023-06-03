@@ -50,7 +50,11 @@ class OrcaWrapper(Wrapper):
         """
         molstring = f"* xyz {m.charge} {m.multiplicity}\n"
         for i in range(m.natoms()):
-            molstring += m.get_line(i) + "\n"
+            if i in m.dummy_atoms:
+                suffix = ":"
+            else:
+                suffix = ""
+            molstring += m.get_line(i, atom_suffix=suffix) + "\n"
         molstring += "*\n"
         return molstring
 
@@ -146,7 +150,10 @@ class OrcaWrapper(Wrapper):
         mol = self.convert_molecule(m)
 
         basis = "%basis\n"
+        for atom, ecp in m.ecps.items():
+            basis += f'newECP {atom.title()} "{ecp}" end\n'
         basis += self._convert_basis(m.basis)
+
         if m.jkbasis:
             basis += self._convert_basis(m.jkbasis, gto_string="NewAuxJKGTO")
         elif m.jbasis:

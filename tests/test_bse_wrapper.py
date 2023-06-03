@@ -34,3 +34,11 @@ def test_fetch_basis():
     assert len(h_ref) == len(h_fetch)
     for s1, s2 in zip(h_ref, h_fetch):
         assert shell_data.shells_are_equal(s1, s2)
+
+
+def test_fetch_ecp():
+    ecpbas = bsew.fetch_ecp('aug-cc-pvtz-pp', ['I'])
+    assert '53' in ecpbas['elements']
+    ibas = ecpbas['elements']['53']
+    assert 'ecp_potentials' in ibas
+    assert 'electron_shells' not in ibas

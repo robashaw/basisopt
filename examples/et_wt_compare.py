@@ -20,6 +20,7 @@ viz_basis['even'] = ne_et.get_basis()['ne']
 viz_basis['well'] = ne_wt.get_basis()['ne']
 
 import matplotlib.pyplot as plt
+
 from basisopt.viz.basis import plot_exponents
 
 fig, ax = plot_exponents(viz_basis, atoms=['even', 'well'], split_by_shell=True)
@@ -29,5 +30,3 @@ ax[1].set_title('Well-tempered')
 filename = "comparison_plot.png"
 bo_logger.info("Writing exponents plot to %s", filename)
 plt.savefig(filename)
-
-

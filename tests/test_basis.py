@@ -40,6 +40,20 @@ def test_even_temper_expansion():
     assert almost_equal(p_shell.exps[11], 474.989023, thresh=1e-6)
 
 
+def test_well_temper_expansion():
+    wt_params = [(0.1, 2.3, 12.2, 8.6, 13), (0.2, 2.1, 32.8, 9.9, 10)]
+    wt_basis = basis.well_temper_expansion(wt_params)
+    assert len(wt_basis) == 2
+
+    s_shell = wt_basis[0]
+    p_shell = wt_basis[1]
+    assert len(s_shell.exps) == 13
+    assert almost_equal(s_shell.exps[0], 0.1, thresh=1e-6)
+    assert almost_equal(s_shell.exps[10], 1615.706126, thresh=1e-6)
+    assert len(p_shell.exps) == 10
+    assert almost_equal(p_shell.exps[6], 33.623095, thresh=1e-6)
+
+
 def test_fix_ratio():
     exps = np.array([0.1, 0.2, 0.58, 1.3, 3.0, 8.2])
     new_exps = basis.fix_ratio(exps)

@@ -4,10 +4,12 @@ from typing import Any, Optional, Union
 
 import numpy as np
 from monty.json import MSONable
+from scipy.special import legendre
 
 from basisopt import data
 from basisopt.containers import InternalBasis, Result, Shell
 from basisopt.data import ETParams
+from basisopt.data import LegParams
 from basisopt.testing import Test
 from basisopt.util import bo_logger, dict_decode
 
@@ -66,6 +68,38 @@ def even_temper_expansion(params: ETParams) -> list[Shell]:
         el_basis.append(new_shell)
     return el_basis
 
+def legendre_expansion(params: LegParams) -> list[Shell]:
+    """Forms a basis for an element from Petersson's Legendre expansion 
+
+    Arguments:
+        params (list): list of tuples corresponding to shells
+        e.g. [(c_s, x_s, n_s), (c_p, x_p, n_p), ...] where each shell
+        is expanded as ln c_l = \Sum_{k=0}^{k_{max}} a_k P_k
+        * (\frac{2c_l - 2}{n_l - 1} - 1)
+        Where a_k is a parameter and P_k is the k'th Legendre polynomial.
+        k_max is the total number of parameters (6).
+
+    Returns:
+        list of Shell objects for the expansion
+    """
+    el_basis = []
+    for ix, (a0, a1, a2, a3, a4, a5, n) in enumerate(params):
+        new_shell = Shell()
+        new_shell.l = data.INV_AM_DICT[ix]
+        exponents = []
+        for j in range(n):
+            # Possibly convert to a loop
+            ln_a = a0 * legendre(0)((((2*(j+1))-2)/(n - 1)) - 1)
+            ln_a += a1 * legendre(1)((((2*(j+1))-2)/(n - 1)) - 1)
+            ln_a += a2 * legendre(2)((((2*(j+1))-2)/(n - 1)) - 1)
+            ln_a += a3 * legendre(3)((((2*(j+1))-2)/(n - 1)) - 1)
+            ln_a += a4 * legendre(4)((((2*(j+1))-2)/(n - 1)) - 1)
+            ln_a += a5 * legendre(5)((((2*(j+1))-2)/(n - 1)) - 1)
+            exponents.append(np.exp(ln_a))
+        new_shell.exps = np.array(exponents)
+        uncontract_shell(new_shell)
+        el_basis.append(new_shell)
+    return el_basis 
 
 def fix_ratio(exps: np.ndarray, ratio: float = 1.4) -> np.ndarray:
     """Returns a sorted numpy array of exponents

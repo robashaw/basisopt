@@ -10,14 +10,14 @@ from basisopt.containers import InternalBasis
 from .preconditioners import unit
 from .strategies import Strategy
 
-_INITIAL_GUESS = (0.1, 4.0, 1.0, 0.3, 2.0, 0.1, 10)
+_INITIAL_GUESS = ([0.1, 4.0], 18)
 
 
 class LegendreStrategy(Strategy):
     """Implements a strategy for a basis set, where each angular
     momentum shell is determined using Petersson and co-workers' method
     based on Legendre polynomials. See J. Chem. Phys. 118, 1101 (2003).
-    A list of six parameters is required, along with the total
+    A list of parameters is required, along with the total
     number of exponents (n).
 
     Algorithm:
@@ -131,14 +131,14 @@ class LegendreStrategy(Strategy):
 
     def get_active(self, basis: InternalBasis, element: str) -> np.ndarray:
         """Returns the Legendre params for the current shell"""
-        (a0, a1, a2, a3, a4, a5, _) = self.shells[self._step]
-        return np.array([a0, a1, a2, a3, a4, a5])
+        (A_vals, _) = self.shells[self._step]
+        return np.array(A_vals)
 
     def set_active(self, values: np.ndarray, basis: InternalBasis, element: str):
         """Given the Legendre params for a shell, expands the basis
         """
-        (a0, a1, a2, a3, a4, a5, n) = self.shells[self._step]
-        self.shells[self._step] = (a0, a1, a2, a3, a4, a5, n)
+        (A_vals, n) = self.shells[self._step]
+        self.shells[self._step] = (A_vals, n)
         self.set_basis_shells(basis, element)
 
     def next(self, basis: InternalBasis, element: str, objective: float) -> bool:
@@ -151,18 +151,18 @@ class LegendreStrategy(Strategy):
             if self._step == self.max_l:
                 self.first_run = False
                 self._step = 0
-                (a0, a1, a2, a3, a4, a5, n) = self.shells[self._step]
-                self.shells[self._step] = (a0, a1, a2, a3, a4, a5, min(n + 1, self.max_n))
+                (A_vals, n) = self.shells[self._step]
+                self.shells[self._step] = (A_vals, min(n + 1, self.max_n))
         else:
             if self.delta_objective < self.target:
                 self.shell_done[self._step] = 0
 
             self._step = (self._step + 1) % self.max_l
-            (a0, a1, a2, a3, a4, a5, n) = self.shells[self._step]
+            (A_vals, n) = self.shells[self._step]
             if n == self.max_n:
                 self.shell_done[self._step] = 0
             elif self.shell_done[self._step] != 0:
-                self.shells[self._step] = (a0, a1, a2, a3, a4, a5, n + 1)
+                self.shells[self._step] = (A_vals, n + 1)
 
             carry_on = np.sum(self.shell_done) != 0
 

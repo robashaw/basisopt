@@ -83,18 +83,14 @@ def legendre_expansion(params: LegParams) -> list[Shell]:
         list of Shell objects for the expansion
     """
     el_basis = []
-    for ix, (a0, a1, a2, a3, a4, a5, n) in enumerate(params):
+    for ix, (A_vals, n) in enumerate(params):
         new_shell = Shell()
         new_shell.l = data.INV_AM_DICT[ix]
         exponents = []
         for j in range(n):
-            # Possibly convert to a loop
-            ln_a = a0 * legendre(0)((((2*(j+1))-2)/(n - 1)) - 1)
-            ln_a += a1 * legendre(1)((((2*(j+1))-2)/(n - 1)) - 1)
-            ln_a += a2 * legendre(2)((((2*(j+1))-2)/(n - 1)) - 1)
-            ln_a += a3 * legendre(3)((((2*(j+1))-2)/(n - 1)) - 1)
-            ln_a += a4 * legendre(4)((((2*(j+1))-2)/(n - 1)) - 1)
-            ln_a += a5 * legendre(5)((((2*(j+1))-2)/(n - 1)) - 1)
+            ln_a = 0e1
+            for k in range(len(A_vals)):
+                ln_a += A_vals[k] * legendre(k)((((2*(j+1))-2)/(n - 1)) - 1)
             exponents.append(np.exp(ln_a))
         new_shell.exps = np.array(exponents)
         uncontract_shell(new_shell)

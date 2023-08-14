@@ -32,7 +32,7 @@ ETParams = list[tuple[float, float, int]]
 """Dictionary with pre-optimised Legendre polynomial expansions for atoms"""
 _LEGENDRE_DATA = {}
 
-LegParams = list[tuple[list, int]]
+LegParams = list[tuple[tuple, int]]
 
 def get_even_temper_params(atom: str = 'H', accuracy: float = 1e-5) -> ETParams:
     """Searches for the relevant even tempered expansion

@@ -10,7 +10,7 @@ from basisopt.containers import InternalBasis
 from .preconditioners import unit
 from .strategies import Strategy
 
-_INITIAL_GUESS = ([0.1, 4.0], 18)
+_INITIAL_GUESS = ((3.5, 5.0, 0.8, 0.3, 0.1, 0.1), 10)
 
 
 class LegendreStrategy(Strategy):
@@ -138,7 +138,7 @@ class LegendreStrategy(Strategy):
         """Given the Legendre params for a shell, expands the basis
         """
         (A_vals, n) = self.shells[self._step]
-        self.shells[self._step] = (A_vals, n)
+        self.shells[self._step] = (values, n)
         self.set_basis_shells(basis, element)
 
     def next(self, basis: InternalBasis, element: str, objective: float) -> bool:

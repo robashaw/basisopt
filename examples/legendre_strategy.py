@@ -10,4 +10,3 @@ ne.set_legendre(method='scf', accuracy=1e-4)
 print(ne.leg_params)
 for i, p in enumerate(ne.get_basis()['ne']):
     print(f"l = {i}:", p.exps)
-	

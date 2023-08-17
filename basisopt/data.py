@@ -34,6 +34,7 @@ _LEGENDRE_DATA = {}
 
 LegParams = list[tuple[tuple, int]]
 
+
 def get_even_temper_params(atom: str = 'H', accuracy: float = 1e-5) -> ETParams:
     """Searches for the relevant even tempered expansion
     from _EVEN_TEMPERED_DATA
@@ -46,6 +47,7 @@ def get_even_temper_params(atom: str = 'H', accuracy: float = 1e-5) -> ETParams:
     else:
         return []
 
+
 def get_legendre_params(atom: str = 'H', accuracy: float = 1e-5) -> LegParams:
     """Searches for the relevant Legendre polynomial-based expansion
     from _LEGENDRE_DATA
@@ -57,6 +59,7 @@ def get_legendre_params(atom: str = 'H', accuracy: float = 1e-5) -> LegParams:
         return _LEGENDRE_DATA[atom][index]
     else:
         return []
+
 
 """Essentially exact numerical Hartree-Fock energies for all atoms
    in Hartree. Ref: Saito 2009, doi.org/10.1016/j.adt.2009.06.001"""

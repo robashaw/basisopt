@@ -17,7 +17,7 @@ class LegendreStrategy(Strategy):
     """Implements a strategy for a basis set, where each angular
     momentum shell is determined using Petersson and co-workers' method
     based on Legendre polynomials. See J. Chem. Phys. 118, 1101 (2003).
-    A list of parameters is required, along with the total
+    A tuple of parameters is required, along with the total
     number of exponents (n).
 
     Algorithm:
@@ -135,8 +135,7 @@ class LegendreStrategy(Strategy):
         return np.array(A_vals)
 
     def set_active(self, values: np.ndarray, basis: InternalBasis, element: str):
-        """Given the Legendre params for a shell, expands the basis
-        """
+        """Given the Legendre params for a shell, expands the basis"""
         (A_vals, n) = self.shells[self._step]
         self.shells[self._step] = (values, n)
         self.set_basis_shells(basis, element)

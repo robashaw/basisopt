@@ -8,8 +8,7 @@ from scipy.special import legendre
 
 from basisopt import data
 from basisopt.containers import InternalBasis, Result, Shell
-from basisopt.data import ETParams
-from basisopt.data import LegParams
+from basisopt.data import ETParams, LegParams
 from basisopt.testing import Test
 from basisopt.util import bo_logger, dict_decode
 
@@ -68,13 +67,14 @@ def even_temper_expansion(params: ETParams) -> list[Shell]:
         el_basis.append(new_shell)
     return el_basis
 
+
 def legendre_expansion(params: LegParams) -> list[Shell]:
-    """Forms a basis for an element from Petersson's Legendre expansion 
+    """Forms a basis for an element from Petersson's Legendre expansion
 
     Arguments:
         params (list): list of tuples corresponding to shells
         e.g. [(c_s, x_s, n_s), (c_p, x_p, n_p), ...] where each shell
-        is expanded as ln c_l = \Sum_{k=0}^{k_{max}} a_k P_k
+        is expanded as ln c_l = Sum_{k=0}^{k_{max}} a_k P_k
         * (\frac{2c_l - 2}{n_l - 1} - 1)
         Where a_k is a parameter and P_k is the k'th Legendre polynomial.
         k_max is the total number of parameters (6).
@@ -90,12 +90,13 @@ def legendre_expansion(params: LegParams) -> list[Shell]:
         for j in range(n):
             ln_a = 0e1
             for k in range(len(A_vals)):
-                ln_a += A_vals[k] * legendre(k)((((2*(j+1))-2)/(n - 1)) - 1)
+                ln_a += A_vals[k] * legendre(k)((((2 * (j + 1)) - 2) / (n - 1)) - 1)
             exponents.append(np.exp(ln_a))
         new_shell.exps = np.array(exponents)
         uncontract_shell(new_shell)
         el_basis.append(new_shell)
-    return el_basis 
+    return el_basis
+
 
 def fix_ratio(exps: np.ndarray, ratio: float = 1.4) -> np.ndarray:
     """Returns a sorted numpy array of exponents

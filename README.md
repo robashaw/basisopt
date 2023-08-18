@@ -28,9 +28,11 @@ Contributions are welcomed, either in the form of raising issues or pull request
 
 ## Differences from Robert Shaw's repo
 
-The following major changes have been made relative to Robert's original version of the repo.
+The following major changes have been made relative to Robert's original version (corresponding to release 1.0.0) of the repo.
 
-- Support for a Molpro backend using pymolpro
+- Support for a Molpro backend using pymolpro.
+- Adds the ability to use/optimise well-tempered expansions of exponents.
+
 
 ## Documentation
 
@@ -48,6 +50,6 @@ There are working examples in the examples folder, and these are (or will be) do
 
 ## Acknowledging usage
 
-If you use this library in your program and find it helpful, that's great! Any feedback would be much appreciated. If you publish results using this library, please consider citing the following paper detailing version 1.0.0:
+If you use this library in your program and find it helpful, that's great! Any feedback would be much appreciated. If you publish results using this library, please cite the following paper detailing version 1.0.0:
 
 [J. Chem. Phys. 159, 044802 (2023)](https://doi.org/10.1063/5.0157878)

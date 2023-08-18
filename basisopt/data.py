@@ -29,6 +29,11 @@ _EVEN_TEMPERED_DATA = {}
 
 ETParams = list[tuple[float, float, int]]
 
+"""Dictionary with pre-optimised well-tempered expansions for atoms"""
+_WELL_TEMPERED_DATA = {}
+
+WTParams = list[tuple[float, float, float, float, int]]
+
 
 def get_even_temper_params(atom: str = 'H', accuracy: float = 1e-5) -> ETParams:
     """Searches for the relevant even tempered expansion
@@ -39,6 +44,19 @@ def get_even_temper_params(atom: str = 'H', accuracy: float = 1e-5) -> ETParams:
         index = max(4, log_acc) - 4
         index = int(min(index, 3))
         return _EVEN_TEMPERED_DATA[atom][index]
+    else:
+        return []
+
+
+def get_well_temper_params(atom: str = 'H', accuracy: float = 1e-5) -> WTParams:
+    """Searches for the relevant well tempered expansion
+    from _WELL_TEMPERED_DATA
+    """
+    if atom in _WELL_TEMPERED_DATA:
+        log_acc = -np.log10(accuracy)
+        index = max(4, log_acc) - 4
+        index = int(min(index, 3))
+        return _WELL_TEMPERED_DATA[atom][index]
     else:
         return []
 

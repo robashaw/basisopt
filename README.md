@@ -33,6 +33,7 @@ The following major changes have been made relative to Robert's original version
 - Support for a Molpro backend using pymolpro.
 - Adds the ability to use/optimise well-tempered expansions of exponents.
 
+
 ## Documentation
 
 For dependencies, detailed installation instructions, and a guide to getting started, please refer to the main documentation (currently Robert's original version) [here](https://basisopt.readthedocs.io/en/latest/index.html).

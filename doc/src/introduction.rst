@@ -35,6 +35,8 @@ For Psi4, the python API is used:
 	import basisopt as bo
 	bo.set_backend('psi4')
 	bo.set_tmp_dir('/tmp/')
+	
+It is possible to use the Molpro backend using a python API provided by pymolpro. Please see the :ref:`sec:molpro` documentation for further details.
 
 For ORCA (and other non-native backends), we need to give the path to the *directory containing the exexcutables*, e.g.
 

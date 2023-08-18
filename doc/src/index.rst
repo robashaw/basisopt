@@ -7,7 +7,7 @@ basisopt : quantum chemistry basis set optimization
 About
 =======
 
-BasisOpt is an open-source library for the optimization of gaussian basis sets, for use in quantum chemistry calculations. We aim to offer:
+BasisOpt is an open-source library for the optimization of molecular gaussian basis sets, for use in quantum chemistry calculations. We aim to offer:
 
 * a software-agnostic interface to allow for reproducibility  
 * automation of the optimization procedure
@@ -20,15 +20,16 @@ It was written predominantly by Robert Shaw (@robertshaw383), with assistance fr
 Citation
 ========
 
-If you make use of this software, please consider citing the following: 
+If you make use of this software, please cite the following: 
 
-[ChemRxiv preprint](https://chemrxiv.org/engage/chemrxiv/article-details/640f48e3b5d5dbe9e832e997)
+`J. Chem. Phys. 159, 044802 (2023) <https://doi.org/10.1063/5.0157878>`_
 
 .. toctree::
    :maxdepth: 1
    
    installation
    introduction
+   molpro
    tutorials
    api/modules
 

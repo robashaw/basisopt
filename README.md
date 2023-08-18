@@ -1,11 +1,6 @@
 # BasisOpt
 
-[![Build Status](https://github.com/github/docs/actions/workflows/test.yml/badge.svg)]()
-[![codecov](https://codecov.io/gh/robashaw/basisopt/branch/main/graph/badge.svg?token=V8zNdEgBKj)](https://codecov.io/gh/robashaw/basisopt)
-[![Documentation Status](https://readthedocs.org/projects/basisopt/badge/?version=latest)](https://basisopt.readthedocs.io/en/latest/?badge=latest)
-[![Code Quality](https://api.codiga.io/project/32104/status/svg)](https://app.codiga.io/hub/project/32104/basisopt)
-
-BasisOpt is a python library for the optimization of Gaussian basis sets as used in most quantum chemistry packages. It is currently under development, but should be reasonably stable. 
+BasisOpt is a python library for the optimization of molecular Gaussian basis sets as used in most quantum chemistry packages. This development version has been forked from the [original version](https://github.com/robashaw/basisopt). 
 
 ## Installation
 
@@ -31,13 +26,22 @@ However, if you intend to submit a PR for your change, please test building with
 
 Contributions are welcomed, either in the form of raising issues or pull requests on this repo. Please take a look at the Code of Conduct before interacting, which includes instructions for reporting any violations.
 
-## Coming soon(ish)
+## Differences from Robert Shaw's repo
 
-- Standard optimization strategies (PCSeg and correlation-consistent)
+The following major changes have been made relative to Robert's original version (corresponding to release 1.0.0) of the repo.
+
+- Support for a Molpro backend using pymolpro.
+- Adds the ability to use/optimise well-tempered expansions of exponents.
 
 ## Documentation
 
-For dependencies, detailed installation instructions, and a guide to getting started, please refer to the main documentation [here](https://basisopt.readthedocs.io/en/latest/index.html).
+For dependencies, detailed installation instructions, and a guide to getting started, please refer to the main documentation (currently Robert's original version) [here](https://basisopt.readthedocs.io/en/latest/index.html).
+
+You can build the development version docs locally using sphinx from the ``doc`` directory:
+
+	sphinx-build -b html src build
+
+then open ``index.html`` in the resulting build directory.
 
 ## Examples
 
@@ -45,6 +49,6 @@ There are working examples in the examples folder, and these are (or will be) do
 
 ## Acknowledging usage
 
-If you use this library in your program and find it helpful, that's great! Any feedback would be much appreciated. If you publish results using this library, please consider citing the following paper detailing the implementation:
+If you use this library in your program and find it helpful, that's great! Any feedback would be much appreciated. If you publish results using this library, please cite the following paper detailing version 1.0.0:
 
-[ChemRxiv preprint](https://chemrxiv.org/engage/chemrxiv/article-details/640f48e3b5d5dbe9e832e997)
+[J. Chem. Phys. 159, 044802 (2023)](https://doi.org/10.1063/5.0157878)

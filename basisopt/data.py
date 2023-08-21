@@ -14,26 +14,35 @@ FORCE_MASS = 1822.88853
 
 @cache
 def atomic_number(element: str) -> int:
+    """Returns the atomic number for the element"""
     el = md_element(element)
     return el.atomic_number
 
-
-"""Dictionary converting letter-value angular momenta to l quantum number"""
 AM_DICT = {'s': 0, 'p': 1, 'd': 2, 'f': 3, 'g': 4, 'h': 5, 'i': 6, 'j': 7, 'k': 8, 'l': 9}
+"""Dictionary converting letter-value angular momenta to l quantum number"""
 
-"""Dictionary converting back from l quantum number to letter value"""
 INV_AM_DICT = dict((v, k) for k, v in AM_DICT.items())
+"""Dictionary converting back from l quantum number to letter value"""
 
-"""Dictionary with pre-optimised even-tempered expansions for atoms"""
 _EVEN_TEMPERED_DATA = {}
+"""Dictionary with pre-optimised even-tempered expansions for atoms"""
 
 ETParams = list[tuple[float, float, int]]
+"""Parameters for an even-tempered expansion. The tuple contains:
+    a float of the starting exponent;
+    a float of the spacing between exponents;
+    an int of the total number of primitive exponents"""
 
-"""Dictionary with pre-optimised well-tempered expansions for atoms"""
 _WELL_TEMPERED_DATA = {}
+"""Dictionary with pre-optimised well-tempered expansions for atoms"""
 
 WTParams = list[tuple[float, float, float, float, int]]
-
+"""Parameters for a well-tempered expansion. The tuple contains:
+    a float of the starting exponent;
+    a float of the primary spacing between exponents;
+    a float of the gamma parameter;
+    a float of the delta parameter;
+    an int of the total number of primitive exponents"""
 
 def get_even_temper_params(atom: str = 'H', accuracy: float = 1e-5) -> ETParams:
     """Searches for the relevant even tempered expansion
@@ -60,9 +69,8 @@ def get_well_temper_params(atom: str = 'H', accuracy: float = 1e-5) -> WTParams:
     else:
         return []
 
-
-"""Essentially exact numerical Hartree-Fock energies for all atoms
-   in Hartree. Ref: Saito 2009, doi.org/10.1016/j.adt.2009.06.001"""
+#Essentially exact numerical Hartree-Fock energies for all atoms
+#   in Hartree. Ref: Saito 2009, doi.org/10.1016/j.adt.2009.06.001
 _ATOMIC_HF_ENERGIES = {
     1: -0.5,
     2: -2.86167999561,

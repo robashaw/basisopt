@@ -112,10 +112,12 @@ class MolproWrapper(Wrapper):
         cmd = self._command_string(m.method, **params)
         mol = self.convert_molecule(m)
         basis = self._convert_basis(m.basis)
+        put_xml = f"put,xml"
 
         # Assemble into an input string and pass to the Project
-        molpro_input = g_param_str + mol + basis + cmd
-        print(molpro_input)
+        molpro_input = g_param_str + mol + basis + cmd + put_xml
+        # Debug, uncomment the following line for the Molpro input file to be printed to screen
+#        print(molpro_input)
         proj.write_input(molpro_input)
 
     def _get_energy(self, proj: Project, meth: str) -> float:

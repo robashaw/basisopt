@@ -65,7 +65,7 @@ class Molecule(MSONable):
 
         Arguments:
              element (str): element name
-             coord (list): [x,y,z] coords in Ansgtrom
+             coord (list): [x,y,z] coords in Angstrom
              dummy (bool): if True, the atom is marked as a dummy atom
         """
         self._coords.append(np.array(coord))

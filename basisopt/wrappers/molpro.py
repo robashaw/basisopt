@@ -1,7 +1,8 @@
 # Wrappers for Molpro functionality using pymolpro (https://github.com/molpro/pymolpro)
 from pymolpro import Project
 
-from basisopt.bse_wrapper import internal_basis_converter
+from basisopt.bse_wrapper import fetch_ecp, internal_basis_converter
+from basis_set_exchange.writers import write_formatted_basis_str
 from basisopt.containers import InternalBasis
 from basisopt.exceptions import FailedCalculation
 from basisopt.molecule import Molecule
@@ -80,12 +81,29 @@ class MolproWrapper(Wrapper):
             command = f"{{{method}{method_options}}}"
         return command + "\n"
 
-    def _convert_basis(self, basis: InternalBasis) -> str:
+    def _convert_ecp(self, m: Molecule) -> str:
+        """Adds any ECPs that are requested for the molecule.
+
+        Arguments:
+            m: Molecule: Molecule to find the ECPs for
+
+        Returns:
+            Molpro basis block ECP string
+        """
+        ecp_str=""
+        for atom, name in m.ecps.items():
+            ecp = fetch_ecp(name, [atom])
+            lines = write_formatted_basis_str(ecp, fmt="molpro").split('\n')
+            ecp_str += "\n".join(lines[4:])
+        return ecp_str
+
+    def _convert_basis(self, basis: InternalBasis, ecps: str) -> str:
         """Converts an InternalBasis to the basis string for Molpro
         May be updated in future to enable auxiliary fitting sets
 
         Arguments:
             basis (InternalBasis): basis set to convert
+            ecps (str): any ECPS to be included in the basis
 
         Returns:
             Molpro basis block string
@@ -94,6 +112,8 @@ class MolproWrapper(Wrapper):
         basis_str = ""
         for line in molpro_basis[1:-1]:
             basis_str += line + "\n"
+        #Insert any ECPS
+        basis_str = basis_str[:8] + ecps + basis_str[8:]
         return basis_str
 
     def initialise(self, proj: Project, m: Molecule, tmp: str = "", **params):
@@ -111,7 +131,8 @@ class MolproWrapper(Wrapper):
             g_param_str = glo_params + "\n"
         cmd = self._command_string(m.method, **params)
         mol = self.convert_molecule(m)
-        basis = self._convert_basis(m.basis)
+        ecp = self._convert_ecp(m)
+        basis = self._convert_basis(m.basis, ecp)
         put_xml = f"put,xml"
 
         # Assemble into an input string and pass to the Project
@@ -146,11 +167,7 @@ class MolproWrapper(Wrapper):
             raise FailedCalculation
         # Attempt to catch race cases where wait=True doesn't seem to be sufficient
         p.wait()
-        # TODO use a helper function to extract the energy for a particular method
         energy = self._get_energy(p, mol.method)
-        #        if mol.method == "hf":
-        #            energy = p.energy()
-        #        else:
-        #            energy = p.energy(method=f"{mol.method.upper()}")
+
         p.clean()
         return energy

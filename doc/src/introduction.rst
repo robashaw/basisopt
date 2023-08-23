@@ -159,7 +159,7 @@ If you want ECPs to be used on particular atoms, this can be specified by provid
 		'Br': 'aug-cc-pvtz-pp'
 	})
 	
-If you are using Psi4, these are looked up from the basis set exchange, so should match names given there.
+If you are using Psi4 or Molpro, these are looked up from the basis set exchange, so should match names given there.
 If you are using Orca, the internal Orca ECPs are used, a list of names for which can be found in Section 6.3.3 of the Orca manual. 
 
 
@@ -171,7 +171,7 @@ To test that everything is set up correctly, you can run a quick calculation as 
 .. code-block:: python
 	
 	m.method = 'hf' 
-	success = bo.run_calculation(evaluate='energy, mol=m)
+	success = bo.run_calculation(evaluate='energy', mol=m)
 	print(bo.get_backend().get_value('energy'))
 
 .. toctree::

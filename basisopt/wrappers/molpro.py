@@ -1,8 +1,8 @@
 # Wrappers for Molpro functionality using pymolpro (https://github.com/molpro/pymolpro)
+from basis_set_exchange.writers import write_formatted_basis_str
 from pymolpro import Project
 
 from basisopt.bse_wrapper import fetch_ecp, internal_basis_converter
-from basis_set_exchange.writers import write_formatted_basis_str
 from basisopt.containers import InternalBasis
 from basisopt.exceptions import FailedCalculation
 from basisopt.molecule import Molecule
@@ -90,7 +90,7 @@ class MolproWrapper(Wrapper):
         Returns:
             Molpro basis block ECP string
         """
-        ecp_str=""
+        ecp_str = ""
         for atom, name in m.ecps.items():
             ecp = fetch_ecp(name, [atom])
             lines = write_formatted_basis_str(ecp, fmt="molpro").split('\n')
@@ -112,7 +112,7 @@ class MolproWrapper(Wrapper):
         basis_str = ""
         for line in molpro_basis[1:-1]:
             basis_str += line + "\n"
-        #Insert any ECPS
+        # Insert any ECPS
         basis_str = basis_str[:8] + ecps + basis_str[8:]
         return basis_str
 
@@ -133,12 +133,12 @@ class MolproWrapper(Wrapper):
         mol = self.convert_molecule(m)
         ecp = self._convert_ecp(m)
         basis = self._convert_basis(m.basis, ecp)
-        put_xml = f"put,xml"
+        put_xml = "put,xml"
 
         # Assemble into an input string and pass to the Project
         molpro_input = g_param_str + mol + basis + cmd + put_xml
         # Debug, uncomment the following line for the Molpro input file to be printed to screen
-#        print(molpro_input)
+        #        print(molpro_input)
         proj.write_input(molpro_input)
 
     def _get_energy(self, proj: Project, meth: str) -> float:

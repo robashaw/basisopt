@@ -5,7 +5,7 @@ bo.set_backend('molpro')
 bo.set_tmp_dir('tmp/')
 
 m = bo.Molecule(name="Krypton")
-m.add_atom(element='Kr', coord=[0., 0., 0.])
+m.add_atom(element='Kr', coord=[0.0, 0.0, 0.0])
 
 m.basis = bo.fetch_basis('cc-pvdz-pp', ['Kr'])
 m.set_ecps({'Kr': 'cc-pvtz-pp'})

@@ -45,6 +45,11 @@ WTParams = list[tuple[float, float, float, float, int]]
     a float of the delta parameter;
     an int of the total number of primitive exponents"""
 
+"""Dictionary with pre-optimised Legendre polynomial expansions for atoms"""
+_LEGENDRE_DATA = {}
+
+LegParams = list[tuple[tuple, int]]
+
 
 def get_even_temper_params(atom: str = 'H', accuracy: float = 1e-5) -> ETParams:
     """Searches for the relevant even tempered expansion
@@ -58,6 +63,17 @@ def get_even_temper_params(atom: str = 'H', accuracy: float = 1e-5) -> ETParams:
     else:
         return []
 
+def get_legendre_params(atom: str = 'H', accuracy: float = 1e-5) -> LegParams:
+    """Searches for the relevant Legendre polynomial-based expansion
+    from _LEGENDRE_DATA
+    """
+    if atom in _LEGENDRE_DATA:
+        log_acc = -np.log10(accuracy)
+        index = max(4, log_acc) - 4
+        index = int(min(index, 3))
+        return _LEGENDRE_DATA[atom][index]
+    else:
+        return []
 
 def get_well_temper_params(atom: str = 'H', accuracy: float = 1e-5) -> WTParams:
     """Searches for the relevant well tempered expansion
@@ -72,8 +88,8 @@ def get_well_temper_params(atom: str = 'H', accuracy: float = 1e-5) -> WTParams:
         return []
 
 
-# Essentially exact numerical Hartree-Fock energies for all atoms
-#   in Hartree. Ref: Saito 2009, doi.org/10.1016/j.adt.2009.06.001
+"""Essentially exact numerical Hartree-Fock energies for all atoms
+   in Hartree. Ref: Saito 2009, doi.org/10.1016/j.adt.2009.06.001"""
 _ATOMIC_HF_ENERGIES = {
     1: -0.5,
     2: -2.86167999561,

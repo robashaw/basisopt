@@ -18,6 +18,7 @@ def atomic_number(element: str) -> int:
     el = md_element(element)
     return el.atomic_number
 
+
 AM_DICT = {'s': 0, 'p': 1, 'd': 2, 'f': 3, 'g': 4, 'h': 5, 'i': 6, 'j': 7, 'k': 8, 'l': 9}
 """Dictionary converting letter-value angular momenta to l quantum number"""
 
@@ -44,6 +45,7 @@ WTParams = list[tuple[float, float, float, float, int]]
     a float of the delta parameter;
     an int of the total number of primitive exponents"""
 
+
 def get_even_temper_params(atom: str = 'H', accuracy: float = 1e-5) -> ETParams:
     """Searches for the relevant even tempered expansion
     from _EVEN_TEMPERED_DATA
@@ -69,7 +71,8 @@ def get_well_temper_params(atom: str = 'H', accuracy: float = 1e-5) -> WTParams:
     else:
         return []
 
-#Essentially exact numerical Hartree-Fock energies for all atoms
+
+# Essentially exact numerical Hartree-Fock energies for all atoms
 #   in Hartree. Ref: Saito 2009, doi.org/10.1016/j.adt.2009.06.001
 _ATOMIC_HF_ENERGIES = {
     1: -0.5,

@@ -14,11 +14,11 @@ from basisopt.opt.eventemper import EvenTemperedStrategy
 from basisopt.opt.legendre import LegendreStrategy
 from basisopt.opt.optimizers import optimize
 from basisopt.opt.strategies import Strategy
+from basisopt.opt.welltemper import WellTemperedStrategy
 from basisopt.util import bo_logger
 
 from . import zetatools as zt
-from .basis import Basis, even_temper_expansion, legendre_expansion
-
+from .basis import Basis, even_temper_expansion, legendre_expansion, well_temper_expansion
 
 def needs_element(func: Callable) -> Callable:
     """Decorator that checks if the AtomicBasis has an element attribute
@@ -42,6 +42,7 @@ class AtomicBasis(Basis):
     Attributes:
          et_params (data.ETParams): even tempered expansion parameters
          leg_params (data.LegParams): Legendre polynomial-based expansion parameters
+         wt_params (data.WTParams): well tempered expansion parameters
          charge (int): net charge on atom
          multiplicity (int): spin multiplicity of atom
          config (dict): configuration of basis, (k, v) pairs
@@ -68,6 +69,7 @@ class AtomicBasis(Basis):
         self._done_setup = False
         self.et_params = None
         self.leg_params = None
+        self.wt_params = None
 
         if self._element is not None:
             self.charge = charge
@@ -87,6 +89,7 @@ class AtomicBasis(Basis):
         d["@class"] = type(self).__name__
         d["et_params"] = self.et_params
         d["leg_params"] = self.leg_params
+        d["wt_params"] = self.wt_params
 
         if hasattr(self, 'strategy'):
             if isinstance(self.strategy, Strategy):
@@ -110,6 +113,7 @@ class AtomicBasis(Basis):
         instance._molecule = basis._molecule
         instance.et_params = d.get("et_params", None)
         instance.leg_params = d.get("leg_params", None)
+        instance.wt_params = d.get("wt_params", None)
         instance.strategy = d.get("strategy", None)
         if instance.strategy:
             instance._done_setup = d.get("done_setup", False)
@@ -307,6 +311,45 @@ class AtomicBasis(Basis):
             self._molecule.basis[self._symbol] = even_temper_expansion(self.et_params)
 
     @needs_element
+    def set_well_tempered(
+        self,
+        method: str = 'hf',
+        accuracy: float = 1e-5,
+        max_n: int = 18,
+        max_l: int = -1,
+        exact_ref: bool = True,
+        params: dict[str, Any] = {},
+    ):
+        """Looks up or computes a well tempered basis expansion for the atom
+
+        Arguments:
+             method (str): method to use; possibilities can be found through Wrapper object
+             accuracy (float): the tolerance to optimize to, compared to reference value
+             max_n (int): max number of primitives per shell
+             max_l (int): angular momentum to go up to; if -1, will use max l in minimal config
+             exact_ref (bool): uses exact numerical HF energy if True,
+             calculates cc-pV5Z reference value if False
+             params (dict): dictionary of parameters to pass to the backend -
+             see the relevant Wrapper object for options
+
+        Sets:
+             self.wt_params
+        """
+        self.wt_params = data.get_well_temper_params(atom=self._symbol.title(), accuracy=accuracy)
+        if len(self.wt_params) == 0:
+            # optimize new params
+            if exact_ref:
+                reference = ('exact', data._ATOMIC_HF_ENERGIES[self._element.atomic_number])
+            else:
+                reference = ('cc-pV5Z', None)
+            strategy = WellTemperedStrategy(max_n=max_n, max_l=max_l)
+            self.setup(method=method, strategy=strategy, reference=reference, params=params)
+            self.optimize(algorithm='Nelder-Mead', params=params)
+            self.wt_params = strategy.shells
+        else:
+            self._molecule.basis[self._symbol] = well_temper_expansion(self.wt_params)
+
+    @needs_element
     def set_legendre(
         self,
         method: str = 'hf',
@@ -343,7 +386,7 @@ class AtomicBasis(Basis):
             self.optimize(algorithm='Nelder-Mead', params=params)
             self.leg_params = strategy.shells
         else:
-            self._molecule.basis[self._symbol] = legendre_expansion(self.leg_params)
+            self._molecule.basis[self._symbol] = legendre_expansion(self.leg_params)            
 
     @needs_element
     def optimize(self, algorithm: str = 'Nelder-Mead', params: dict[str, Any] = {}) -> OptResult:

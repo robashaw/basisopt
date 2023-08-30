@@ -47,7 +47,8 @@ There are fairly minimal requirements, and versions listed are minimum tested ve
 You will also need a quantum chemistry backend. Currently supported codes are:
 
 * Psi4 : version 1.4 or above
-* ORCA : version 4.2.x or version 5.x 
+* ORCA : version 4.2.x or version 5.x
+* Molpro: most recent versions (requires the `pymolpro <https://molpro.github.io/pymolpro/index.html>`_ library) 
 
 There will eventually be a tutorial on how to implement wrappers for different packages. If you do, please consider submitting a pull request so that others may benefit. 
   

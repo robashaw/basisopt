@@ -14,20 +14,36 @@ FORCE_MASS = 1822.88853
 
 @cache
 def atomic_number(element: str) -> int:
+    """Returns the atomic number for the element"""
     el = md_element(element)
     return el.atomic_number
 
 
-"""Dictionary converting letter-value angular momenta to l quantum number"""
 AM_DICT = {'s': 0, 'p': 1, 'd': 2, 'f': 3, 'g': 4, 'h': 5, 'i': 6, 'j': 7, 'k': 8, 'l': 9}
+"""Dictionary converting letter-value angular momenta to l quantum number"""
 
-"""Dictionary converting back from l quantum number to letter value"""
 INV_AM_DICT = dict((v, k) for k, v in AM_DICT.items())
+"""Dictionary converting back from l quantum number to letter value"""
 
-"""Dictionary with pre-optimised even-tempered expansions for atoms"""
 _EVEN_TEMPERED_DATA = {}
+"""Dictionary with pre-optimised even-tempered expansions for atoms"""
 
 ETParams = list[tuple[float, float, int]]
+"""Parameters for an even-tempered expansion. The tuple contains:
+    a float of the starting exponent;
+    a float of the spacing between exponents;
+    an int of the total number of primitive exponents"""
+
+_WELL_TEMPERED_DATA = {}
+"""Dictionary with pre-optimised well-tempered expansions for atoms"""
+
+WTParams = list[tuple[float, float, float, float, int]]
+"""Parameters for a well-tempered expansion. The tuple contains:
+    a float of the starting exponent;
+    a float of the primary spacing between exponents;
+    a float of the gamma parameter;
+    a float of the delta parameter;
+    an int of the total number of primitive exponents"""
 
 """Dictionary with pre-optimised Legendre polynomial expansions for atoms"""
 _LEGENDRE_DATA = {}
@@ -47,7 +63,6 @@ def get_even_temper_params(atom: str = 'H', accuracy: float = 1e-5) -> ETParams:
     else:
         return []
 
-
 def get_legendre_params(atom: str = 'H', accuracy: float = 1e-5) -> LegParams:
     """Searches for the relevant Legendre polynomial-based expansion
     from _LEGENDRE_DATA
@@ -57,6 +72,18 @@ def get_legendre_params(atom: str = 'H', accuracy: float = 1e-5) -> LegParams:
         index = max(4, log_acc) - 4
         index = int(min(index, 3))
         return _LEGENDRE_DATA[atom][index]
+    else:
+        return []
+
+def get_well_temper_params(atom: str = 'H', accuracy: float = 1e-5) -> WTParams:
+    """Searches for the relevant well tempered expansion
+    from _WELL_TEMPERED_DATA
+    """
+    if atom in _WELL_TEMPERED_DATA:
+        log_acc = -np.log10(accuracy)
+        index = max(4, log_acc) - 4
+        index = int(min(index, 3))
+        return _WELL_TEMPERED_DATA[atom][index]
     else:
         return []
 

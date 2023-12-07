@@ -60,7 +60,7 @@ class AtomicBasis(Basis):
          _symbol (str): atomic symbol in lowercase
     """
 
-    def __init__(self, name: str = 'H', charge: int = 0, mult: int = 1):
+    def __init__(self, name: str = 'H', charge: int = 0, mult = None):
         super().__init__()
 
         self._element = None
@@ -70,10 +70,15 @@ class AtomicBasis(Basis):
         self.et_params = None
         self.leg_params = None
         self.wt_params = None
-
+        
+        #Set multiplicity to the value held in the data.GROUNDSTATE_MULTIPLICITES
+        #Enum object holding all the ground state multiplicities
         if self._element is not None:
             self.charge = charge
-            self.multiplicity = mult
+            if self.charge == 0 and mult == None:
+                self.multiplicity = getattr(data.GROUNDSTATE_MULTIPLICITIES, self.element.symbol).value
+            else:
+                self.multiplicity = mult
 
     def save(self, filename: str):
         """Pickles the AtomicBasis object into a binary file"""
@@ -344,7 +349,7 @@ class AtomicBasis(Basis):
                 reference = ('cc-pV5Z', None)
             strategy = WellTemperedStrategy(max_n=max_n, max_l=max_l)
             self.setup(method=method, strategy=strategy, reference=reference, params=params)
-            self.optimize(algorithm='Nelder-Mead', params=params)
+            self.optimize(algorithm='Nelder-Mead')
             self.wt_params = strategy.shells
         else:
             self._molecule.basis[self._symbol] = well_temper_expansion(self.wt_params)

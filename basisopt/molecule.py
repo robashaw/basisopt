@@ -5,7 +5,7 @@ import numpy as np
 from monty.json import MSONable
 
 from .containers import basis_to_dict, dict_to_basis
-from .data import atomic_number
+from .data import atomic_number, GROUNDSTATE_MULTIPLICITIES
 from .exceptions import InvalidDiatomic
 from .util import bo_logger, dict_decode
 
@@ -35,7 +35,7 @@ class Molecule(MSONable):
          _references (dict): dictionary of reference values for results
     """
 
-    def __init__(self, name: str = "Untitled", charge: int = 0, mult: int = 1):
+    def __init__(self, name: str = "Untitled", charge: int = 0, mult: int = None):
         self.name = name
         self.charge = charge
         self.multiplicity = mult
@@ -68,6 +68,10 @@ class Molecule(MSONable):
              coord (list): [x,y,z] coords in Angstrom
              dummy (bool): if True, the atom is marked as a dummy atom
         """
+        if self.multiplicity:
+            self.multiplicity = self.multiplicity
+        else:
+            self.multiplicity = getattr(GROUNDSTATE_MULTIPLICITIES, element).value
         self._coords.append(np.array(coord))
         self._atom_names.append(element)
         if dummy:

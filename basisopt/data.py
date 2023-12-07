@@ -1,6 +1,6 @@
 # data
 from functools import cache
-
+from enum import Enum
 import numpy as np
 from mendeleev import element as md_element
 
@@ -50,6 +50,44 @@ _LEGENDRE_DATA = {}
 
 LegParams = list[tuple[tuple, int]]
 
+class GROUNDSTATE_MULTIPLICITIES(Enum):
+    H   = 2
+    He  = 1
+    Li  = 2
+    Be  = 1
+    B   = 2
+    C   = 3
+    N   = 4
+    O   = 3
+    F   = 2
+    Ne  = 1
+    Na  = 2
+    Mg  = 1
+    Al  = 2
+    Si  = 3
+    P   = 4
+    S   = 3
+    Cl  = 2
+    Ar  = 1
+    K   = 2
+    Ca  = 1
+    Sc  = 2
+    Ti  = 3
+    V   = 4
+    Cr  = 7
+    Mn  = 6
+    Fe  = 5 
+    Co  = 4
+    Ni  = 3
+    Cu  = 2
+    Zn  = 1
+    Ga  = 2
+    Ge  = 3
+    As  = 4
+    Se  = 3
+    Br  = 2
+    Kr  = 1
+    
 
 def get_even_temper_params(atom: str = 'H', accuracy: float = 1e-5) -> ETParams:
     """Searches for the relevant even tempered expansion

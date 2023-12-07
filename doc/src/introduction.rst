@@ -35,6 +35,8 @@ For Psi4, the python API is used:
 	import basisopt as bo
 	bo.set_backend('psi4')
 	bo.set_tmp_dir('/tmp/')
+	
+It is possible to use the Molpro backend using a python API provided by pymolpro. Please see the :ref:`sec:molpro` documentation for further details.
 
 For ORCA (and other non-native backends), we need to give the path to the *directory containing the exexcutables*, e.g.
 
@@ -157,7 +159,7 @@ If you want ECPs to be used on particular atoms, this can be specified by provid
 		'Br': 'aug-cc-pvtz-pp'
 	})
 	
-If you are using Psi4, these are looked up from the basis set exchange, so should match names given there.
+If you are using Psi4 or Molpro, these are looked up from the basis set exchange, so should match names given there.
 If you are using Orca, the internal Orca ECPs are used, a list of names for which can be found in Section 6.3.3 of the Orca manual. 
 
 
@@ -169,7 +171,7 @@ To test that everything is set up correctly, you can run a quick calculation as 
 .. code-block:: python
 	
 	m.method = 'hf' 
-	success = bo.run_calculation(evaluate='energy, mol=m)
+	success = bo.run_calculation(evaluate='energy', mol=m)
 	print(bo.get_backend().get_value('energy'))
 
 .. toctree::

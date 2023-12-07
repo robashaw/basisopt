@@ -5,7 +5,12 @@ import numpy as np
 from basisopt.bse_wrapper import fetch_basis
 from basisopt.containers import Shell
 
-from .basis import even_temper_expansion, fix_ratio, uncontract_shell
+from .basis import (
+    even_temper_expansion,
+    fix_ratio,
+    uncontract_shell,
+    well_temper_expansion,
+)
 
 # All guess functions need this signature
 # func(atomic, params={}), where atomic is an AtomicBasis object
@@ -57,3 +62,14 @@ def even_tempered_guess(atomic, params={}):
     if atomic.et_params is None:
         atomic.set_even_tempered(**params)
     return even_temper_expansion(atomic.et_params)
+
+
+def well_tempered_guess(atomic, params={}):
+    """Takes guess from a well-tempered expansion
+
+    Params:
+         see signature for AtomicBasis.set_well_tempered
+    """
+    if atomic.wt_params is None:
+        atomic.set_well_tempered(**params)
+    return well_temper_expansion(atomic.wt_params)

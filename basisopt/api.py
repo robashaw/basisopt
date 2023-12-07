@@ -149,6 +149,18 @@ def orca(path: str):
     bo_logger.info("ORCA install dir at: %s", path)
 
 
+@register_backend
+def molpro(path: str):
+    """Tests pymolpro import and prepares to be used as calculation backend"""
+    try:
+        global _CURRENT_BACKEND
+        from basisopt.wrappers.molpro import MolproWrapper
+
+        _CURRENT_BACKEND = MolproWrapper()
+    except ImportError:
+        bo_logger.error("Molpro backend (using pymolpro) not found!")
+
+
 def run_calculation(
     evaluate: str = 'energy', mol: Molecule = None, params: dict[Any, Any] = {}
 ) -> int:

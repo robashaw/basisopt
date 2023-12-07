@@ -1,8 +1,8 @@
 # -- Project information -----------------------------------------------------
 
 project = 'BasisOpt'
-copyright = '2023, Robert Shaw'
-author = 'Robert Shaw'
+copyright = '2023, Robert Shaw and Grant Hill'
+author = 'Robert Shaw and Grant Hill'
 
 import basisopt
 

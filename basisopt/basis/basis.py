@@ -4,10 +4,12 @@ from typing import Any, Optional, Union
 
 import numpy as np
 from monty.json import MSONable
+from scipy.special import legendre
 
 from basisopt import data
 from basisopt.containers import InternalBasis, Result, Shell
-from basisopt.data import ETParams
+from basisopt.data import ETParams, LegParams, WTParams
+
 from basisopt.testing import Test
 from basisopt.util import bo_logger, dict_decode
 
@@ -62,6 +64,55 @@ def even_temper_expansion(params: ETParams) -> list[Shell]:
         new_shell = Shell()
         new_shell.l = data.INV_AM_DICT[ix]
         new_shell.exps = np.array([c * (x**p) for p in range(n)])
+        uncontract_shell(new_shell)
+        el_basis.append(new_shell)
+    return el_basis
+
+def legendre_expansion(params: LegParams) -> list[Shell]:
+    """Forms a basis for an element from Petersson's Legendre expansion
+
+    Arguments:
+        params (list): list of tuples corresponding to shells
+        e.g. [(c_s, x_s, n_s), (c_p, x_p, n_p), ...] where each shell
+        is expanded as ln c_l = Sum_{k=0}^{k_{max}} a_k P_k
+        * (\frac{2c_l - 2}{n_l - 1} - 1)
+        Where a_k is a parameter and P_k is the k'th Legendre polynomial.
+        k_max is the total number of parameters (6).
+
+    Returns:
+        list of Shell objects for the expansion
+    """
+    el_basis = []
+    for ix, (A_vals, n) in enumerate(params):
+        new_shell = Shell()
+        new_shell.l = data.INV_AM_DICT[ix]
+        exponents = []
+        for j in range(n):
+            ln_a = 0e1
+            for k in range(len(A_vals)):
+                ln_a += A_vals[k] * legendre(k)((((2 * (j + 1)) - 2) / (n - 1)) - 1)
+            exponents.append(np.exp(ln_a))
+        new_shell.exps = np.array(exponents)
+        uncontract_shell(new_shell)
+        el_basis.append(new_shell)
+    return el_basis
+
+def well_temper_expansion(params: WTParams) -> list[Shell]:
+    """Forms a basis for an element from well tempered expansion parameters
+
+    Arguments:
+         params (list): list of tuples corresponding to shells
+         e.g. [(c_s, x_s, g_s, d_s, n_s), (c_p, x_p, g_p, d_p, n_p), ...] where each shell
+         is expanded as c_l * (x_l**k)*(1 + g_l*((k+1)/n_l)**d_l) for k=0,...,n_l
+
+    Returns:
+         list of Shell objects for the well tempered expansion
+    """
+    el_basis = []
+    for ix, (c, x, g, d, n) in enumerate(params):
+        new_shell = Shell()
+        new_shell.l = data.INV_AM_DICT[ix]
+        new_shell.exps = np.array([c * (x**p) * (1.0 + g * ((p + 1) / n) ** d) for p in range(n)])
         uncontract_shell(new_shell)
         el_basis.append(new_shell)
     return el_basis

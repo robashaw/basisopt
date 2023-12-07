@@ -1,4 +1,4 @@
-# Wrappers for psi4 functionality
+# Wrappers for Orca functionality
 import os
 import subprocess
 from typing import Any

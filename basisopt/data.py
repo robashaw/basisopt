@@ -1,6 +1,6 @@
 # data
 from functools import cache
-
+from enum import Enum
 import numpy as np
 from mendeleev import element as md_element
 
@@ -14,21 +14,80 @@ FORCE_MASS = 1822.88853
 
 @cache
 def atomic_number(element: str) -> int:
+    """Returns the atomic number for the element"""
     el = md_element(element)
     return el.atomic_number
 
 
-"""Dictionary converting letter-value angular momenta to l quantum number"""
 AM_DICT = {'s': 0, 'p': 1, 'd': 2, 'f': 3, 'g': 4, 'h': 5, 'i': 6, 'j': 7, 'k': 8, 'l': 9}
+"""Dictionary converting letter-value angular momenta to l quantum number"""
 
-"""Dictionary converting back from l quantum number to letter value"""
 INV_AM_DICT = dict((v, k) for k, v in AM_DICT.items())
+"""Dictionary converting back from l quantum number to letter value"""
 
-"""Dictionary with pre-optimised even-tempered expansions for atoms"""
 _EVEN_TEMPERED_DATA = {}
+"""Dictionary with pre-optimised even-tempered expansions for atoms"""
 
 ETParams = list[tuple[float, float, int]]
+"""Parameters for an even-tempered expansion. The tuple contains:
+    a float of the starting exponent;
+    a float of the spacing between exponents;
+    an int of the total number of primitive exponents"""
 
+_WELL_TEMPERED_DATA = {}
+"""Dictionary with pre-optimised well-tempered expansions for atoms"""
+
+WTParams = list[tuple[float, float, float, float, int]]
+"""Parameters for a well-tempered expansion. The tuple contains:
+    a float of the starting exponent;
+    a float of the primary spacing between exponents;
+    a float of the gamma parameter;
+    a float of the delta parameter;
+    an int of the total number of primitive exponents"""
+
+"""Dictionary with pre-optimised Legendre polynomial expansions for atoms"""
+_LEGENDRE_DATA = {}
+
+LegParams = list[tuple[tuple, int]]
+
+class GROUNDSTATE_MULTIPLICITIES(Enum):
+    H   = 2
+    He  = 1
+    Li  = 2
+    Be  = 1
+    B   = 2
+    C   = 3
+    N   = 4
+    O   = 3
+    F   = 2
+    Ne  = 1
+    Na  = 2
+    Mg  = 1
+    Al  = 2
+    Si  = 3
+    P   = 4
+    S   = 3
+    Cl  = 2
+    Ar  = 1
+    K   = 2
+    Ca  = 1
+    Sc  = 2
+    Ti  = 3
+    V   = 4
+    Cr  = 7
+    Mn  = 6
+    Fe  = 5 
+    Co  = 4
+    Ni  = 3
+    Cu  = 2
+    Zn  = 1
+    Ga  = 2
+    Ge  = 3
+    As  = 4
+    Se  = 3
+    Br  = 2
+    Kr  = 1
+    
 
 def get_even_temper_params(atom: str = 'H', accuracy: float = 1e-5) -> ETParams:
     """Searches for the relevant even tempered expansion
@@ -39,6 +98,30 @@ def get_even_temper_params(atom: str = 'H', accuracy: float = 1e-5) -> ETParams:
         index = max(4, log_acc) - 4
         index = int(min(index, 3))
         return _EVEN_TEMPERED_DATA[atom][index]
+    else:
+        return []
+
+def get_legendre_params(atom: str = 'H', accuracy: float = 1e-5) -> LegParams:
+    """Searches for the relevant Legendre polynomial-based expansion
+    from _LEGENDRE_DATA
+    """
+    if atom in _LEGENDRE_DATA:
+        log_acc = -np.log10(accuracy)
+        index = max(4, log_acc) - 4
+        index = int(min(index, 3))
+        return _LEGENDRE_DATA[atom][index]
+    else:
+        return []
+
+def get_well_temper_params(atom: str = 'H', accuracy: float = 1e-5) -> WTParams:
+    """Searches for the relevant well tempered expansion
+    from _WELL_TEMPERED_DATA
+    """
+    if atom in _WELL_TEMPERED_DATA:
+        log_acc = -np.log10(accuracy)
+        index = max(4, log_acc) - 4
+        index = int(min(index, 3))
+        return _WELL_TEMPERED_DATA[atom][index]
     else:
         return []
 

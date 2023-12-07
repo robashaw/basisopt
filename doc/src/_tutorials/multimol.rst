@@ -5,7 +5,7 @@
 Multiple-molecule basis optimization
 ====================================
 
-This example demonstrates how BasisOpt can be used to optimize a double-zeta molecule-optimized basis set. In this case five molecules (water, methane, methanol, formaldehyde and oxygen) are used for the optimization, resulting in a single set of exponents for hydrogen, carbon and oxygen. Please note that as the exponents are tightly coupled this optimization can take a long time to run. The full example script can be found in ``examples/multi-molecule/multi-molecule.py``.
+This example demonstrates how BasisOpt can be used to optimize a double-zeta molecule-optimized basis set. In this case five molecules (water, methane, methanol, formaldehyde and oxygen) are used for the optimization, resulting in a single set of exponents for hydrogen, carbon and oxygen. Please note that as the exponents are tightly coupled this optimization can take a long time to run. The full example script can be found in ``examples/multi-molecule/multi_molecule.py``.
 
 This example also shows the use of the logger functionality in BasisOpt.
 
@@ -18,19 +18,19 @@ In this example we use the Psi4 program to carry out the electronic structure ca
 
 	mb = MolecularBasis(name="double")
 	list_of_mols = ['water', 'methane', 'methanol', 'formaldehyde', 'oxygen']
-	mol_objs = [
-    	bo.molecule.Molecule.from_xyz(mol+'.xyz', name=mol)
-    	for mol in list_of_mols
-		]
+	mol_objs = [bo.molecule.Molecule.from_xyz(mol + '.xyz', name=mol) for mol in list_of_mols]
 	mb = MolecularBasis(name="double", molecules=mol_objs)
 	
-We also set some calculation parameters that will be used in the optimization strategy. Specifically, we select the :math:`\omega` B97X-D density functional and turn off the use of density fitting in Psi4.
+We also set some calculation parameters that will be used in the optimization strategy. Specifically, we select the :math:`\omega` B97X-D density functional, adjust the DFT integration grid, and turn off the use of density fitting in Psi4.
 
 .. code-block:: python
 
 	params = {
     	'functional': "wb97x-d",
-    	'scf_type': "pk"
+    	'scf_type': "pk",
+		'dft_spherical_points': "974",
+		'dft_radial_points': "175",
+		'dft_pruning_scheme': "none"
 	}
 
 Optimization strategy and first run
@@ -68,7 +68,7 @@ Within these iterations we also use the logging capability in BasisOpt to produc
 	    bo_logger.info("Starting consistency iteration %d", counter+1)
 	    mb.optimize()
 	    e_opt.append(strategy.last_objective)
-	    e_diff = strategy.delta_objective
+	    e_diff = abs(strategy.last_objective - e_opt[counter])
 	    bo_logger.info("Objective function difference from previous iteration: %f\n", e_diff)
 	    counter += 1
 

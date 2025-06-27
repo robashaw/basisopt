@@ -3,9 +3,10 @@ from typing import Any, Callable
 from . import api
 from .util import bo_logger
 
-if api._PARALLEL:
+
+try:
     from distributed import Client, LocalCluster, wait
-else:
+except ImportError:
     bo_logger.warning("Dask not installed, parallelisation not available")
 
 

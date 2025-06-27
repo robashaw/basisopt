@@ -1,8 +1,6 @@
 from typing import Any, Callable
 
-from . import api
 from .util import bo_logger
-
 
 try:
     from distributed import Client, LocalCluster, wait

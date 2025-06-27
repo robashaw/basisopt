@@ -1,6 +1,5 @@
 from typing import Any, Callable
 
-from . import api
 from .util import bo_logger
 
 

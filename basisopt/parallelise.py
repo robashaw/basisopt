@@ -2,7 +2,6 @@ from typing import Any, Callable
 
 from .util import bo_logger
 
-
 try:
     from distributed import Client, LocalCluster, wait
 except ImportError:

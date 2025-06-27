@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Final
 
 import numpy as np
 from mendeleev import element as md_element
@@ -10,7 +10,8 @@ from basisopt.containers import InternalBasis
 from .preconditioners import unit
 from .strategies import Strategy
 
-_INITIAL_GUESS = (0.1, 2.2, 20.0, 10.0, 8)
+_INITIAL_GUESS: Final = (0.1, 2.2, 20.0, 10.0, 8)
+_MIN_RATIO: Final = 1.01
 
 
 class WellTemperedStrategy(Strategy):
@@ -143,9 +144,9 @@ class WellTemperedStrategy(Strategy):
         """
         (c, x, g, d, n) = self.shells[self._step]
         c = max(values[0], 1e-5)
-        x = max(values[1], 1.01)
-        g = max(values[2], 1.01)
-        d = max(values[3], 1.01)
+        x = max(values[1], _MIN_RATIO)
+        g = max(values[2], _MIN_RATIO)
+        d = max(values[3], _MIN_RATIO)
         self.shells[self._step] = (c, x, g, d, n)
         self.set_basis_shells(basis, element)
 
